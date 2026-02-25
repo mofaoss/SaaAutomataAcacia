@@ -45,10 +45,10 @@ jobs:
         import sys
         import os
         sys.path.append('PerfectBuild')
-        
+
         try:
             from perfect_build import Config
-            
+
             # 输出配置到 GitHub Actions 环境变量
             print(f"app_ver={Config.app_ver}")
             print(f"app_name={Config.app_name}")
@@ -56,7 +56,7 @@ jobs:
             print(f"app_publisher={Config.app_publisher}")
             print(f"app_url={Config.app_url}")
             print(f"app_icon={Config.app_icon}")
-            
+
             # 设置为 GitHub Actions 输出
             with open(os.environ['GITHUB_OUTPUT'], 'a') as f:
                 f.write(f"app_ver={Config.app_ver}\n")
@@ -65,7 +65,7 @@ jobs:
                 f.write(f"app_publisher={Config.app_publisher}\n")
                 f.write(f"app_url={Config.app_url}\n")
                 f.write(f"app_icon={Config.app_icon}\n")
-                
+
         except ImportError as e:
             print(f"Error importing config: {e}")
             # 使用默认值
@@ -73,11 +73,11 @@ jobs:
                 'app_ver': '2.0.5-official',
                 'app_name': 'SAA',
                 'app_exec': 'SAA',
-                'app_publisher': 'laozhu',
-                'app_url': 'https://github.com/LaoZhuJackson/SnowbreakAutoAssistant',
+                'app_publisher': 'mofaoss',
+                'app_url': 'https://github.com/mofaoss/SnowbreakAutoAssistant',
                 'app_icon': 'app/resource/images/logo.ico'
             }
-            
+
             with open(os.environ['GITHUB_OUTPUT'], 'a') as f:
                 for key, value in defaults.items():
                     f.write(f"{key}={value}\n")
@@ -240,22 +240,22 @@ jobs:
         $buildMode = "${{ github.event.inputs.build_mode }}"
         $useInnoSetup = "${{ github.event.inputs.inno_setup }}"
         if (-not $buildMode) { $buildMode = "nuitka" }
-        
+
         # 创建便携版
         $portableArchiveName = "${appName}-${version}-${buildMode}-Portable-Windows-x64.zip"
-        
+
         if (Test-Path "build/${appName}.dist") {
           # Nuitka 构建
           Write-Host "Creating portable package from Nuitka build..."
           Compress-Archive -Path "build/${appName}.dist/*" -DestinationPath $portableArchiveName -CompressionLevel Optimal
-          
+
           # 为 Nuitka 构建创建安装程序
           if ($buildMode -ne "pyinstaller") {
             Write-Host "Creating installer for Nuitka build..."
-            
+
             # 创建 ISS 脚本文件
             $issFile = "${appName}-setup.iss"
-            
+
             # 写入 ISS 脚本内容
             $issLines = @(
               '#define MyAppName "${{ needs.get-config.outputs.app_name }}"',
@@ -299,21 +299,21 @@ jobs:
               '[Run]',
               'Filename: "{app}\{#MyAppExeName}"; Description: "{cm:LaunchProgram,{#StringChange(MyAppName, ''&'', ''&&'')}}"; Flags: nowait postinstall skipifsilent'
             )
-            
+
             $issLines | Set-Content $issFile -Encoding UTF8
             Write-Host "Created ISS script: $issFile"
-            
+
             # 运行 Inno Setup 编译器
             $innoCompiler = "C:\Program Files (x86)\Inno Setup 6\Compil32.exe"
-            
+
             if ((Test-Path $innoCompiler) -and (Test-Path $issFile) -and ($useInnoSetup -eq "true")) {
               Write-Host "Running Inno Setup compiler..."
               Write-Host "Compiler: $innoCompiler"
               Write-Host "Script: $issFile"
-              
+
               # 运行编译器并等待完成
               $process = Start-Process -FilePath $innoCompiler -ArgumentList "/cc", $issFile -Wait -PassThru -WindowStyle Hidden
-              
+
               $installerName = "${appName}-${version}-Setup-Windows-x64.exe"
               if ($process.ExitCode -eq 0 -and (Test-Path $installerName)) {
                 Write-Host "[SUCCESS] Successfully created installer: $installerName"
@@ -334,7 +334,7 @@ jobs:
               Write-Warning "Skipping installer creation"
             }
           }
-          
+
         } elseif (Test-Path "build/dist/${appName}") {
           # PyInstaller 构建
           Write-Host "Creating portable package from PyInstaller build..."
@@ -343,7 +343,7 @@ jobs:
           Write-Error "No build output found to package"
           exit 1
         }
-        
+
         Write-Host "=== Build Artifacts Summary ==="
         Write-Host "Portable version: $portableArchiveName"
         if (Test-Path $portableArchiveName) {
@@ -351,7 +351,7 @@ jobs:
         } else {
           Write-Warning "[WARNING] Portable version creation failed"
         }
-        
+
         # Check if installer was created
         $installerName = "${appName}-${version}-Setup-Windows-x64.exe"
         if (Test-Path $installerName) {
@@ -362,7 +362,7 @@ jobs:
         } else {
           Write-Host "[INFO] PyInstaller mode, skipping installer creation"
         }
-        
+
         Write-Host "=== All Generated Files ==="
         Get-ChildItem | Where-Object { ($_.Name -like "*.zip" -or $_.Name -like "*.exe") -and $_.Name -like "${appName}*" } | ForEach-Object {
           Write-Host "[FILE] $($_.Name) - $([math]::Round($_.Length / 1MB, 2)) MB"
@@ -388,9 +388,9 @@ jobs:
         } else {
           $CURRENT_TAG = "v${{ needs.get-config.outputs.app_ver }}"
         }
-        
+
         Write-Host "Current tag: $CURRENT_TAG"
-        
+
         # 检查是否有任何标签存在
         $tagOutput = git tag 2>$null
         if ($LASTEXITCODE -ne 0 -or -not $tagOutput) {
@@ -403,18 +403,18 @@ jobs:
           $PREVIOUS_TAG = $allTags | Where-Object { $_ -ne $CURRENT_TAG } | Select-Object -First 1
           $HAS_TAGS = $true
         }
-        
+
         if ((-not $PREVIOUS_TAG) -and ($HAS_TAGS -eq $true)) {
           Write-Host "No previous tag found (this might be the first tag), showing all commits"
           $PREVIOUS_TAG = ""
         }
-        
+
         Write-Host "Previous tag: $(if ($PREVIOUS_TAG) { $PREVIOUS_TAG } else { '(none - showing all commits)' })"
-        
+
         # 生成更新日志
         "### ChangeLog" | Out-File -FilePath "changelog.md" -Encoding utf8
         "" | Out-File -FilePath "changelog.md" -Encoding utf8 -Append
-        
+
         if (-not $PREVIOUS_TAG) {
           # 如果没有上一个标签，显示所有提交（按日期倒序，最新的在上面）
           git log --pretty=format:"- %s (%ad)" --date=short | Out-File -FilePath "changelog.md" -Encoding utf8 -Append
@@ -423,19 +423,19 @@ jobs:
           Write-Host "All commits since ${PREVIOUS_TAG}:"
           git log --pretty=format:"- %s (%ad)" --date=short "${PREVIOUS_TAG}..HEAD" | Out-File -FilePath "changelog.md" -Encoding utf8 -Append
         }
-        
+
         # 检查是否有提交记录
         $changelogContent = Get-Content -Path "changelog.md" -Raw
         if ((-not $changelogContent) -or ($changelogContent.Trim().Split("`n").Length -le 2)) {
           "- No commits" | Out-File -FilePath "changelog.md" -Encoding utf8 -Append
         }
-        
+
         # 将更新日志内容保存到输出
         $changelogText = Get-Content -Path "changelog.md" -Raw
         "changelog<<EOF" | Out-File -FilePath $env:GITHUB_OUTPUT -Encoding utf8 -Append
         $changelogText | Out-File -FilePath $env:GITHUB_OUTPUT -Encoding utf8 -Append
         "EOF" | Out-File -FilePath $env:GITHUB_OUTPUT -Encoding utf8 -Append
-        
+
         # 显示生成的更新日志
         Write-Host "Generated changelog:"
         Get-Content -Path "changelog.md"
@@ -457,20 +457,20 @@ jobs:
           ## ${{ needs.get-config.outputs.app_name }} ${{ needs.get-config.outputs.app_ver }}
 
           ${{ steps.changelog.outputs.changelog }}
-          
+
           ---
-          
+
           ### 📦 下载说明
-          
+
           - **便携版 (推荐)**: 下载 `*-Portable-*.zip` 文件，解压后直接运行
           - **安装程序**: 下载 `*-Setup-*.exe` 文件，按向导安装
-          
+
           ### 🚀 使用方法
           1. 下载 Portable 便携版压缩包
           2. 解压到任意目录
           3. 右键 `SAA.exe` "以管理员身份运行"
           4. 无需安装，可直接运行
-          
+
           ### ⚙️ 构建信息
           - **版本**: `${{ needs.get-config.outputs.app_ver }}`
           - **构建工具**: `${{ github.event.inputs.build_mode || 'nuitka' }}`
@@ -478,7 +478,7 @@ jobs:
           - **Python**: ${{ matrix.python-version }}
           - **构建引擎**: ${{ github.event.inputs.build_mode == 'pyinstaller' && 'PyInstaller' || 'Nuitka' }}
           - **支持系统**: Windows 10/11 (x64)
-          
+
           ### 📖 更多信息
           项目主页: ${{ needs.get-config.outputs.app_url }}
       env:

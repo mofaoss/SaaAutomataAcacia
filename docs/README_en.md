@@ -7,16 +7,18 @@
     <h2>Snowbreak Auto Assistant</h2>
     <br/>
 
-![Static Badge](https://img.shields.io/badge/platfrom-Windows-%2329F1FF)
-![GitHub Release](https://img.shields.io/github/v/release/LaoZhuJackson/SnowbreakAutoAssistant?color=%2329F1FF)
-![GitHub Downloads (all assets, all releases)](https://img.shields.io/github/downloads/LaoZhuJackson/SnowbreakAutoAssistant/total?color=%2329F1FF)
-[![Static Badge](https://img.shields.io/badge/QQ_Group-996710620-%2329F1FF)](https://qm.qq.com/q/CIvpwI3qVy)
-[![Ask DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/LaoZhuJackson/SnowbreakAutoAssistant)
-
 <a href="../README.md">简体中文</a> | English
 </div>
 
 ## ✨Feature Introduction
+
+> [!Tip]
+> **Update**
+> 1. Fixed the issue where Steam could not log in automatically.
+> 2. Added support for farming routine logistics when using stamina.
+> 3. Optimized the logic for using memory chips, automatically using them based on the number of characters being farmed.
+> 4. Added the new feature: Star Exploration Pal Capture.
+> 5. More features to be updated...
 
 > [!Warning]
 >
@@ -67,6 +69,10 @@
 
 ✅ Automatic coordinate updates & schedule reminders
 
+✅ Farm routine logistics
+
+✅ Star Exploration Pal Capture
+
 ⬜ Massage therapy
 
 ⬜ Direct game launch
@@ -105,7 +111,7 @@ Demo video:[【基于图像识别的芬妮舞狮尘白自动化代理助手-哔�
 
 ### 📌Download
 
-- [Github Release](https://github.com/LaoZhuJackson/SnowbreakAutoAssistant/releases)
+- [Github Release](https://github.com/mofaoss/SnowbreakAutoAssistant/releases)
 
 ## ❤️ Related Projects
 
@@ -114,27 +120,9 @@ Demo video:[【基于图像识别的芬妮舞狮尘白自动化代理助手-哔�
 - MAA Arknights Assistant https://github.com/MaaAssistantArknights/MaaAssistantArknights
 - GUI component library https://github.com/zhiyiYo/PyQt-Fluent-Widgets
 
-## 🚧 SAA Repository Status
-
-![Alt](https://repobeats.axiom.co/api/embed/0ceb9f68a219c51ebc15ebeb8be43535880464c7.svg "Repobeats analytics image")
-
-## 🌟 Star History
-
-[![star趋势](https://starchart.cc/LaoZhuJackson/SnowbreakAutoAssistant.svg?variant=adaptive)](https://starchart.cc/LaoZhuJackson/SnowbreakAutoAssistant)
-
 ## 📝License
 
 > [!Note]
 >
 > MIT License
 [LICENSE](https://github.com/LaoZhuJackson/SnowbreakAutoAssistant/blob/main/LICENSE)
-
-## 👍 Sponsorship
-
-- WeChat
-
-<img src="./asset/support.jpg" width="200"/>
-
-- Afdian
-
-<img src="./asset/support.png" width="200"/>

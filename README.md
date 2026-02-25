@@ -7,19 +7,20 @@
     <h2>Snowbreak Auto Assistant</h2>
 <br/>
 
-![Static Badge](https://img.shields.io/badge/platfrom-Windows-%2329F1FF)
-![GitHub Release](https://img.shields.io/github/v/release/LaoZhuJackson/SnowbreakAutoAssistant?color=%2329F1FF)
-![GitHub Downloads (all assets, all releases)](https://img.shields.io/github/downloads/LaoZhuJackson/SnowbreakAutoAssistant/total?color=%2329F1FF)
-[![Static Badge](https://img.shields.io/badge/QQ_Group-996710620-%2329F1FF)](https://qm.qq.com/q/CIvpwI3qVy)
-[![Ask DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/LaoZhuJackson/SnowbreakAutoAssistant)
-
 简体中文 | <a href="docs/README_en.md">English</a>
 </div>
 
 ## ✨功能介绍
+> [!Tip]
+> **Update**
+> 1. 修复 Steam 无法自动登录问题
+> 2. 新增刷体力支持刷取常规后勤
+> 3. 优化记忆嵌片使用逻辑，根据刷取角色数量自动使用
+> 4. 新增新星开拓抓帕鲁功能
+> 5. 更多功能待更新...
 
 > [!Warning]
-> 
+>
 > 2.0版本后所有任务支持窗口被遮挡，鼠标点击采取了一种取巧的方式最小化干扰用户操作，部分不需要鼠标操作的任务可以实现纯后台
 > 只适配16:9的屏幕，支持全屏和窗口化，其他比例可以打开设置里的自动缩放功能，会自动将游戏窗口缩放并放在左上角（必须得贴着左上角）
 
@@ -74,6 +75,10 @@
 
 ✅ 自动兑换兑换码
 
+✅ 刷取常规后勤
+
+✅ 新星开拓抓帕鲁
+
 ⬜ 按摩
 
 ⬜ 更新日志展示
@@ -106,7 +111,7 @@
 
 ### 📌下载
 
-- [Github Release](https://github.com/LaoZhuJackson/SnowbreakAutoAssistant/releases)
+- [Github Release](https://github.com/mofaoss/SnowbreakAutoAssistant/releases)
 
 ## ❤️相关项目
 
@@ -115,27 +120,9 @@
 - maa明日方舟助手 https://github.com/MaaAssistantArknights/MaaAssistantArknights
 - 图形界面组件库 https://github.com/zhiyiYo/PyQt-Fluent-Widgets
 
-## 🚧SAA仓库状态
-
-![Alt](https://repobeats.axiom.co/api/embed/0ceb9f68a219c51ebc15ebeb8be43535880464c7.svg "Repobeats analytics image")
-
-## 🌟Star 趋势
-
-[![star趋势](https://starchart.cc/LaoZhuJackson/SnowbreakAutoAssistant.svg?variant=adaptive)](https://starchart.cc/LaoZhuJackson/SnowbreakAutoAssistant)
-
 ## 📝License
 
 > [!Note]
 >
 > GPLv3 License
 [LICENSE](https://github.com/LaoZhuJackson/SnowbreakAutoAssistant/blob/main/LICENSE)
-
-## 👍赞助
-
-- 微信
-
-<img src="./asset/support.jpg" width="200"/>
-
-- 爱发电
-
-<img src="./asset/support.png" width="200"/>
