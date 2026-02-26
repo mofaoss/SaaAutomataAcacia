@@ -114,18 +114,32 @@ class Matcher:
 
     def match(self, template_path: str, target: cv2.typing.MatLike):
         template = cv2.imread(template_path, cv2.IMREAD_UNCHANGED)
-        if template.shape[-1] == 4:
-            mask = template[:, :, 3]  # 提取alpha通道
+        if template is None:
+            raise FileNotFoundError(f"模板图片读取失败: {template_path}")
+
+        if template.ndim == 3 and template.shape[-1] == 4:
+            mask = template[:, :, 3].copy()  # 提取alpha通道
+            template = template[:, :, :3]
         else:
             mask = None
+
+        # 统一数据类型，避免 matchTemplate 内部算术操作类型不一致
+        if template.dtype != np.uint8:
+            template = cv2.normalize(template, None, 0, 255, cv2.NORM_MINMAX).astype(np.uint8)
+        if target.dtype != np.uint8:
+            target = cv2.normalize(target, None, 0, 255, cv2.NORM_MINMAX).astype(np.uint8)
+        if mask is not None and mask.dtype != np.uint8:
+            mask = cv2.normalize(mask, None, 0, 255, cv2.NORM_MINMAX).astype(np.uint8)
 
         # 预处理：锐化 + 边缘增强
         kernel = np.array([[-1, -1, -1], [-1, 9, -1], [-1, -1, -1]])
         template = cv2.filter2D(template, -1, kernel)
         target = cv2.filter2D(target, -1, kernel)
         # 转换为灰度图
-        template = cv2.cvtColor(template, cv2.COLOR_BGR2GRAY)
-        target = cv2.cvtColor(target, cv2.COLOR_BGR2GRAY)
+        if template.ndim == 3:
+            template = cv2.cvtColor(template, cv2.COLOR_BGR2GRAY)
+        if target.ndim == 3:
+            target = cv2.cvtColor(target, cv2.COLOR_BGR2GRAY)
         # 获取模板尺寸
         tpl_h, tpl_w = template.shape[:2]
         orig_h, orig_w = target.shape[:2]
