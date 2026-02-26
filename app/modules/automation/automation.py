@@ -338,8 +338,11 @@ class Automation:
         :param include: 是否包含目标字符串。
         :return: (是否匹配, 匹配的目标文本)
         """
-        text = normalize_chinese_text(text)
-        normalized_targets = [normalize_chinese_text(target) for target in targets]
+        if config.game_language.value == 1:
+            text = normalize_chinese_text(text)
+            normalized_targets = [normalize_chinese_text(target) for target in targets]
+        else:
+            normalized_targets = targets
         if include:
             for target in normalized_targets:
                 if target in text:
