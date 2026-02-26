@@ -308,11 +308,11 @@ class Input:
                         # 先发送一次 move，提升滚轮消息命中目标窗口的稳定性
                         win32gui.PostMessage(self.hwnd, self.WmCode['mouse_move'], 0, lparam)
 
-                        # PostMessage 失败时，进行一次轻量重试
-                        if not win32gui.PostMessage(self.hwnd, message, wparam, lparam):
-                            time.sleep(0.01)
-                            if not win32gui.PostMessage(self.hwnd, message, wparam, lparam):
-                                raise RuntimeError("发送滚轮消息失败")
+                        # 发送滚轮消息：以是否抛异常为准，不用返回值判定成功
+                        win32gui.PostMessage(self.hwnd, message, wparam, lparam)
+                        # 轻量补发一次，提升个别场景的命中稳定性
+                        time.sleep(0.005)
+                        win32gui.PostMessage(self.hwnd, message, wparam, lparam)
 
                         self.logger.debug(f"鼠标移动至({x},{y})滚动滚轮 {delta}")
                         return True
