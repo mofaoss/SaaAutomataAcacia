@@ -21,3 +21,6 @@ nuitka-crash-report.xml
 .venv/
 *.pyc
 saa.cmd
+
+# Local VS Code workspace settings
+.vscode/

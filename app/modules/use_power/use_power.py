@@ -1,5 +1,6 @@
 import re
 import time
+from pathlib import Path
 
 import win32gui
 
@@ -98,6 +99,13 @@ class UsePowerModule:
         return day_options
 
     def check_power(self):
+        relative_path = Path("app/resource/images/use_power/time.png")
+        project_root = Path(__file__).resolve().parents[3]
+        power_icon_template = next(
+            (str(path) for path in (relative_path, project_root / relative_path) if path.exists()),
+            None
+        )
+
         timeout = Timer(50).start()
         current_check = 1  # 当前检查的体力剩余天数
         confirm_flag = False  # 是否选择好了体力
@@ -160,7 +168,7 @@ class UsePowerModule:
                         confirm_flag = False
                         continue
             if not confirm_flag and not enter_power_select:
-                if self.auto.click_element('app/resource/images/use_power/stamina.png', 'image',
+                if power_icon_template and self.auto.click_element(power_icon_template, 'image',
                                            crop=(833 / 1920, 0, 917 / 1920, 68 / 1080),
                                            threshold=0.7,
                                            is_log=self.is_log):
