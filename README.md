@@ -8,6 +8,8 @@
 <br/>
 
 简体中文 | <a href="docs/README_en.md">English</a>
+
+[![ko-fi](https://ko-fi.com/img/githubbutton_sm.svg)](https://ko-fi.com/P5P21QG9LW)
 </div>
 
 ## ✨功能介绍

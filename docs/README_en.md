@@ -8,6 +8,8 @@
     <br/>
 
 <a href="../README.md">简体中文</a> | English
+
+[![ko-fi](https://ko-fi.com/img/githubbutton_sm.svg)](https://ko-fi.com/P5P21QG9LW)
 </div>
 
 ## 🌏 Language Compatibility
