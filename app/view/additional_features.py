@@ -10,7 +10,7 @@ from PyQt5.QtWidgets import QFrame, QWidget, QLabel
 from fuzzywuzzy import process
 from qfluentwidgets import SpinBox, CheckBox, ComboBox, LineEdit, Slider
 
-from app.common.config import config
+from app.common.config import config, is_non_chinese_ui_language
 from app.common.logger import original_stdout, original_stderr
 from app.common.signal_bus import signalBus
 from app.common.style_sheet import StyleSheet
@@ -21,7 +21,7 @@ from app.modules.fishing.fishing import FishingModule
 from app.modules.jigsaw.jigsaw import JigsawModule
 from app.modules.massaging.massaging import MassagingModule
 from app.modules.maze.maze import MazeModule
-from app.modules.routine_action.routine_action import ActionModule
+from app.modules.operation_action.operation_action import OperationModule
 from app.modules.water_bomb.water_bomb import WaterBombModule
 from app.modules.capture_pals.capture_pals import CapturePalsModule
 from app.ui.additional_features_interface import Ui_additional_features
@@ -33,6 +33,7 @@ class Additional(QFrame, Ui_additional_features, BaseInterface):
 
     def __init__(self, text: str, parent=None):
         super().__init__()
+        self._is_non_chinese_ui = is_non_chinese_ui_language()
         self.setting_name_list = ['商店', '体力', '奖励']
 
         self.setupUi(self)
@@ -57,42 +58,45 @@ class Additional(QFrame, Ui_additional_features, BaseInterface):
         self._connect_to_slot()
 
     def _initWidget(self):
+        def ui_text(zh_text, en_text):
+            return en_text if self._is_non_chinese_ui else zh_text
+
         # 正向链接
         self.SegmentedWidget.addItem(self.page_fishing.objectName(),
-                                     '钓鱼',
+                                     ui_text('钓鱼', 'Fishing'),
                                      onClick=lambda: self.stackedWidget.
                                      setCurrentWidget(self.page_fishing))
         self.SegmentedWidget.addItem(self.page_action.objectName(),
-                                     '常规行动',
+                                     ui_text('常规行动', 'Operation'),
                                      onClick=lambda: self.stackedWidget.
                                      setCurrentWidget(self.page_action))
         self.SegmentedWidget.addItem(self.page_jigsaw.objectName(),
-                                     '信源解析',
+                                     ui_text('信源解析', 'Jigsaw Solver'),
                                      onClick=lambda: self.stackedWidget.
                                      setCurrentWidget(self.page_jigsaw))
         self.SegmentedWidget.addItem(self.page_water_bomb.objectName(),
-                                     '心动水弹',
+                                     ui_text('心动水弹', 'Water Bomb'),
                                      onClick=lambda: self.stackedWidget.
                                      setCurrentWidget(self.page_water_bomb))
         self.SegmentedWidget.addItem(
             self.page_alien_guardian.objectName(),
-            '异星守护',
+            ui_text('异星守护', 'Alien Guardian'),
             onClick=lambda: self.stackedWidget.setCurrentWidget(
                 self.page_alien_guardian))
         self.SegmentedWidget.addItem(self.page_maze.objectName(),
-                                     '验证战场',
+                                     ui_text('验证战场', 'Maze'),
                                      onClick=lambda: self.stackedWidget.
                                      setCurrentWidget(self.page_maze))
         self.SegmentedWidget.addItem(self.page_massaging.objectName(),
-                                     '按摩',
+                                     ui_text('按摩', 'Massage'),
                                      onClick=lambda: self.stackedWidget.
                                      setCurrentWidget(self.page_massaging))
         self.SegmentedWidget.addItem(self.page_card.objectName(),
-                                     '猜心对局',
+                                     ui_text('猜心对局', 'Card Match'),
                                      onClick=lambda: self.stackedWidget.
                                      setCurrentWidget(self.page_card))
         self.SegmentedWidget.addItem(self.page_capture_pals.objectName(),
-                                     '抓帕鲁',
+                                     ui_text('抓帕鲁', 'Capture Pals'),
                                      onClick=lambda: self.stackedWidget.
                                      setCurrentWidget(self.page_capture_pals))
         self.SegmentedWidget.setCurrentItem(self.page_fishing.objectName())
@@ -100,12 +104,18 @@ class Additional(QFrame, Ui_additional_features, BaseInterface):
         self.ComboBox_fishing_mode.addItems(
             ["高性能（消耗性能高速判断，准确率高）", "低性能（超时自动拉杆，准确率较低）"])
         self.BodyLabel_tip_fish.setText(
+            "### Tips\n* Side mouse buttons are not supported in background mode\n* Use analyst for fishing character, otherwise it may fail\n* Configure cast key, fishing times and lure type in game first\n* Daily limit: rare spot 25, epic spot 50, normal spot unlimited\n* Move to next fishing spot manually after one spot is exhausted\n* If yellow block detection is abnormal, recalibrate HSV color\n"
+            if self._is_non_chinese_ui else
             "### 提示\n* 为实现纯后台，现已不支持鼠标侧键\n* 钓鱼角色选择分析员，否则无法正常工作\n* 根据游戏右下角手动设置好抛竿按键、钓鱼次数和鱼饵类型后再点开始\n* 珍奇钓鱼点每天最多钓25次\n* 稀有钓鱼点每天最多钓50次\n* 普通钓鱼点无次数限制\n* 当一个钓鱼点钓完后需要手动移动到下一个钓鱼点，进入钓鱼界面后再启动一次\n* 当黄色块数异常时尝试上面的校准HSV，钓鱼出现圆环时点`校准颜色`，然后点黄色区域\n"
         )
         self.BodyLabel_tip_action.setText(
+            "### Tips\n* Auto-run operation from the lobby page\n* Repeats the first training stage for specified times with no stamina cost\n* Useful for weekly pass mission count"
+            if self._is_non_chinese_ui else
             "### 提示\n* 自动完成常规行动，在看板娘页面点击开始\n* 重复刷指定次数实战训练第一关，不消耗体力\n* 用于完成凭证20次常规行动周常任务"
         )
         self.BodyLabel_tip_jigsaw.setText(
+            "### Tips\n* This feature gives solutions only and does not auto-place pieces\n* Enter current piece counts manually\n* Higher max solution count takes longer but may yield better results (recommended 10~100)\n* Generated result is best within searched candidates, not global optimum\n"
+            if self._is_non_chinese_ui else
             "### 提示\n* 本功能只提供解决方案，不自动拼\n* 需要手动输入当前拥有的各个拼图数量\n* 指定最大方案数越大，耗时越长，但可能会得到一个更优的方案,建议范围10~100\n* 设置过大方案数会产生卡顿\n* 生成的方案不是全局最优，而是目前方案数中的最优\n* 可以尝试降低9,10,11号碎片数量可能得到更优解\n* 当方案数量较少时，则应增加9,10,11号碎片数量"
         )
         self.BodyLabel_tip_water.setText(
@@ -122,6 +132,14 @@ class Additional(QFrame, Ui_additional_features, BaseInterface):
             "### 提示\n* 站在猜心对局入口位置后再点开始\n* 两种模式均无策略，目的均是为了快速结束对局刷下一把\n* 逻辑：有质疑直接质疑，轮到自己出牌时出中间的那一张\n* 实测有赢有输，挂着刷经验就行"
         )
         self.BodyLabel_tip_capture_pals.setText(
+            "### Tips\n"
+            "* Auto-capture pals based on community strategy\n"
+            "* Configure support skill key to C before running\n"
+            "* Ensure full-screen 16:9 and stay on Partner/Adventure island selection page\n"
+            "* Both islands support Fixed-point mode and Patrol mode\n"
+            "* Patrol mode exits and re-enters map each cycle to refresh targets\n"
+            "* If surrender fails repeatedly, check your location and UI page\n"
+            if self._is_non_chinese_ui else
             "### 提示\n"
             "* 通过视频BV1SV8wzjEpE和BV1SV8wzjEpE的抓捕思路实现\n"
             "* 本功能用于自动抓帕鲁，需要携带有高伤害满级召雷+碎冰冰/布防的帕鲁来秒杀敌人，比如武装会员，爆破会员等\n"
@@ -485,7 +503,7 @@ class Additional(QFrame, Ui_additional_features, BaseInterface):
         """周常行动开始按键的信号处理"""
         if not self.is_running_action:
             self.redirectOutput(self.textBrowser_log_action)
-            self.action_task = SubTask(ActionModule)
+            self.action_task = SubTask(OperationModule)
             self.action_task.is_running.connect(self.handle_action)
             self.action_task.start()
         else:

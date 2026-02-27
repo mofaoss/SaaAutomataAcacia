@@ -22,6 +22,7 @@ from .ocr_replacement_table import OcrReplacementTable
 from .setting_interface import SettingInterface
 from .trigger import Trigger
 from ..common.config import config
+from ..common.config import is_non_chinese_ui_language
 from ..common.icon import Icon
 from ..common.logger import logger
 from ..common.matcher import matcher
@@ -48,6 +49,7 @@ class MainWindow(MSFluentWindow):
 
     def __init__(self):
         super().__init__()
+        self._is_non_chinese_ui = is_non_chinese_ui_language()
         self.initWindow()
 
         # create system theme listener
@@ -63,7 +65,11 @@ class MainWindow(MSFluentWindow):
         self.tableInterface = OcrReplacementTable('Table Interface', self)
         self.settingInterface = SettingInterface(self)
 
-        self.support_button = NavigationBarPushButton(FIF.HEART, '赞赏', isSelectable=False)
+        self.support_button = NavigationBarPushButton(
+            FIF.HEART,
+            self._ui_text('赞赏', 'Support'),
+            isSelectable=False
+        )
 
         self.connectSignalToSlot()
 
@@ -126,11 +132,11 @@ class MainWindow(MSFluentWindow):
         # self.navigationInterface.setAcrylicEnabled(True)
 
         # TODO: add navigation items
-        self.addSubInterface(self.displayInterface, FIF.PHOTO, '展示页')
-        self.addSubInterface(self.homeInterface, FIF.HOME, '主页', FIF.HOME_FILL)
-        self.addSubInterface(self.additionalInterface, FIF.APPLICATION, '小工具')
-        self.addSubInterface(self.triggerInterface, FIF.COMPLETED, '触发器')
-        self.addSubInterface(self.tableInterface, FIF.SYNC, '替换表')
+        self.addSubInterface(self.displayInterface, FIF.PHOTO, self._ui_text('展示页', 'Display'))
+        self.addSubInterface(self.homeInterface, FIF.HOME, self._ui_text('主页', 'Home'), FIF.HOME_FILL)
+        self.addSubInterface(self.additionalInterface, FIF.APPLICATION, self._ui_text('小工具', 'Tools'))
+        self.addSubInterface(self.triggerInterface, FIF.COMPLETED, self._ui_text('触发器', 'Trigger'))
+        self.addSubInterface(self.tableInterface, FIF.SYNC, self._ui_text('替换表', 'Replacement'))
 
         # add custom widget to bottom
         self.navigationInterface.addWidget(
@@ -139,7 +145,8 @@ class MainWindow(MSFluentWindow):
             self.onSupport,
             NavigationItemPosition.BOTTOM
         )
-        self.addSubInterface(self.helpInterface, FIF.HELP, '帮助', position=NavigationItemPosition.BOTTOM)
+        self.addSubInterface(self.helpInterface, FIF.HELP, self._ui_text('帮助', 'Help'),
+                     position=NavigationItemPosition.BOTTOM)
         self.addSubInterface(
             self.settingInterface, Icon.SETTINGS, self.tr('Settings'), Icon.SETTINGS_FILLED,
             NavigationItemPosition.BOTTOM)
@@ -165,7 +172,7 @@ class MainWindow(MSFluentWindow):
         self.resize(960, 860)
         self.setMinimumWidth(760)
         self.setWindowIcon(QIcon(':app/resource/images/logo.png'))
-        self.setWindowTitle('SAA尘白助手')
+        self.setWindowTitle(self._ui_text('SAA尘白助手', 'SAA Snowbreak Assistant'))
 
         setThemeColor("#009FAA")
 
@@ -215,8 +222,9 @@ class MainWindow(MSFluentWindow):
 
     def onSupport(self):
         view = FlyoutView(
-            title="赞助作者",
-            content="如果这个助手帮助到你，可以考虑赞助作者一杯奶茶(>ω･* )ﾉ",
+            title=self._ui_text("赞助作者", "Support Author"),
+            content=self._ui_text("如果这个助手帮助到你，可以考虑赞助作者一杯奶茶(>ω･* )ﾉ",
+                                  "If this assistant helps you, consider buying the author a coffee (>ω･* )ﾉ"),
             image="asset/support.jpg",
             isClosable=True,
         )
@@ -225,6 +233,9 @@ class MainWindow(MSFluentWindow):
 
         w = Flyout.make(view, self.support_button, self)
         view.closed.connect(w.close)
+
+    def _ui_text(self, zh_text: str, en_text: str) -> str:
+        return en_text if self._is_non_chinese_ui else self.tr(zh_text)
 
     def switchToSample(self, routeKey, index):
         """

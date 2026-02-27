@@ -28,6 +28,7 @@ class BannerWidget(QWidget):
         super().__init__(parent=parent)
         self.setFixedHeight(350)
         self._is_simplified_ui = self._is_simplified_ui_language()
+        self._is_non_chinese_ui = is_non_chinese_ui_language()
 
         self.vBoxLayout = QVBoxLayout(self)
         # 大标题
@@ -70,17 +71,20 @@ class BannerWidget(QWidget):
 
         self.linkCardView.addCard(
             FluentIcon.GITHUB,
-            self.tr("GitHub地址"),
-            self.tr("你的星星\n就是我的动力|･ω･)"),
+            self._ui_text("GitHub地址", "GitHub"),
+            self._ui_text("你的星星\n就是我的动力|･ω･)", "Your stars\nkeep me motivated |･ω･)"),
             REPO_URL,
         )
         self.linkCardView.addCard(
             FluentIcon.INFO,
-            self.tr("支持作者"),
-            self.tr("点击查看\n赞助二维码") if self._is_simplified_ui else self.tr("前往 Ko-fi\n支持作者"),
+            self._ui_text("支持作者", "Support Author"),
+            self._ui_text("点击查看\n赞助二维码", "Click to view\nsupport QR") if self._is_simplified_ui else self._ui_text("前往 Ko-fi\n支持作者", "Visit Ko-fi\nto support"),
             "" if self._is_simplified_ui else "https://ko-fi.com/mofa",
             on_click=self._show_support_qr if self._is_simplified_ui else None,
         )
+
+    def _ui_text(self, zh_text: str, en_text: str) -> str:
+        return en_text if self._is_non_chinese_ui else self.tr(zh_text)
 
     @staticmethod
     def _is_simplified_ui_language():
@@ -95,8 +99,9 @@ class BannerWidget(QWidget):
 
     def _show_support_qr(self, source_widget):
         view = FlyoutView(
-            title=self.tr("赞助作者"),
-            content=self.tr("如果这个助手帮助到你，可以考虑赞助作者一杯奶茶(>ω･* )ﾉ"),
+            title=self._ui_text("赞助作者", "Support Author"),
+            content=self._ui_text("如果这个助手帮助到你，可以考虑赞助作者一杯奶茶(>ω･* )ﾉ",
+                                  "If this assistant helps you, consider buying the author a coffee (>ω･* )ﾉ"),
             image="asset/support.jpg",
             isClosable=True,
         )
@@ -144,6 +149,7 @@ class DisplayInterface(ScrollArea):
 
     def __init__(self, parent=None):
         super().__init__(parent=parent)
+        self._is_non_chinese_ui = is_non_chinese_ui_language()
         self.banner = BannerWidget(self)
         self.view = QWidget(self)
         self.vBoxLayout = QVBoxLayout(self.view)
@@ -172,8 +178,13 @@ class DisplayInterface(ScrollArea):
         self.gameLanguageNoticeLayout.setContentsMargins(24, 14, 24, 14)
         self.gameLanguageNoticeLayout.setSpacing(4)
         self.gameLanguageNoticeTitle.setStyleSheet("font-size: 16px; font-weight: 500;")
+        self.gameLanguageNoticeTitle.setText(
+            "Language Notice" if self._is_non_chinese_ui else self.tr("语言提示")
+        )
         self.gameLanguageNoticeLabel.setText(
             "Note: Game language for automation supports only Simplified/Traditional Chinese."
+            if self._is_non_chinese_ui
+            else self.tr("注意：自动化识别的游戏语言目前仅支持简体中文与繁体中文。")
         )
         self.gameLanguageNoticeLabel.setStyleSheet("color: red;")
         self.gameLanguageNoticeLabel.setWordWrap(True)
@@ -186,34 +197,34 @@ class DisplayInterface(ScrollArea):
     def loadSamples(self):
         """load samples"""
 
-        quick_jump = SampleCardView(self.tr("快捷跳转"), self.view)
+        quick_jump = SampleCardView("Quick Access" if self._is_non_chinese_ui else self.tr("快捷跳转"), self.view)
         # 跳转设置
         quick_jump.addSampleCard(
             icon=os.path.join(self.basedir, "setting.svg"),
-            title="设置",
-            content=self.tr("软件相关设置"),
+            title="Settings" if self._is_non_chinese_ui else "设置",
+            content="App settings" if self._is_non_chinese_ui else self.tr("软件相关设置"),
             routeKey="settingInterface",
             index=0,
         )
         quick_jump.addSampleCard(
             icon=os.path.join(self.basedir, "play.svg"),
-            title="功能界面",
-            content=self.tr("简单设置后一键种草！"),
+            title="Main Tasks" if self._is_non_chinese_ui else "功能界面",
+            content="Configure quickly and run with one click" if self._is_non_chinese_ui else self.tr("简单设置后一键种草！"),
             routeKey="Home-Interface",
             index=0,
         )
         # 使用教程跳转
         quick_jump.addSampleCard(
             icon=os.path.join(self.basedir, "explain.svg"),
-            title="使用教程",
-            content=self.tr("查看教程快速使用"),
+            title="Tutorial" if self._is_non_chinese_ui else "使用教程",
+            content="Read the guide to get started quickly" if self._is_non_chinese_ui else self.tr("查看教程快速使用"),
             routeKey="Help-Interface",
             index=0,
         )
         quick_jump.addSampleCard_URL(
             icon=os.path.join(self.basedir, "electronics.svg"),
-            title="实现后台操作",
-            content=self.tr("让电脑不再跟你抢键鼠"),
+            title="Background Mode" if self._is_non_chinese_ui else "实现后台操作",
+            content="Let the game run without fighting for mouse/keyboard" if self._is_non_chinese_ui else self.tr("让电脑不再跟你抢键鼠"),
             url="https://www.bilibili.com/read/cv24286313/",
         )
 

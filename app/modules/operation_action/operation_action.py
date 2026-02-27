@@ -4,7 +4,7 @@ from app.common.config import config
 from app.modules.automation.timer import Timer
 
 
-class ActionModule:
+class OperationModule:
     def __init__(self, auto, logger):
         self.auto = auto
         self.logger = logger
@@ -16,7 +16,7 @@ class ActionModule:
         self.times = config.SpinBox_action_times.value
 
         self.enter_train()
-        for i in range(self.times):
+        for _ in range(self.times):
             self.fight()
         self.auto.back_to_home()
 
@@ -31,7 +31,6 @@ class ActionModule:
 
             if not is_finish:
                 if not is_enter:
-                    # 防止上一次没退出
                     if self.auto.find_element(['技', '援技', '支援技', '黄色', '区域'], 'text',
                                               crop=(40 / 1920, 63 / 1080, 380 / 1920, 400 / 1080),
                                               is_log=self.is_log):
@@ -67,7 +66,7 @@ class ActionModule:
                             self.auto.press_key("shift")
                             time.sleep(6)
                         else:
-                            for i in range(10):
+                            for _ in range(10):
                                 self.auto.press_key("shift", press_time=1)
                                 time.sleep(0.3)
                         self.auto.key_up("w")

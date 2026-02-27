@@ -24,16 +24,21 @@
 
 > [!Tip]
 > **Update**
-> 1. Fixed the issue where Steam could not log in automatically.
-> 2. Added support for farming routine logistics when using stamina.
-> 3. Optimized the logic for using memory chips, automatically using them based on the number of characters being farmed.
-> 4. Added the new feature: Star Exploration Pal Capture.
-> 5. More features to be updated...
+> 1. Added Traditional Chinese support.
+> 2. Fixed the issue where Steam could not log in automatically.
+> 3. Added support for farming operation logistics when using stamina.
+> 4. Optimized memory chip usage logic and auto-applies by selected character count.
+> 5. Added Star Exploration Pal Capture.
+> 6. Improved background stability: better fault tolerance and quieter background operations.
+> 7. Optimized shop purchase flow: fewer accidental clicks and more stable scrolling.
+> 8. Fixed stamina potion day matching errors (e.g., 1/3 no longer mismatches to 11/13).
+> 9. The UI now mostly supports English in core areas (Display/Home/Additional features).
+> 10. More features to be updated...
 
 > [!Warning]
 >
 > After version 2.0, all tasks support running while the window is obscured. Mouse clicks use an optimized method to
-> minimize user disruption, enabling pure background operation for tasks not requiring mouse interaction.Only supports 16:
+> minimize user disruption, enabling pure background operation for tasks not requiring mouse interaction. Only supports 16:
 > 9 screen ratios. Works in both fullscreen and windowed modes. For other ratios, enable auto-scaling in settings to
 > automatically resize and position the game window in the top-left corner (must be flush with the corner).
 
@@ -79,21 +84,27 @@
 
 ✅ Automatic coordinate updates & schedule reminders
 
-✅ Farm routine logistics
+✅ Direct game launch via SAA
+
+✅ GPU acceleration support for NVIDIA/AMD
+
+✅ Auto-start on boot
+
+✅ Stamina recovery notifications
+
+✅ Auto redeem codes
+
+✅ Farm operation logistics
 
 ✅ Star Exploration Pal Capture
 
 ⬜ Massage therapy
 
-⬜ Direct game launch
+⬜ Update log display
 
-⬜ Auto-start on boot
-
-⬜ Stamina recovery notifications
+⬜ Global hotkeys
 
 ⬜ Auto-gacha
-
-⬜ Auto-redeem codes
 
 
 </details>
@@ -134,5 +145,5 @@ Demo video:[【基于图像识别的芬妮舞狮尘白自动化代理助手-哔�
 
 > [!Note]
 >
-> MIT License
+> GPLv3 License
 [LICENSE](https://github.com/mofaoss/SnowbreakAutoAssistant/blob/main/LICENSE)

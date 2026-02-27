@@ -22,28 +22,45 @@ class Frame(QFrame):
 class TreeFrame_person(Frame):
     itemStateChanged = pyqtSignal(int, int)
 
-    def __init__(self, parent=None, enableCheck=False):
+    def __init__(self, parent=None, enableCheck=False, is_non_chinese_ui=False):
         super().__init__(parent)
         self.parent = parent
         self.tree = TreeWidget(self.parent)
         self.addWidget(self.tree)
 
-        item1 = QTreeWidgetItem(['人物碎片'])
-        item1.addChildren([
-            QTreeWidgetItem(["肴"]),
-            QTreeWidgetItem(["安卡希雅"]),
-            QTreeWidgetItem(["里芙"]),
-            QTreeWidgetItem(["辰星"]),
-            QTreeWidgetItem(["茉莉安"]),
-            QTreeWidgetItem(["芬妮"]),
-            QTreeWidgetItem(["芙提雅"]),
-            QTreeWidgetItem(["瑟瑞斯"]),
-            QTreeWidgetItem(["琴诺"]),
-            QTreeWidgetItem(["猫汐尔"]),
-            QTreeWidgetItem(["晴"]),
-            QTreeWidgetItem(["恩雅"]),
-            QTreeWidgetItem(["妮塔"]),
-        ])
+        title = 'Character Shards' if is_non_chinese_ui else '人物碎片'
+        children = [
+            "Yao",
+            "Acacia",
+            "Lyfe",
+            "Chenxing",
+            "Marian",
+            "Fenny",
+            "Fritia",
+            "Siris",
+            "Cherno",
+            "Mauxir",
+            "Haru",
+            "Enya",
+            "Nita",
+        ] if is_non_chinese_ui else [
+            "肴",
+            "安卡希雅",
+            "里芙",
+            "辰星",
+            "茉莉安",
+            "芬妮",
+            "芙提雅",
+            "瑟瑞斯",
+            "琴诺",
+            "猫汐尔",
+            "晴",
+            "恩雅",
+            "妮塔",
+        ]
+
+        item1 = QTreeWidgetItem([title])
+        item1.addChildren([QTreeWidgetItem([name]) for name in children])
         self.tree.addTopLevelItem(item1)
 
         self.tree.setHeaderHidden(True)
@@ -124,18 +141,25 @@ class TreeFrame_person(Frame):
 class TreeFrame_weapon(Frame):
     itemStateChanged = pyqtSignal(int, int)
 
-    def __init__(self, parent=None, enableCheck=False):
+    def __init__(self, parent=None, enableCheck=False, is_non_chinese_ui=False):
         super().__init__(parent)
         self.parent = parent
         self.tree = TreeWidget(self.parent)
         self.addWidget(self.tree)
 
-        item1 = QTreeWidgetItem(['武器'])
-        item1.addChildren([
-            QTreeWidgetItem(["彩虹打火机"]),
-            QTreeWidgetItem(["草莓蛋糕"]),
-            QTreeWidgetItem(["深海呼唤"]),
-        ])
+        title = 'Weapon' if is_non_chinese_ui else '武器'
+        children = [
+            "Prismatic Igniter",
+            "Strawberry Shortcake",
+            "Deep Sea's Call",
+        ] if is_non_chinese_ui else [
+            "彩虹打火机",
+            "草莓蛋糕",
+            "深海呼唤",
+        ]
+
+        item1 = QTreeWidgetItem([title])
+        item1.addChildren([QTreeWidgetItem([name]) for name in children])
         self.tree.addTopLevelItem(item1)
 
         self.tree.setHeaderHidden(True)

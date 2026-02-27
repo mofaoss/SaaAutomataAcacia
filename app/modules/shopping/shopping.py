@@ -1,6 +1,7 @@
 import time
 
 from app.common.config import config
+from app.common.config import is_non_chinese_ui_language
 from app.modules.automation.timer import Timer
 
 
@@ -8,12 +9,13 @@ class ShoppingModule:
     def __init__(self, auto, logger):
         self.auto = auto
         self.logger = logger
+        self.is_non_chinese_ui = is_non_chinese_ui_language()
         self.is_log = False
         self.config_data = config.toDict()
         self.commodity_dic = self.config_data["home_interface_shopping"]
         self.person_dic = self.config_data["home_interface_shopping_person"]
         self.weapon_dic = self.config_data["home_interface_shopping_weapon"]
-        self.name_dic = {
+        self.name_dic_zh = {
             'CheckBox_buy_3': '通用强化套件',
             'CheckBox_buy_4': '优选强化套件',
             'CheckBox_buy_5': '精致强化套件',
@@ -28,7 +30,22 @@ class ShoppingModule:
             'CheckBox_buy_14': '单极纤维',
             'CheckBox_buy_15': '光纤轴突',
         }
-        self.person_dic_re = {
+        self.name_dic_en = {
+            'CheckBox_buy_3': 'Universal Enhancement Kit',
+            'CheckBox_buy_4': 'Premium Enhancement Kit',
+            'CheckBox_buy_5': 'Exquisite Enhancement Kit',
+            'CheckBox_buy_6': 'Beginner Battle Record',
+            'CheckBox_buy_7': 'Standard Battle Record',
+            'CheckBox_buy_8': 'Advanced Battle Record',
+            'CheckBox_buy_9': 'Junior Rank Certification',
+            'CheckBox_buy_10': 'Intermediate Rank Certification',
+            'CheckBox_buy_11': 'Senior Rank Certification',
+            'CheckBox_buy_12': 'Synthetic Particles',
+            'CheckBox_buy_13': 'Hydrocarbon Plastic',
+            'CheckBox_buy_14': 'Monopolar Fibers',
+            'CheckBox_buy_15': 'Fiber Axon',
+        }
+        self.person_dic_re_zh = {
             "item_person_0": "人物碎片",
             "item_person_1": "肴",
             "item_person_2": "安卡希雅",
@@ -44,18 +61,47 @@ class ShoppingModule:
             "item_person_12": "恩雅",
             "item_person_13": "妮塔",
         }
-        self.weapon_dic_re = {
+        self.person_dic_re_en = {
+            "item_person_0": "Character Shard",
+            "item_person_1": "Yao",
+            "item_person_2": "Acacia",
+            "item_person_3": "Lyfe",
+            "item_person_4": "Chenxing",
+            "item_person_5": "Marian",
+            "item_person_6": "Fenny",
+            "item_person_7": "Fritia",
+            "item_person_8": "Siris",
+            "item_person_9": "Cherno",
+            "item_person_10": "Mauxir",
+            "item_person_11": "Haru",
+            "item_person_12": "Enya",
+            "item_person_13": "Nita",
+        }
+        self.weapon_dic_re_zh = {
             "item_weapon_0": "武器",
             "item_weapon_1": "彩虹打火机",
             "item_weapon_2": "草莓蛋糕",
             "item_weapon_3": "深海呼唤",
         }
+        self.weapon_dic_re_en = {
+            "item_weapon_0": "Weapon",
+            "item_weapon_1": "Prismatic Igniter",
+            "item_weapon_2": "Strawberry Shortcake",
+            "item_weapon_3": "Deep Sea's Call",
+        }
+        self.person_key_to_display = self.person_dic_re_en if self.is_non_chinese_ui else self.person_dic_re_zh
+        self.weapon_key_to_display = self.weapon_dic_re_en if self.is_non_chinese_ui else self.weapon_dic_re_zh
+        self.commodity_key_to_display = self.name_dic_en if self.is_non_chinese_ui else self.name_dic_zh
+        self.target_to_display = {}
         self.scroll_fallback_points = [
             (960, 540),
             (1552, 537),
             (520, 540),
         ]
         self.scroll_point_index = 0
+
+    def _ui_text(self, zh_text: str, en_text: str) -> str:
+        return en_text if self.is_non_chinese_ui else zh_text
 
     def run(self):
         self.is_log = config.isLog.value
@@ -80,7 +126,7 @@ class ShoppingModule:
                 continue
 
             if timeout.reached():
-                self.logger.error("打开商店超时")
+                self.logger.error(self._ui_text("打开商店超时", "Open shop timeout"))
                 break
 
     def buy(self):
@@ -116,7 +162,8 @@ class ShoppingModule:
                         is_selected = True
                         continue
                     else:
-                        self.logger.warn(f'商店没有{text}')
+                        self.logger.warn(self._ui_text(f'商店没有{self._display_name(text)}',
+                                                      f'{self._display_name(text)} not found in shop'))
                         finish_list.append(text)
                         # 更新text
                         if len(temp_list) != 0:
@@ -138,7 +185,7 @@ class ShoppingModule:
                     continue
                 if self.auto.find_element('不足', 'text', crop=(866 / 1920, 513 / 1080, 1048 / 1920, 880 / 1080),
                                           is_log=self.is_log):
-                    self.logger.warn('买不起了，杂鱼~')
+                    self.logger.warn(self._ui_text('买不起了，杂鱼~', 'Insufficient currency'))
                     break
                 if self.auto.click_element('最大', 'text', crop=(1713 / 1920, 822 / 1080, 1, 895 / 1080),
                                            is_log=self.is_log):
@@ -163,7 +210,7 @@ class ShoppingModule:
             else:
                 break
             if timeout.reached():
-                self.logger.error("购买商品超时")
+                self.logger.error(self._ui_text("购买商品超时", "Purchase timeout"))
                 break
         self.auto.back_to_home()
 
@@ -180,7 +227,9 @@ class ShoppingModule:
                 first_flag = False
                 continue
             if value:
-                result_list.append(self.person_dic_re[key])
+                target_name = self.person_dic_re_zh[key]
+                result_list.append(target_name)
+                self.target_to_display[target_name] = self.person_key_to_display[key]
         # 收集勾选的武器
         first_flag = True
         for key, value in self.weapon_dic.items():
@@ -188,26 +237,36 @@ class ShoppingModule:
                 first_flag = False
                 continue
             if value:
-                result_list.append(self.weapon_dic_re[key])
+                target_name = self.weapon_dic_re_zh[key]
+                result_list.append(target_name)
+                self.target_to_display[target_name] = self.weapon_key_to_display[key]
         # 收集商品
         for key, value in self.commodity_dic.items():
             if value:
-                result_list.append(self.name_dic[key])
+                target_name = self.name_dic_zh[key]
+                result_list.append(target_name)
+                self.target_to_display[target_name] = self.commodity_key_to_display[key]
         return result_list
+
+    def _display_name(self, target_name):
+        return self.target_to_display.get(target_name, target_name)
 
     def try_select_item(self, text, max_attempts=4):
         for attempt in range(max_attempts):
             if self.auto.click_element(text, 'text', crop=(302 / 1920, 194 / 1080, 1, 1), is_log=self.is_log):
                 return True
             if attempt < max_attempts - 1:
-                self.logger.info(f'未找到{text}，尝试滑动商店后重试({attempt + 1}/{max_attempts - 1})')
+                self.logger.info(self._ui_text(
+                    f'未找到{self._display_name(text)}，尝试滑动商店后重试({attempt + 1}/{max_attempts - 1})',
+                    f'{self._display_name(text)} not found, retry after scrolling ({attempt + 1}/{max_attempts - 1})'))
                 self.scroll_to_bottom(scroll_times=1)
         return False
 
     def scroll_to_bottom(self, scroll_times=3):
         for _ in range(scroll_times):
             if not self.scroll_once():
-                self.logger.warn("商店滚动失败：本轮所有滚轮点位均未生效")
+                self.logger.warn(self._ui_text("商店滚动失败：本轮所有滚轮点位均未生效",
+                                              "Shop scroll failed: all fallback points were ineffective"))
 
     def scroll_once(self):
         total = len(self.scroll_fallback_points)

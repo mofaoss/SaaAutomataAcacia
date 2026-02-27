@@ -16,7 +16,7 @@ from qfluentwidgets import FluentIcon as FIF, InfoBar, InfoBarPosition, CheckBox
     BodyLabel, ProgressBar, FlyoutView, Flyout
 from win11toast import toast
 
-from app.common.config import config
+from app.common.config import config, is_non_chinese_ui_language
 from app.common.data_models import Coordinates, UpdateData, RedeemCode, ApiData, ApiResponse, parse_config_update_data
 from app.common.logger import original_stdout, original_stderr, logger
 from app.common.signal_bus import signalBus
@@ -65,6 +65,8 @@ class StartThread(QThread, BaseTask):
         self.checkbox_dic = checkbox_dic
         self._is_running = True
         self.name_list_zh = ['自动登录', '领取物资', '商店购买', '刷体力', '人物碎片', '精神拟境', '领取奖励']
+        self.name_list_en = ['Auto Login', 'Collect Supplies', 'Shop', 'Use Stamina', 'Character Shards',
+                             'Neural Simulation', 'Claim Rewards']
 
     def run(self):
         self.is_running_signal.emit('start')
@@ -73,7 +75,8 @@ class StartThread(QThread, BaseTask):
             for key, value in self.checkbox_dic.items():
                 if value:
                     index = int(re.search(r'\d+', key).group()) - 1
-                    self.logger.info(f"当前任务：{self.name_list_zh[index]}")
+                    task_name = self.name_list_en[index] if is_non_chinese_ui_language() else self.name_list_zh[index]
+                    self.logger.info(f"当前任务：{task_name}")
                     if not self.init_auto('game'):
                         normal_stop_flag = False
                         break
@@ -144,7 +147,14 @@ def no_select(widget):
 class Home(QFrame, Ui_home, BaseInterface):
     def __init__(self, text: str, parent=None):
         super().__init__()
-        self.setting_name_list = ['登录', '物资', '商店', '体力', '碎片']
+        self._is_non_chinese_ui = is_non_chinese_ui_language()
+        self.setting_name_list = [
+            self._ui_text('登录', 'Login'),
+            self._ui_text('物资', 'Supplies'),
+            self._ui_text('商店', 'Shop'),
+            self._ui_text('体力', 'Stamina'),
+            self._ui_text('碎片', 'Shards'),
+        ]
         self.person_dic = {
             "人物碎片": "item_person_0",
             "肴": "item_person_1",
@@ -161,20 +171,52 @@ class Home(QFrame, Ui_home, BaseInterface):
             "恩雅": "item_person_12",
             "妮塔": "item_person_13",
         }
+        self.person_dic_en = {
+            "Character Shards": "item_person_0",
+            "Yao": "item_person_1",
+            "Acacia": "item_person_2",
+            "Lyfe": "item_person_3",
+            "Chenxing": "item_person_4",
+            "Marian": "item_person_5",
+            "Fenny": "item_person_6",
+            "Fritia": "item_person_7",
+            "Siris": "item_person_8",
+            "Cherno": "item_person_9",
+            "Mauxir": "item_person_10",
+            "Haru": "item_person_11",
+            "Enya": "item_person_12",
+            "Nita": "item_person_13",
+        }
         self.weapon_dic = {
             "武器": "item_weapon_0",
             "彩虹打火机": "item_weapon_1",
             "草莓蛋糕": "item_weapon_2",
             "深海呼唤": "item_weapon_3",
         }
+        self.weapon_dic_en = {
+            "Weapon": "item_weapon_0",
+            "Prismatic Igniter": "item_weapon_1",
+            "Strawberry Shortcake": "item_weapon_2",
+            "Deep Sea's Call": "item_weapon_3",
+        }
+        self.person_text_to_key = {**self.person_dic, **self.person_dic_en}
+        self.weapon_text_to_key = {**self.weapon_dic, **self.weapon_dic_en}
 
         self.setupUi(self)
         self.setObjectName(text.replace(' ', '-'))
         self.parent = parent
 
         self.is_running = False
-        self.select_person = TreeFrame_person(parent=self.ScrollArea, enableCheck=True)
-        self.select_weapon = TreeFrame_weapon(parent=self.ScrollArea, enableCheck=True)
+        self.select_person = TreeFrame_person(
+            parent=self.ScrollArea,
+            enableCheck=True,
+            is_non_chinese_ui=self._is_non_chinese_ui,
+        )
+        self.select_weapon = TreeFrame_weapon(
+            parent=self.ScrollArea,
+            enableCheck=True,
+            is_non_chinese_ui=self._is_non_chinese_ui,
+        )
 
         self.game_hwnd = None
 
@@ -192,31 +234,48 @@ class Home(QFrame, Ui_home, BaseInterface):
             self.update_online_cloudflare()
 
     def _initWidget(self):
+        self._apply_home_i18n()
+
         for tool_button in self.SimpleCardWidget_option.findChildren(ToolButton):
             tool_button.setIcon(FIF.SETTING)
 
         # 设置combobox选项
-        after_use_items = ['无动作', '退出游戏和代理', '退出代理', '退出游戏']
+        after_use_items = [
+            self._ui_text('无动作', 'Do Nothing'),
+            self._ui_text('退出游戏和代理', 'Exit Game and Assistant'),
+            self._ui_text('退出代理', 'Exit Assistant'),
+            self._ui_text('退出游戏', 'Exit Game')
+        ]
         power_day_items = ['1', '2', '3', '4', '5', '6']
-        power_usage_items = ['活动材料本', '刷常规后勤']
+        power_usage_items = [
+            self._ui_text('活动材料本', 'Event Stages'),
+            self._ui_text('刷常规后勤', 'Operation Logistics')
+        ]
         self.ComboBox_after_use.addItems(after_use_items)
         self.ComboBox_power_day.addItems(power_day_items)
         self.ComboBox_power_usage.addItems(power_usage_items)
-        self.LineEdit_c1.setPlaceholderText("未输入")
-        self.LineEdit_c2.setPlaceholderText("未输入")
-        self.LineEdit_c3.setPlaceholderText("未输入")
-        self.LineEdit_c4.setPlaceholderText("未输入")
+        self.LineEdit_c1.setPlaceholderText(self._ui_text("未输入", "Not set"))
+        self.LineEdit_c2.setPlaceholderText(self._ui_text("未输入", "Not set"))
+        self.LineEdit_c3.setPlaceholderText(self._ui_text("未输入", "Not set"))
+        self.LineEdit_c4.setPlaceholderText(self._ui_text("未输入", "Not set"))
 
         self.BodyLabel_enter_tip.setText(
+            "### Tips\n* Select your server in Settings\n* Enable \"Auto open game\" and select the correct game path by the tutorial above\n* Click \"Start\" to launch and run automatically"
+            if self._is_non_chinese_ui else
             "### 提示\n* 去设置里选择你的区服\n* 建议勾选“自动打开游戏”，勾选后根据上方教程选择好对应的路径\n* 点击“开始”按钮会自动打开游戏")
         self.BodyLabel_person_tip.setText(
+            "### Tips\n* Enter codename instead of full name, e.g. use \"朝翼\" (Dawnwing) for \"凯茜娅-朝翼\" (Katya-Dawnwing)"
+            if self._is_non_chinese_ui else
             "### 提示\n* 输入代号而非全名，比如想要刷“凯茜娅-朝翼”，就输入“朝翼”")
         self.BodyLabel_collect_supplies.setText(
+            "### Tips\n* Enable \"Redeem Code\" to fetch and redeem online codes automatically\n* Online codes are maintained by developers and may not always be updated in time\n* You can import a txt file for batch redeem (one code per line)"
+            if self._is_non_chinese_ui else
             "### 提示\n* 勾选“领取兑换码”会自动拉取在线兑换码进行兑换\n* 在线兑换码由开发者维护，更新不一定及时\n* 导入txt文本文件可以批量使用用户兑换码，txt需要一行一个兑换码")
         self.PopUpAniStackedWidget.setCurrentIndex(0)
-        self.TitleLabel_setting.setText("设置-" + self.setting_name_list[self.PopUpAniStackedWidget.currentIndex()])
+        self.TitleLabel_setting.setText(self._ui_text("设置", "Settings") + "-" + self.setting_name_list[
+            self.PopUpAniStackedWidget.currentIndex()])
         self.PushButton_start.setShortcut("F1")
-        self.PushButton_start.setToolTip("快捷键：F1")
+        self.PushButton_start.setToolTip(self._ui_text("快捷键：F1", "Shortcut: F1"))
 
         self.gridLayout.addWidget(self.select_person, 1, 0)
         self.gridLayout.addWidget(self.select_weapon, 2, 0)
@@ -269,14 +328,18 @@ class Home(QFrame, Ui_home, BaseInterface):
     def _load_item_config(self):
         item = QTreeWidgetItemIterator(self.select_person.tree)
         while item.value():
-            config_item = getattr(config, self.person_dic[item.value().text(0)], None)
-            item.value().setCheckState(0, Qt.Checked if config_item.value else Qt.Unchecked)
+            item_key = self.person_text_to_key.get(item.value().text(0))
+            config_item = getattr(config, item_key, None) if item_key else None
+            if config_item is not None:
+                item.value().setCheckState(0, Qt.Checked if config_item.value else Qt.Unchecked)
             item += 1
 
         item2 = QTreeWidgetItemIterator(self.select_weapon.tree)
         while item2.value():
-            config_item2 = getattr(config, self.weapon_dic[item2.value().text(0)], None)
-            item2.value().setCheckState(0, Qt.Checked if config_item2.value else Qt.Unchecked)
+            item_key2 = self.weapon_text_to_key.get(item2.value().text(0))
+            config_item2 = getattr(config, item_key2, None) if item_key2 else None
+            if config_item2 is not None:
+                item2.value().setCheckState(0, Qt.Checked if config_item2.value else Qt.Unchecked)
             item2 += 1
 
     def _connect_to_save_changed(self):
@@ -300,9 +363,18 @@ class Home(QFrame, Ui_home, BaseInterface):
 
     def on_path_tutorial_click(self):
         """查找启动器路径教程，记得添加进build路径"""
+        tutorial_title = "How to find the game path" if self._is_non_chinese_ui else "如何查找对应游戏路径"
+        tutorial_content = (
+            'No matter which server/channel you play, first select your server in Settings.\n'
+            'For global server, choose a path like "E:\\SteamLibrary\\steamapps\\common\\SNOWBREAK".\n'
+            'For CN/Bilibili server, open the Snowbreak launcher and find launcher settings.\n'
+            'Then choose the game installation path shown there.'
+            if self._is_non_chinese_ui else
+            '不管你是哪个渠道服的玩家，第一步都应该先去设置里选服\n国际服选完服之后选择类似"E:\\SteamLibrary\\steamapps\\common\\SNOWBREAK"的路径\n官服和b服的玩家打开尘白启动器，新版或者旧版启动器都找到启动器里对应的设置\n在下面的路径选择中找到并选择刚才你看到的路径'
+        )
         view = FlyoutView(
-            title="如何查找对应游戏路径",
-            content='不管你是哪个渠道服的玩家，第一步都应该先去设置里选服\n国际服选完服之后选择类似"E:\SteamLibrary\steamapps\common\SNOWBREAK"的路径\n官服和b服的玩家打开尘白启动器，新版或者旧版启动器都找到启动器里对应的设置\n在下面的路径选择中找到并选择刚才你看到的路径',
+            title=tutorial_title,
+            content=tutorial_content,
             image="asset/path_tutorial.png",
             isClosable=True,
         )
@@ -690,8 +762,8 @@ class Home(QFrame, Ui_home, BaseInterface):
         else:
             # logger.error("需要至少勾选一项任务才能开始")
             InfoBar.error(
-                title='未勾选工作',
-                content="需要至少勾选一项工作才能开始",
+                title=self._ui_text('未勾选工作', 'No task selected'),
+                content=self._ui_text("需要至少勾选一项工作才能开始", "Select at least one task before starting"),
                 orient=Qt.Horizontal,
                 isClosable=False,  # disable close button
                 position=InfoBarPosition.TOP_RIGHT,
@@ -704,22 +776,24 @@ class Home(QFrame, Ui_home, BaseInterface):
         if str_flag == 'start':
             self.is_running = True
             self.set_checkbox_enable(False)
-            self.PushButton_start.setText("停止")
+            self.PushButton_start.setText(self._ui_text("停止", "Stop"))
         elif str_flag == 'end':
             self.is_running = False
             self.set_checkbox_enable(True)
-            self.PushButton_start.setText("开始")
+            self.PushButton_start.setText(self._ui_text("开始", "Start"))
             # 后处理
             self.after_finish()
             self.resize_window()  # 把窗口还原成原本位置
         elif str_flag == 'no_auto':
             self.is_running = False
             self.set_checkbox_enable(True)
-            self.PushButton_start.setText("开始")
-            text = "助手会自动缩放窗口至1920*1080" if config.autoScaling.value else "然后手动缩放窗口到16:9并贴在屏幕左上角"
+            self.PushButton_start.setText(self._ui_text("开始", "Start"))
+            text = self._ui_text("助手会自动缩放窗口至1920*1080", "the assistant will auto-resize to 1920*1080") \
+                if config.autoScaling.value else self._ui_text("然后手动缩放窗口到16:9并贴在屏幕左上角",
+                                                               "then manually resize to 16:9 and place it at top-left")
             InfoBar.error(
-                title='未成功初始化auto',
-                content=f"未打开游戏，{text}，然后再点击开始",
+                title=self._ui_text('未成功初始化auto', 'Auto init failed'),
+                content=self._ui_text(f"未打开游戏，{text}，然后再点击开始", f"Game is not opened, {text}, then click Start again"),
                 orient=Qt.Horizontal,
                 isClosable=True,
                 position=InfoBarPosition.TOP_RIGHT,
@@ -766,10 +840,62 @@ class Home(QFrame, Ui_home, BaseInterface):
 
     def set_current_index(self, index):
         try:
-            self.TitleLabel_setting.setText("设置-" + self.setting_name_list[index])
+            self.TitleLabel_setting.setText(self._ui_text("设置", "Settings") + "-" + self.setting_name_list[index])
             self.PopUpAniStackedWidget.setCurrentIndex(index)
         except Exception as e:
             self.logger.error(e)
+
+    def _ui_text(self, zh_text: str, en_text: str) -> str:
+        return en_text if self._is_non_chinese_ui else zh_text
+
+    def _apply_home_i18n(self):
+        self.TitleLabel.setText(self._ui_text("日志", "Log"))
+        self.CheckBox_entry_1.setText(self._ui_text("自动登录", "Auto Login"))
+        self.CheckBox_stamina_2.setText(self._ui_text("领取物资", "Collect Supplies"))
+        self.CheckBox_shop_3.setText(self._ui_text("商店购买", "Shop"))
+        self.CheckBox_use_power_4.setText(self._ui_text("刷体力", "Use Stamina"))
+        self.CheckBox_person_5.setText(self._ui_text("角色碎片", "Character Shards"))
+        self.CheckBox_chasm_6.setText(self._ui_text("精神拟境", "Neural Simulation"))
+        self.CheckBox_reward_7.setText(self._ui_text("领取奖励", "Claim Rewards"))
+        self.PushButton_select_all.setText(self._ui_text("全选", "Select All"))
+        self.PushButton_no_select.setText(self._ui_text("清空", "Clear"))
+        self.BodyLabel.setText(self._ui_text("结束后进行", "After Finish"))
+        self.PushButton_start.setText(self._ui_text("开始", "Start"))
+        self.PrimaryPushButton_path_tutorial.setText(self._ui_text("查看教程", "Tutorial"))
+        self.StrongBodyLabel_4.setText(self._ui_text("启动器中查看游戏路径", "Find game path in launcher"))
+        self.CheckBox_open_game_directly.setText(self._ui_text("自动打开游戏", "Auto open game"))
+        self.PushButton_select_directory.setText(self._ui_text("选择", "Browse"))
+        self.CheckBox_mail.setText(self._ui_text("领取邮件", "Claim Mail"))
+        self.CheckBox_fish_bait.setText(self._ui_text("领取鱼饵", "Claim Bait"))
+        self.CheckBox_dormitory.setText(self._ui_text("宿舍碎片", "Dorm Shards"))
+        self.CheckBox_redeem_code.setText(self._ui_text("领取兑换码", "Redeem Codes"))
+        self.PrimaryPushButton_import_codes.setText(self._ui_text("导入", "Import"))
+        self.PushButton_reset_codes.setText(self._ui_text("重置", "Reset"))
+        self.StrongBodyLabel.setText(self._ui_text("选择要购买的商品", "Select items to buy"))
+        self.StrongBodyLabel_2.setText(self._ui_text("选择体力使用方式", "Stamina usage mode"))
+        self.CheckBox_is_use_power.setText(self._ui_text("自动使用期限", "Auto use expiring"))
+        self.BodyLabel_6.setText(self._ui_text("天内的体力药", "day potion"))
+        self.StrongBodyLabel_3.setText(self._ui_text("选择需要刷碎片的角色", "Select characters for shards"))
+        self.BodyLabel_3.setText(self._ui_text("角色1：", "Character 1:"))
+        self.BodyLabel_4.setText(self._ui_text("角色2：", "Character 2:"))
+        self.BodyLabel_5.setText(self._ui_text("角色3：", "Character 3:"))
+        self.BodyLabel_8.setText(self._ui_text("角色4：", "Character 4:"))
+        self.CheckBox_is_use_chip.setText(self._ui_text("是否使用记忆嵌片", "Use memory chip"))
+        self.TitleLabel_3.setText(self._ui_text("日程提醒", "Schedule"))
+
+        self.CheckBox_buy_3.setText(self._ui_text("通用强化套件", "Universal Enhancement Kit"))
+        self.CheckBox_buy_4.setText(self._ui_text("优选强化套件", "Premium Enhancement Kit"))
+        self.CheckBox_buy_5.setText(self._ui_text("精致强化套件", "Exquisite Enhancement Kit"))
+        self.CheckBox_buy_6.setText(self._ui_text("新手战斗记录", "Beginner Battle Record"))
+        self.CheckBox_buy_7.setText(self._ui_text("普通战斗记录", "Standard Battle Record"))
+        self.CheckBox_buy_8.setText(self._ui_text("优秀战斗记录", "Advanced Battle Record"))
+        self.CheckBox_buy_9.setText(self._ui_text("初级职级认证", "Junior Rank Certification"))
+        self.CheckBox_buy_10.setText(self._ui_text("中级职级认证", "Intermediate Rank Certification"))
+        self.CheckBox_buy_11.setText(self._ui_text("高级职级认证", "Senior Rank Certification"))
+        self.CheckBox_buy_12.setText(self._ui_text("合成颗粒", "Synthetic Particles"))
+        self.CheckBox_buy_13.setText(self._ui_text("芳烃塑料", "Hydrocarbon Plastic"))
+        self.CheckBox_buy_14.setText(self._ui_text("单极纤维", "Monopolar Fibers"))
+        self.CheckBox_buy_15.setText(self._ui_text("光纤轴突", "Fiber Axon"))
 
     def save_changed(self, widget):
         # logger.debug(f"触发save_changed:{widget.objectName()}")
@@ -866,12 +992,18 @@ class Home(QFrame, Ui_home, BaseInterface):
                     ProgressBar_tip = ProgressBar(self.scrollAreaWidgetContents_tips)
                     ProgressBar_tip.setObjectName(f"ProgressBar_tip{index + 1}")
                 if value[0] == 0:
-                    BodyLabel_tip.setText(f"{key}已结束")
+                    BodyLabel_tip.setText(
+                        f"{key} {self._ui_text('已结束', 'finished')}"
+                    )
                 else:
                     if value[2]:
-                        BodyLabel_tip.setText(f"{key}未开始")
+                        BodyLabel_tip.setText(
+                            f"{key} {self._ui_text('未开始', 'not started')}"
+                        )
                     else:
-                        BodyLabel_tip.setText(f"{key}剩余：{value[0]}天")
+                        BodyLabel_tip.setText(
+                            self._ui_text(f"{key}剩余：{value[0]}天", f"{key} remaining: {value[0]} day(s)")
+                        )
                 ProgressBar_tip.setValue(int(value[1]))
                 items_list.append([BodyLabel_tip, ProgressBar_tip, value[1]])
 
