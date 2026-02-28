@@ -1,6 +1,6 @@
 <div align="center">
     <h1>
-        <img src="./asset/logo.png" width="200"/>
+        <img src="./asset/logo_head.png" width="200"/>
         <br/>
         自律型安卡希雅
     </h1>
