@@ -1,4 +1,4 @@
-import traceback
+import time
 
 import cv2
 
@@ -15,13 +15,25 @@ class OCR:
         self.ocr = None
         self.logger = logger
         self.replacements = replacements
+        self._last_error_message = None
+        self._last_error_time = 0.0
 
     def run(self, image, extract: list = None, is_log=False):
         self.instance_ocr()
         try:
+            if image is None:
+                if is_log:
+                    self.logger.debug("OCR输入图像为空，跳过本次识别")
+                return None
+
             if isinstance(image, str):
-                image = cv2.imread(image, cv2.IMREAD_UNCHANGED)  # 读取图像，保持原始通道
-                if image.shape[2] == 4:  # 如果是RGBA图像
+                image_path = image
+                image = cv2.imread(image_path, cv2.IMREAD_UNCHANGED)  # 读取图像，保持原始通道
+                if image is None:
+                    if is_log:
+                        self.logger.debug(f"OCR读取图像失败，路径无效或文件不可读：{image_path}")
+                    return None
+                if len(image.shape) == 3 and image.shape[2] == 4:  # 如果是RGBA图像
                     image = image[:, :, :3]  # 只保留RGB通道
             if extract:
                 letter = extract[0]
@@ -37,8 +49,12 @@ class OCR:
                     self.logger.debug(f"OCR未识别出任何文字")
                 return None
         except Exception as e:
-            self.logger.error(f"执行ocr出错：{e}")
-            traceback.print_exc()
+            error_message = f"执行ocr出错：{e}"
+            now = time.time()
+            if error_message != self._last_error_message or now - self._last_error_time > 2:
+                self.logger.error(error_message)
+                self._last_error_message = error_message
+                self._last_error_time = now
             return None
 
     def format_and_replace(self, result, is_log=False):

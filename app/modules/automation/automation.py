@@ -80,8 +80,16 @@ class Automation:
         self.running = True
         self.pause = False
         self.pause_event = threading.Event()  # 用来控制暂停
+        self._last_error_log = {}
 
         self._init_input()
+
+    def _log_error_throttled(self, key, message, interval=2.0):
+        now = time.time()
+        last = self._last_error_log.get(key, 0)
+        if now - last >= interval:
+            self.logger.error(message)
+            self._last_error_log[key] = now
 
     def _init_input(self):
         self.input_handler = Input(self.hwnd, self.logger)
@@ -181,7 +189,7 @@ class Automation:
                 self.current_screenshot = None
         except Exception as e:
             # print(traceback.format_exc())
-            self.logger.error(f"截图失败：{e}")
+            self._log_error_throttled('take_screenshot_failed', f"截图失败：{e}")
 
     def calculate_positions(self, max_loc):
         """
@@ -247,6 +255,10 @@ class Automation:
         :return: 左上，右下相对坐标，寻找到的目标的置信度
         """
         temp = self.current_screenshot
+        if temp is None:
+            self._log_error_throttled('find_image_without_screenshot', "当前没有可用截图，跳过图像匹配")
+            return None, None, None
+
         if extract:
             letter = extract[0]
             thr = extract[1]
@@ -284,7 +296,7 @@ class Automation:
                 ImageUtils.show_ndarray(temp)
         except Exception as e:
             # print(traceback.format_exc())
-            self.logger.error(f"寻找图片出错：{e}")
+            self._log_error_throttled('find_image_error', f"寻找图片出错：{e}")
         return None, None, None
 
     @atoms
@@ -293,6 +305,9 @@ class Automation:
         try:
             # image=None时
             if image is None:
+                if self.current_screenshot is None:
+                    self.ocr_result = []
+                    return
                 # ImageUtils.show_ndarray(self.current_screenshot)
                 self.ocr_result = ocr.run(self.current_screenshot, extract, is_log=is_log)
             # 传入特定的图片进行ocr识别
@@ -304,7 +319,7 @@ class Automation:
                 self.ocr_result = []
         except Exception as e:
             # print(traceback.format_exc())
-            self.logger.error(f"OCR识别失败：{e}")
+            self._log_error_throttled('perform_ocr_error', f"OCR识别失败：{e}")
             self.ocr_result = []  # 确保在异常情况下，ocr_result为列表类型
 
     def calculate_text_position(self, result):
@@ -410,7 +425,8 @@ class Automation:
                                                                                    self.hwnd)
                 # ImageUtils.show_ndarray(self.current_screenshot, 'after_current')
             else:
-                self.logger.error(f"当前没有current_screenshot,裁切失败")
+                self._log_error_throttled('find_element_no_current_screenshot', "当前没有current_screenshot,裁切失败")
+                return None
         if config.showScreenshot.value:
             signalBus.showScreenshot.emit(self.current_screenshot)
         if find_type in ['image', 'text', 'image_threshold']:
@@ -638,6 +654,10 @@ class Automation:
         :param is_resize:
         :return:
         """
+        if self.first_screenshot is None:
+            self._log_error_throttled('crop_from_first_no_screenshot', "当前没有first_screenshot,裁切失败")
+            return None
+
         crop_image, _ = ImageUtils.crop_image(self.first_screenshot, crop, self.hwnd)
         if config.showScreenshot.value:
             signalBus.showScreenshot.emit(crop_image)
@@ -657,6 +677,10 @@ class Automation:
         """
         if is_screenshot:
             self.take_screenshot()
+        if self.first_screenshot is None:
+            self._log_error_throttled('read_text_no_screenshot', "当前没有截图，无法读取文本")
+            self.ocr_result = []
+            return self.ocr_result
         crop_image, _ = ImageUtils.crop_image(self.first_screenshot, crop, self.hwnd)
         # ImageUtils.show_ndarray(crop_image)
         self.perform_ocr(image=crop_image, extract=extract, is_log=is_log)
@@ -678,6 +702,9 @@ class Automation:
         try:
             if isinstance(target, str):
                 target = cv2.imread(target)
+            if target is None:
+                self._log_error_throttled('find_image_and_count_no_target', "目标图像为空，跳过匹配计数")
+                return None
             temp = target
             if extract:
                 letter = extract[0]
@@ -707,7 +734,7 @@ class Automation:
             return len(matches)
         except Exception as e:
             # print(traceback.format_exc())
-            self.logger.error(f"寻找图片并计数出错：{e}")
+            self._log_error_throttled('find_image_and_count_error', f"寻找图片并计数出错：{e}")
             return None
 
     def calculate_power_time(self):

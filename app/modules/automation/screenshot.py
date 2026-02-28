@@ -1,4 +1,5 @@
 import ctypes
+import time
 
 import cv2
 import numpy as np
@@ -73,8 +74,16 @@ class Screenshot:
         self.base_width = 1920
         self.base_height = 1080
         self.logger = logger
+        self._last_error_log = {}
         # 排除缩放干扰
         ctypes.windll.user32.SetProcessDPIAware()
+
+    def _log_error_throttled(self, key, message, interval=2.0):
+        now = time.time()
+        last = self._last_error_log.get(key, 0)
+        if now - last >= interval:
+            self.logger.error(message)
+            self._last_error_log[key] = now
 
     def get_window(self, title):
         hwnd = win32gui.FindWindow(None, title)  # 获取窗口句柄
@@ -99,6 +108,11 @@ class Screenshot:
             if is_interval:
                 self._screenshot_interval.wait()
             self._screenshot_interval.reset()
+
+            if not hwnd or not win32gui.IsWindow(hwnd):
+                self._log_error_throttled('invalid_hwnd', "截图失败：无效的窗口句柄，窗口可能已关闭")
+                return None
+
             # 获取带标题的窗口尺寸
             left, top, right, bottom = win32gui.GetWindowRect(hwnd)
 
@@ -156,7 +170,7 @@ class Screenshot:
             return img_crop, scale_x, scale_y, relative_pos
         except Exception as e:
             # print(traceback.format_exc())
-            self.logger.error(f"截图失败：{repr(e)},窗口可以不置顶但不能最小化")
+            self._log_error_throttled('screenshot_failed', f"截图失败：{repr(e)},窗口可以不置顶但不能最小化")
             return None
 
 
