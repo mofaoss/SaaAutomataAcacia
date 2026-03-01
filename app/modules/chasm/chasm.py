@@ -12,7 +12,9 @@ class ChasmModule:
         self.is_log = False
 
     def run(self):
-        if not self.is_in_time_range():
+        if not self.is_in_time_range() or not self.auto.find_element("app/resource/images/chasm/reward.png", "image",
+                                                                     threshold=0.65, crop=(62 / 1920, 857 / 1080, 193 / 1920, 973 / 1080),
+                                                                     is_log=self.is_log):
             self.logger.warn('当前未开放拟境')
         else:
             self.is_log = config.isLog.value
