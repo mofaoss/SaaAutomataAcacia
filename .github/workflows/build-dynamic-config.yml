@@ -2,6 +2,8 @@ name: 构建 SaaAutomataAcacia Windows 安装包
 
 on:
   push:
+    branches:
+      - 'main'
     tags:
       - 'v*'
   workflow_dispatch:
@@ -20,6 +22,8 @@ jobs:
     env:
       PYTHON_VERSION: '3.10'
       PIP_NO_INPUT: '1'
+      IS_TAG: ${{ startsWith(github.ref, 'refs/tags/') }}
+      IS_MAIN: ${{ github.ref == 'refs/heads/main' }}
 
     steps:
       - name: Checkout repository
@@ -48,14 +52,22 @@ jobs:
           cache-dependency-path: requirements.txt
 
       - name: Cache Nuitka artifacts
+        id: nuitka_cache
         uses: actions/cache@v4
         with:
           path: C:\Users\runneradmin\AppData\Local\Nuitka\Nuitka\Cache
-          key: ${{ runner.os }}-nuitka-py${{ env.PYTHON_VERSION }}-${{ hashFiles('requirements.txt', 'PerfectBuild/build.py', 'PerfectBuild/nuitka-setup-template.iss') }}
+          key: nuitka-${{ runner.os }}-${{ hashFiles('requirements.txt') }}
           restore-keys: |
-            ${{ runner.os }}-nuitka-py${{ env.PYTHON_VERSION }}-
+            nuitka-${{ runner.os }}-
+
+      - name: Main cache heartbeat (early exit)
+        if: ${{ env.IS_MAIN == 'true' && steps.nuitka_cache.outputs.cache-hit == 'true' }}
+        shell: powershell
+        run: |
+          Write-Host "Main cache heartbeat: cache hit, skip heavy build steps."
 
       - name: Install Inno Setup
+        if: ${{ env.IS_TAG == 'true' || env.IS_MAIN != 'true' || steps.nuitka_cache.outputs.cache-hit != 'true' }}
         shell: powershell
         run: |
           choco install innosetup --no-progress -y
@@ -68,6 +80,7 @@ jobs:
           }
 
       - name: Install Dependency Walker (for Nuitka)
+        if: ${{ env.IS_TAG == 'true' || env.IS_MAIN != 'true' || steps.nuitka_cache.outputs.cache-hit != 'true' }}
         shell: powershell
         run: |
           choco install dependencywalker --no-progress -y
@@ -81,6 +94,7 @@ jobs:
           }
 
       - name: Install Python dependencies
+        if: ${{ env.IS_TAG == 'true' || env.IS_MAIN != 'true' || steps.nuitka_cache.outputs.cache-hit != 'true' }}
         shell: powershell
         run: |
           python -m pip install --upgrade pip setuptools wheel
@@ -88,6 +102,7 @@ jobs:
 
       - name: Resolve version from tag/input
         id: version
+        if: ${{ env.IS_TAG == 'true' || env.IS_MAIN != 'true' || steps.nuitka_cache.outputs.cache-hit != 'true' }}
         shell: powershell
         run: |
           $inputVersion = "${{ github.event.inputs.version }}"
@@ -115,6 +130,7 @@ jobs:
           "version=$version" | Out-File -FilePath $env:GITHUB_OUTPUT -Encoding utf8 -Append
 
       - name: Update version in files
+        if: ${{ env.IS_TAG == 'true' || env.IS_MAIN != 'true' || steps.nuitka_cache.outputs.cache-hit != 'true' }}
         shell: powershell
         env:
           TARGET_VERSION: ${{ steps.version.outputs.version }}
@@ -143,6 +159,7 @@ jobs:
           Write-Host "Updated version in PerfectBuild/perfect_build.py and update_data.txt"
 
       - name: Build (Nuitka mode)
+        if: ${{ env.IS_TAG == 'true' || env.IS_MAIN != 'true' || steps.nuitka_cache.outputs.cache-hit != 'true' }}
         shell: powershell
         env:
           SAA_APP_DIR: ${{ github.workspace }}
@@ -156,6 +173,7 @@ jobs:
           }
 
       - name: Analyze package size
+        if: ${{ env.IS_TAG == 'true' }}
         shell: powershell
         run: |
           $appExec = "SAA"
@@ -184,6 +202,7 @@ jobs:
 
       - name: Verify release output
         id: verify
+        if: ${{ env.IS_TAG == 'true' }}
         shell: powershell
         run: |
           $version = "${{ steps.version.outputs.version }}"
@@ -209,6 +228,7 @@ jobs:
 
       - name: Collect release files
         id: collect
+        if: ${{ env.IS_TAG == 'true' }}
         shell: powershell
         run: |
           $releaseDir = "${{ steps.verify.outputs.release_dir }}"
@@ -232,6 +252,7 @@ jobs:
           "release_files_dir=$outDir" | Out-File -FilePath $env:GITHUB_OUTPUT -Encoding utf8 -Append
 
       - name: Upload portable zip artifact
+        if: ${{ env.IS_TAG == 'true' }}
         uses: actions/upload-artifact@v4
         with:
           name: SaaAutomataAcacia-${{ steps.version.outputs.version }}-portable
@@ -239,6 +260,7 @@ jobs:
           if-no-files-found: error
 
       - name: Upload installer exe artifact
+        if: ${{ env.IS_TAG == 'true' }}
         uses: actions/upload-artifact@v4
         with:
           name: SaaAutomataAcacia-${{ steps.version.outputs.version }}-installer
@@ -246,7 +268,7 @@ jobs:
           if-no-files-found: error
 
       - name: Create draft GitHub Release
-        if: startsWith(github.ref, 'refs/tags/')
+        if: ${{ env.IS_TAG == 'true' }}
         uses: softprops/action-gh-release@v2
         with:
           tag_name: ${{ github.ref_name }}
