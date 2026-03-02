@@ -35,10 +35,9 @@
 
 > [!Warning]
 >
-> After version 2.0, all tasks support running while the window is obscured. Mouse clicks use an optimized method to
-> minimize user disruption, enabling pure background operation for tasks not requiring mouse interaction. Only supports 16:
-> 9 screen ratios. Works in both fullscreen and windowed modes. For other ratios, enable auto-scaling in settings to
-> automatically resize the game window, and it no longer needs to be fixed in the top-left corner.
+> 1. Game can now run fully hidden in the background, and this feature can be enabled on the display page.
+> 2. Currently supports only 16:9 game aspect ratios, with both fullscreen and windowed modes. A resolution of at least 1280×720 is recommended. The higher the resolution, the better.
+> 3. Game language must be simplified/traditional chinese.
 
 ### ✨Feature List
 
