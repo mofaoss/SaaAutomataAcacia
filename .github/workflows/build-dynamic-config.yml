@@ -131,29 +131,7 @@ jobs:
           SAA_APP_DIR: ${{ github.workspace }}
           INNO_SETUP_COMPILER: C:\Program Files (x86)\Inno Setup 6\ISCC.exe
         run: |
-          $maxRetries = 3
-          $success = $false
-
-          for ($attempt = 1; $attempt -le $maxRetries; $attempt++) {
-            Write-Host "===== Build attempt $attempt/$maxRetries ====="
-            conda run -n $env:CONDA_ENV_NAME python .\PerfectBuild\build.py --n
-
-            if ($LASTEXITCODE -eq 0) {
-              $success = $true
-              break
-            }
-
-            if ($attempt -lt $maxRetries) {
-              Write-Warning "构建失败，准备补装依赖后重试..."
-              conda run -n $env:CONDA_ENV_NAME pip install --upgrade nuitka ordered-set zstandard pyinstaller
-              Start-Sleep -Seconds 20
-            }
-          }
-
-          if (-not $success) {
-            Write-Error "构建在 $maxRetries 次尝试后仍失败"
-            exit 1
-          }
+          .\PerfectBuild\ci_build_retry.ps1 -CondaEnvName $env:CONDA_ENV_NAME
 
       - name: Verify release output
         id: verify
