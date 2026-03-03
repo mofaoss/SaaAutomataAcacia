@@ -138,8 +138,8 @@ class MainWindow(MSFluentWindow):
         self._localize_widget_if_needed(self.displayInterface)
 
     def _create_home_interface(self):
-        from .home import Home
-        self.homeInterface = Home('Home Interface', self)
+        from .daily import Daily
+        self.homeInterface = Daily('Daily Interface', self)
         self._localize_widget_if_needed(self.homeInterface)
 
     def _create_additional_interface(self):

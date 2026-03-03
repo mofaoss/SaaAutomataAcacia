@@ -175,7 +175,7 @@ def no_select(widget):
         checkbox.setChecked(False)
 
 
-class Home(QFrame, Ui_home, BaseInterface):
+class Daily(QFrame, Ui_home, BaseInterface):
     def __init__(self, text: str, parent=None):
         super().__init__()
         self._is_non_chinese_ui = is_non_chinese_ui_language()
