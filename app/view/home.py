@@ -583,49 +583,6 @@ class Home(QFrame, Ui_home, BaseInterface):
 
         self._emit_update_clickable_log(best, local_version)
 
-        local_is_prerelease = is_prerelease_version(local_version)
-        if best["is_prerelease"] and not local_is_prerelease:
-            content = self._ui_text(
-                f"发现测试版更新：{best['version']}（当前 {local_version}）。这是预发布版本，包含新功能测试，建议按需体验。",
-                f"Pre-release update found: {best['version']} (current {local_version}). This build includes feature testing; install only if you want early access."
-            )
-            InfoBar.warning(
-                title=self._ui_text("发现测试版更新", "Pre-release Available"),
-                content=content,
-                orient=Qt.Horizontal,
-                isClosable=True,
-                position=InfoBarPosition.TOP_RIGHT,
-                duration=12000,
-                parent=self
-            )
-            return
-
-        if best["is_prerelease"] and local_is_prerelease:
-            content = self._ui_text(
-                f"发现新的测试版：{best['version']}（当前 {local_version}）。",
-                f"New pre-release available: {best['version']} (current {local_version})."
-            )
-        elif (not best["is_prerelease"]) and local_is_prerelease:
-            content = self._ui_text(
-                f"发现稳定版更新：{best['version']}（当前 {local_version}）。可从测试版切换到稳定版。",
-                f"Stable release available: {best['version']} (current {local_version}). You can switch from pre-release to stable now."
-            )
-        else:
-            content = self._ui_text(
-                f"发现新版本：{best['version']}（当前 {local_version}）。",
-                f"New version available: {best['version']} (current {local_version})."
-            )
-
-        InfoBar.info(
-            title=self._ui_text("发现版本更新", "Update Available"),
-            content=content + self._ui_text("（请在日志中点击“点击下载最新”）", " (Click \"Click to download latest\" in log)"),
-            orient=Qt.Horizontal,
-            isClosable=True,
-            position=InfoBarPosition.TOP_RIGHT,
-            duration=10000,
-            parent=self
-        )
-
     def _handle_update_logic(self, raw_data: Dict[str, Any], online_data: Dict[str, Any], response: ApiResponse):
         """处理更新数据的业务逻辑"""
         local_config_data = parse_config_update_data(config.update_data.value)
@@ -968,8 +925,8 @@ class Home(QFrame, Ui_home, BaseInterface):
                 self.set_checkbox_enable(True)
                 self.PushButton_start.setText(self._ui_text("开始", "Start"))
                 text = self._ui_text("助手会自动缩放窗口至1920*1080", "the assistant will auto-resize to 1920*1080") \
-                    if config.autoScaling.value else self._ui_text("然后手动缩放窗口到16:9并贴在屏幕左上角",
-                                                                   "then manually resize to 16:9 and place it at top-left")
+                    if config.autoScaling.value else self._ui_text("然后手动缩放窗口到16:9",
+                                                                   "then manually resize to 16:9")
                 InfoBar.error(
                     title=self._ui_text('未成功初始化auto', 'Auto init failed'),
                     content=self._ui_text(f"未打开游戏，{text}，然后再点击开始", f"Game is not opened, {text}, then click Start again"),

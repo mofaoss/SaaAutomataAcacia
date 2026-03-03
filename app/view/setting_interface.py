@@ -95,7 +95,7 @@ class SettingInterface(ScrollArea):
             self._ui_text('启动时进入', 'Startup page'),
             self._ui_text("选择启动软件时直接进入哪个页面", "Choose which page to open on startup"),
             texts=[
-                self._ui_text('展示页', 'Display'), self._ui_text('主页', 'Home'),
+                self._ui_text('展示页', 'Display'), self._ui_text('日常', 'Daily'),
                 self._ui_text('小工具', 'Tools')
             ],
             parent=self.personalGroup
@@ -201,8 +201,8 @@ class SettingInterface(ScrollArea):
         self.autoScaling = SwitchSettingCard(
             FIF.BACK_TO_WINDOW,
             self._ui_text('自动缩放比例', 'Auto scaling'),
-            self._ui_text('默认开启，在启动安卡希雅·自律姬时如果发现游戏窗口比例不是16:9会自动缩放成1920*1080并贴在左上角',
-                          'Enabled by default. If the game is not 16:9, it auto-resizes to 1920*1080 and snaps to top-left on startup'),
+            self._ui_text('默认开启，在启动安卡希雅·自律姬时如果发现游戏窗口比例不是16:9会自动缩放成1920*1080',
+                          'Enabled by default. If the game is not 16:9, it auto-resizes to 1920*1080 on startup'),
             configItem=config.autoScaling,
             parent=self.aboutSoftwareGroup
         )

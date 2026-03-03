@@ -1,15 +1,16 @@
 # coding: utf-8
 import datetime
+import html
 import os.path
 import re
 import sys
 import threading
 import time
 from pathlib import Path
-from PyQt5.QtCore import QSize, QTimer, QThread, Qt
-from PyQt5.QtGui import QIcon, QImage, QPixmap, QMovie
+from PyQt5.QtCore import QSize, QTimer, QThread, Qt, QUrl
+from PyQt5.QtGui import QIcon, QImage, QPixmap, QMovie, QDesktopServices
 from PyQt5.QtWidgets import QApplication, QFrame, QLabel
-from qfluentwidgets import FluentIcon as FIF, SystemThemeListener, isDarkTheme, MessageBox
+from qfluentwidgets import FluentIcon as FIF, SystemThemeListener, isDarkTheme, MessageBox, InfoBar, InfoBarPosition
 from qfluentwidgets import NavigationItemPosition, MSFluentWindow, NavigationBarPushButton, FlyoutView, \
     Flyout, setThemeColor
 
@@ -18,8 +19,10 @@ from ..common.config import is_non_chinese_ui_language, is_traditional_ui_langua
 from ..common.icon import Icon
 from ..common.logger import logger
 from ..common.matcher import matcher
+from ..common.setting import REPO_URL
 from ..common.signal_bus import signalBus
-from ..common.utils import get_gitee_text, get_local_version, get_cloudflare_data, launch_game_with_guard
+from ..common.utils import get_gitee_text, get_local_version, get_cloudflare_data, launch_game_with_guard, \
+    get_github_release_channels, is_remote_version_newer, is_prerelease_version
 from ..repackage.custom_message_box import CustomMessageBox
 from ..common import resource  # don't delete
 
@@ -67,6 +70,7 @@ class MainWindow(MSFluentWindow):
         self.cv2_module = None
         self._deferred_init_tasks = []
         self._deferred_initialized = False
+        self._has_shown_update_popup = False
         self._startup_target_index = int(config.enter_interface.value)
         self._nav_registered = {
             'display': False,
@@ -216,7 +220,7 @@ class MainWindow(MSFluentWindow):
     def _create_home_and_add_nav(self):
         if self.homeInterface is None:
             self._create_home_interface()
-        self._register_nav_item('home', self.homeInterface, FIF.HOME, self._ui_text('主页', 'Home'), FIF.HOME_FILL)
+        self._register_nav_item('home', self.homeInterface, FIF.HOME, self._ui_text('日常', 'Daily'), FIF.HOME_FILL)
 
     def _create_additional_and_add_nav(self):
         if self.additionalInterface is None:
@@ -277,7 +281,92 @@ class MainWindow(MSFluentWindow):
                 logger.warn(f'未勾选"自动打开游戏"')
 
         self._finish_splash_screen()
+        QTimer.singleShot(0, self._show_update_popup_if_needed)
         self._defer_load_remaining_interfaces()
+
+    def _select_update_candidate(self, local_version: str, release_channels: dict):
+        stable = release_channels.get("latest") if isinstance(release_channels, dict) else None
+        prerelease = release_channels.get("prerelease") if isinstance(release_channels, dict) else None
+        should_check_prerelease = is_prerelease_version(local_version) or bool(config.checkPrereleaseForStable.value)
+
+        candidates = []
+        for channel_name, release_data in (("latest", stable), ("prerelease", prerelease)):
+            if channel_name == "prerelease" and not should_check_prerelease:
+                continue
+            if not release_data:
+                continue
+            remote_version = release_data.get("version")
+            if not remote_version:
+                continue
+            if is_remote_version_newer(local_version, remote_version):
+                candidates.append({
+                    "channel": channel_name,
+                    "version": remote_version,
+                    "download_url": release_data.get("download_url"),
+                    "is_prerelease": channel_name == "prerelease"
+                })
+
+        if not candidates:
+            return None
+
+        best = candidates[0]
+        for candidate in candidates[1:]:
+            if is_remote_version_newer(best["version"], candidate["version"]):
+                best = candidate
+
+        return best
+
+    def _show_update_popup_if_needed(self):
+        if self._has_shown_update_popup:
+            return
+        self._has_shown_update_popup = True
+
+        local_version = get_local_version() or "N/A"
+        release_channels = get_github_release_channels(REPO_URL)
+        best = self._select_update_candidate(local_version, release_channels)
+
+        if not best:
+            InfoBar.success(
+                title=self._ui_text("更新提示", "Update"),
+                content=self._ui_text("已是最新版", "Already up to date"),
+                orient=Qt.Horizontal,
+                isClosable=True,
+                position=InfoBarPosition.TOP_RIGHT,
+                duration=6000,
+                parent=self,
+            )
+            return
+
+        download_url = str((best or {}).get("download_url") or "").strip()
+        download_link_text = self._ui_text("点击下载", "Click to download")
+        if download_url:
+            content_html = self._ui_text(
+                f"检测到新版本，<a href=\"{html.escape(download_url, quote=True)}\">{download_link_text}</a>",
+                f"New version detected, <a href=\"{html.escape(download_url, quote=True)}\">{download_link_text}</a>"
+            )
+        else:
+            content_html = self._ui_text("检测到新版本", "New version detected")
+
+        info_bar = InfoBar.warning(
+            title=self._ui_text("更新提示", "Update"),
+            content=content_html,
+            orient=Qt.Horizontal,
+            isClosable=True,
+            position=InfoBarPosition.TOP_RIGHT,
+            duration=10000,
+            parent=self,
+        )
+
+        if hasattr(info_bar, "contentLabel") and info_bar.contentLabel is not None:
+            info_bar.contentLabel.setTextFormat(Qt.RichText)
+            info_bar.contentLabel.setOpenExternalLinks(False)
+
+            def _on_link_activated(_):
+                if download_url:
+                    QDesktopServices.openUrl(QUrl(download_url))
+
+            info_bar.contentLabel.linkActivated.connect(_on_link_activated)
+            info_bar.contentLabel.setText(content_html)
 
     def open_game_directly(self):
         """直接启动游戏（兼容 Steam/Epic 与国服等不同目录结构）"""
@@ -304,11 +393,11 @@ class MainWindow(MSFluentWindow):
         if self._startup_target_index == 2 and self.additionalInterface is not None:
             startup_top_interface = (self.additionalInterface, FIF.APPLICATION, self._ui_text('小工具', 'Tools'))
         elif self._startup_target_index == 1 and self.homeInterface is not None:
-            startup_top_interface = (self.homeInterface, FIF.HOME, self._ui_text('主页', 'Home'), FIF.HOME_FILL)
+            startup_top_interface = (self.homeInterface, FIF.HOME, self._ui_text('日常', 'Daily'), FIF.HOME_FILL)
         elif self.displayInterface is not None:
             startup_top_interface = (self.displayInterface, FIF.PHOTO, self._ui_text('展示页', 'Display'))
         elif self.homeInterface is not None:
-            startup_top_interface = (self.homeInterface, FIF.HOME, self._ui_text('主页', 'Home'), FIF.HOME_FILL)
+            startup_top_interface = (self.homeInterface, FIF.HOME, self._ui_text('日常', 'Daily'), FIF.HOME_FILL)
         elif self.additionalInterface is not None:
             startup_top_interface = (self.additionalInterface, FIF.APPLICATION, self._ui_text('小工具', 'Tools'))
 
@@ -541,6 +630,13 @@ class MainWindow(MSFluentWindow):
         :param index:
         :return:
         """
+        if routeKey == "Home-Start-Now":
+            if self.homeInterface is None:
+                self._create_home_and_add_nav()
+            self.stackedWidget.setCurrentWidget(self.homeInterface, False)
+            QTimer.singleShot(0, self.homeInterface.on_start_button_click)
+            return
+
         interfaces = self.findChildren(QFrame)
         for w in interfaces:
             if w.objectName() == routeKey:

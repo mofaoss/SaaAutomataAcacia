@@ -1,5 +1,4 @@
 import os
-import random
 
 from PyQt5.QtCore import Qt, QRectF
 from PyQt5.QtGui import QPixmap, QPainter, QPainterPath, QBrush
@@ -8,17 +7,14 @@ from PyQt5.QtWidgets import (
     QVBoxLayout,
     QLabel,
     QGraphicsDropShadowEffect,
-    QHBoxLayout,
 )
-from qfluentwidgets import ScrollArea, FluentIcon, CardWidget, FlyoutView, Flyout
+from qfluentwidgets import ScrollArea, CardWidget
 
-from app.common.config import config, is_non_chinese_ui_language, Language, resolve_configured_locale
+from app.common.config import config, is_non_chinese_ui_language
 from app.common.signal_bus import signalBus
-from app.common.setting import REPO_URL
 from app.common.style_sheet import StyleSheet
-from app.common.utils import get_local_version, get_github_release_channels, is_remote_version_newer, is_prerelease_version
+from app.common.utils import get_local_version
 
-from app.repackage.link_card import LinkCardView
 from app.repackage.samplecardview import SampleCardView
 
 
@@ -28,8 +24,6 @@ class BannerWidget(QWidget):
     def __init__(self, parent=None):
         super().__init__(parent=parent)
         self.setFixedHeight(350)
-        self._is_simplified_ui = self._is_simplified_ui_language()
-        self._is_non_chinese_ui = is_non_chinese_ui_language()
 
         self.vBoxLayout = QVBoxLayout(self)
         # 大标题
@@ -50,134 +44,14 @@ class BannerWidget(QWidget):
         self.galleryLabel.setGraphicsEffect(shadow)
 
         self.basedir = "app/resource/images/display"
-        random_number = random.randint(1, 9)
-        # banner_path = os.path.join(self.basedir, f"background_{random_number}.jpg")
         banner_path = os.path.join(self.basedir, f"101.png")
         self.banner = QPixmap(banner_path)
-        # 超链接卡片
-        self.linkCardView = LinkCardView(self)
-        # 设置边界
-        self.linkCardView.setContentsMargins(0, 0, 0, 36)
         self.galleryLabel.setObjectName("galleryLabel")
-        # 纵向布局
-        linkCardLayout = QHBoxLayout()
-        linkCardLayout.addWidget(self.linkCardView)
-        linkCardLayout.setAlignment(Qt.AlignBottom)
         # 设置横向布局使靠左上显示
         self.vBoxLayout.setSpacing(0)
         self.vBoxLayout.setContentsMargins(0, 20, 0, 0)
         self.vBoxLayout.addWidget(self.galleryLabel)
-        self.vBoxLayout.addLayout(linkCardLayout)
         self.vBoxLayout.setAlignment(Qt.AlignLeft | Qt.AlignTop)
-
-        self.linkCardView.addCard(
-            FluentIcon.GITHUB,
-            self._ui_text("GitHub地址", "GitHub"),
-            self._ui_text("你的星星\n就是我的动力|･ω･)", "Your stars\nkeep me motivated |･ω･)"),
-            REPO_URL,
-        )
-        self.linkCardView.addCard(
-            FluentIcon.INFO,
-            self._ui_text("支持作者", "Support Author"),
-            self._ui_text("点击查看\n赞助二维码", "Click to view\nsupport QR") if self._is_simplified_ui else self._ui_text("前往 Ko-fi\n支持作者", "Visit Ko-fi\nto support"),
-            "" if self._is_simplified_ui else "https://ko-fi.com/mofa",
-            on_click=self._show_support_qr if self._is_simplified_ui else None,
-        )
-        self._add_update_card()
-
-    def _select_update_candidate(self, local_version: str, release_channels: dict):
-        stable = release_channels.get("latest") if isinstance(release_channels, dict) else None
-        prerelease = release_channels.get("prerelease") if isinstance(release_channels, dict) else None
-        should_check_prerelease = is_prerelease_version(local_version) or bool(config.checkPrereleaseForStable.value)
-
-        candidates = []
-        for channel_name, release_data in (("latest", stable), ("prerelease", prerelease)):
-            if channel_name == "prerelease" and not should_check_prerelease:
-                continue
-            if not release_data:
-                continue
-            remote_version = release_data.get("version")
-            if not remote_version:
-                continue
-            if is_remote_version_newer(local_version, remote_version):
-                candidates.append({
-                    "channel": channel_name,
-                    "version": remote_version,
-                    "download_url": release_data.get("download_url"),
-                    "is_prerelease": channel_name == "prerelease"
-                })
-
-        if not candidates:
-            return None
-
-        best = candidates[0]
-        for candidate in candidates[1:]:
-            if is_remote_version_newer(best["version"], candidate["version"]):
-                best = candidate
-        return best
-
-    def _add_update_card(self):
-        local_version = get_local_version() or "N/A"
-        release_channels = get_github_release_channels(REPO_URL)
-        best = self._select_update_candidate(local_version, release_channels)
-        is_prerelease = bool(best and best.get("is_prerelease"))
-
-        if best and best.get("download_url"):
-            title = self._ui_text("更新提示", "Update")
-            content = self._ui_text(
-                f"{'测试版 ' if is_prerelease else ''}{local_version} → {best['version']}\n点击下载最新",
-                f"{'Pre-release ' if is_prerelease else ''}{local_version} -> {best['version']}\nClick to download latest"
-            )
-            url = best.get("download_url")
-        elif best:
-            title = self._ui_text("更新提示", "Update")
-            content = self._ui_text(
-                f"{'测试版 ' if is_prerelease else ''}{local_version} → {best['version']}\n暂未找到直链",
-                f"{'Pre-release ' if is_prerelease else ''}{local_version} -> {best['version']}\nDirect download unavailable"
-            )
-            url = ""
-        else:
-            title = self._ui_text("更新提示", "Update")
-            content = self._ui_text(
-                f"当前已是最新\n版本 {local_version}",
-                f"You're up to date\nVersion {local_version}"
-            )
-            url = ""
-
-        self.linkCardView.addCard(
-            FluentIcon.DOWNLOAD,
-            title,
-            content,
-            url,
-        )
-
-    def _ui_text(self, zh_text: str, en_text: str) -> str:
-        return en_text if self._is_non_chinese_ui else self.tr(zh_text)
-
-    @staticmethod
-    def _is_simplified_ui_language():
-        language = config.language.value
-        if language == Language.CHINESE_SIMPLIFIED:
-            return True
-        if language != Language.AUTO:
-            return False
-
-        locale_name = resolve_configured_locale(language).name().replace('-', '_')
-        return locale_name in {"zh_CN", "zh_SG"} or locale_name.startswith("zh_Hans")
-
-    def _show_support_qr(self, source_widget):
-        view = FlyoutView(
-            title=self._ui_text("赞助作者", "Support Author"),
-            content=self._ui_text("如果这个助手帮助到你，可以考虑赞助作者一杯奶茶(>ω･* )ﾉ",
-                                  "If this assistant helps you, consider buying the author a coffee (>ω･* )ﾉ"),
-            image="asset/support.jpg",
-            isClosable=True,
-        )
-        view.widgetLayout.insertSpacing(1, 5)
-        view.widgetLayout.addSpacing(5)
-
-        flyout = Flyout.make(view, source_widget, self)
-        view.closed.connect(flyout.close)
 
     def paintEvent(self, e):
         super().paintEvent(e)
@@ -295,9 +169,9 @@ class DisplayInterface(ScrollArea):
         )
         quick_jump.addSampleCard(
             icon=os.path.join(self.basedir, "play.svg"),
-            title="Main Tasks" if self._is_non_chinese_ui else "功能界面",
-            content="Configure quickly and run with one click" if self._is_non_chinese_ui else self.tr("简单设置后一键种草！"),
-            routeKey="Home-Interface",
+            title="Start Now" if self._is_non_chinese_ui else "立刻日常",
+            content="SAA handles daily tasks in one click" if self._is_non_chinese_ui else self.tr("自律姬帮你一键种草。"),
+            routeKey="Home-Start-Now",
             index=0,
         )
         # 使用教程跳转
