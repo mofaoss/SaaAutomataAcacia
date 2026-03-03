@@ -125,6 +125,7 @@
 
 ## ❤️相关项目
 
+- 致敬上游 https://github.com/LaoZhuJackson/SnowbreakAutoAssistant
 - OCR文字识别 https://github.com/jingsongliujing/OnnxOCR
 - 三月七星穹铁道助手 https://github.com/moesnow/March7thAssistant
 - maa明日方舟助手 https://github.com/MaaAssistantArknights/MaaAssistantArknights
