@@ -254,6 +254,7 @@ class Daily(QFrame, Ui_home, BaseInterface):
         self.start_thread = None
         self.launch_process = None
         self.launch_deadline = 0.0
+        self.is_launch_pending = False
 
         self._initWidget()
         self._connect_to_slot()
@@ -811,30 +812,53 @@ class Daily(QFrame, Ui_home, BaseInterface):
             result = launch_game_with_guard(logger=logger)
             if not result.get("ok"):
                 logger.error(result.get("error", "启动游戏失败"))
+                self._set_launch_pending_state(False)
                 return
 
             self.launch_process = result.get("process")
 
             self.launch_deadline = time.time() + 90
             self.check_game_window_timer.start(500)
+            self._set_launch_pending_state(True)
         except Exception as e:
             logger.error(f'出现报错: {e}')
+            self._set_launch_pending_state(False)
+
+    def _is_game_window_open(self):
+        return is_exist_snowbreak()
+
+    def _clear_launch_watch_state(self):
+        self.check_game_window_timer.stop()
+        self.launch_deadline = 0.0
+        self.launch_process = None
+
+    def _set_launch_pending_state(self, pending: bool):
+        self.is_launch_pending = bool(pending)
+        if self.is_launch_pending:
+            self.set_checkbox_enable(False)
+            self.PushButton_start.setText(self._ui_text("停止", "Stop"))
+            return
+
+        if not self.is_running:
+            self.set_checkbox_enable(True)
+            self.PushButton_start.setText(self._ui_text("开始", "Start"))
+
+    def _stop_running_guard(self):
+        self.running_game_guard_timer.stop()
 
     def check_game_open(self):
         try:
-            hwnd = is_exist_snowbreak()
+            hwnd = self._is_game_window_open()
             if hwnd:
-                self.check_game_window_timer.stop()
-                self.launch_deadline = 0.0
-                self.launch_process = None
+                self._clear_launch_watch_state()
+                self._set_launch_pending_state(False)
                 logger.info(f'已检测到游戏窗口：{hwnd}')
                 self.after_start_button_click(self.checkbox_dic)
                 return
 
             if self.launch_process is not None and self.launch_process.poll() is not None:
-                self.check_game_window_timer.stop()
-                self.launch_deadline = 0.0
-                self.launch_process = None
+                self._clear_launch_watch_state()
+                self._set_launch_pending_state(False)
                 logger.warn('启动流程已中断：检测到游戏进程退出，已取消本次自动任务')
                 InfoBar.warning(
                     title=self._ui_text('启动已中断', 'Launch interrupted'),
@@ -849,9 +873,8 @@ class Daily(QFrame, Ui_home, BaseInterface):
                 return
 
             if self.launch_deadline and time.time() > self.launch_deadline:
-                self.check_game_window_timer.stop()
-                self.launch_deadline = 0.0
-                self.launch_process = None
+                self._clear_launch_watch_state()
+                self._set_launch_pending_state(False)
                 logger.warn('等待游戏窗口超时，已取消本次自动任务')
                 InfoBar.warning(
                     title=self._ui_text('等待超时', 'Launch timeout'),
@@ -865,10 +888,17 @@ class Daily(QFrame, Ui_home, BaseInterface):
                 )
         except Exception as e:
             logger.error(f'检测游戏启动状态时出现异常：{e}')
-            self.check_game_window_timer.stop()
+            self._clear_launch_watch_state()
+            self._set_launch_pending_state(False)
 
     def on_start_button_click(self):
         """点击开始按钮后的逻辑"""
+        if self.is_launch_pending:
+            self._clear_launch_watch_state()
+            self._set_launch_pending_state(False)
+            logger.info(self._ui_text("已取消等待游戏启动", "Cancelled waiting for game launch"))
+            return
+
         checkbox_dic = {}
         for checkbox in self.SimpleCardWidget_option.findChildren(CheckBox):
             if checkbox.isChecked():
@@ -912,12 +942,14 @@ class Daily(QFrame, Ui_home, BaseInterface):
         """设置按钮"""
         try:
             if str_flag == 'start':
+                self._set_launch_pending_state(False)
                 self.is_running = True
                 self.set_checkbox_enable(False)
                 self.PushButton_start.setText(self._ui_text("停止", "Stop"))
                 if not self.running_game_guard_timer.isActive():
                     self.running_game_guard_timer.start(1000)
             elif str_flag == 'end':
+                self._set_launch_pending_state(False)
                 self.is_running = False
                 self.running_game_guard_timer.stop()
                 self.set_checkbox_enable(True)
@@ -926,6 +958,7 @@ class Daily(QFrame, Ui_home, BaseInterface):
                 self.after_finish()
                 self.resize_window()  # 把窗口还原成原本位置
             elif str_flag == 'no_auto':
+                self._set_launch_pending_state(False)
                 self.is_running = False
                 self.running_game_guard_timer.stop()
                 self.set_checkbox_enable(True)
@@ -943,6 +976,7 @@ class Daily(QFrame, Ui_home, BaseInterface):
                     parent=self
                 )
             elif str_flag == 'interrupted':
+                self._set_launch_pending_state(False)
                 self.is_running = False
                 self.running_game_guard_timer.stop()
                 self.set_checkbox_enable(True)
@@ -960,6 +994,7 @@ class Daily(QFrame, Ui_home, BaseInterface):
                 self.resize_window()
         except Exception as e:
             logger.error(f'处理任务状态变更时出现异常：{e}')
+            self._set_launch_pending_state(False)
             self.is_running = False
             self.running_game_guard_timer.stop()
             self.set_checkbox_enable(True)
@@ -968,20 +1003,20 @@ class Daily(QFrame, Ui_home, BaseInterface):
     def _guard_running_game_window(self):
         try:
             if not self.is_running:
-                self.running_game_guard_timer.stop()
+                self._stop_running_guard()
                 return
 
-            if is_exist_snowbreak():
+            if self._is_game_window_open():
                 return
 
-            self.running_game_guard_timer.stop()
+            self._stop_running_guard()
             logger.warn('检测到游戏窗口已关闭，正在停止当前自动任务')
             if self.start_thread is not None and self.start_thread.isRunning():
                 self.start_thread.stop(reason=self._ui_text('用户中断：游戏窗口已关闭',
                                                             'Interrupted by user: game window closed'))
         except Exception as e:
             logger.error(f'运行中窗口守护检测异常：{e}')
-            self.running_game_guard_timer.stop()
+            self._stop_running_guard()
 
     def resize_window(self):
         # 恢复窗口
