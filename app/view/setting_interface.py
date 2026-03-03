@@ -176,6 +176,10 @@ class SettingInterface(ScrollArea):
         self.aboutHeaderWidget = AboutHeaderWidget(self._is_non_chinese_ui, self.scrollWidget)
         self.versionCheckThread = None
 
+        # core settings
+        self.coreSettingsGroup = SettingCardGroup(
+            self._ui_text("核心设置", "Core Settings"), self.scrollWidget)
+
         # personalization
         self.personalGroup = SettingCardGroup(
             self.tr('Personalization'), self.scrollWidget)
@@ -230,7 +234,7 @@ class SettingInterface(ScrollArea):
 
         # update software
         self.aboutSoftwareGroup = SettingCardGroup(
-            self._ui_text("软件相关", "Software"), self.scrollWidget)
+            self._ui_text("功能相关", "About Software"), self.scrollWidget)
         self.updateOnStartUpCard = SwitchSettingCard(
             FIF.UPDATE,
             self.tr('Check for updates when the application starts'),
@@ -247,13 +251,22 @@ class SettingInterface(ScrollArea):
             configItem=config.checkPrereleaseForStable,
             parent=self.aboutSoftwareGroup
         )
+
+        # Core Settings Cards
+        self.stealthModeCard = SwitchSettingCard(
+            FIF.HIDE,
+            self._ui_text('隐身模式', 'Stealth Mode'),
+            self._ui_text('开启完全后台隐身运行游戏', 'Enable to run game in complete stealth mode in background'),
+            configItem=config.windowTrackingInput,
+            parent=self.coreSettingsGroup
+        )
         self.serverCard = ComboBoxSettingCard(
             config.server_interface,
             FIF.GAME,
             self._ui_text('游戏渠道选择', 'Server channel'),
             self._ui_text("请选择你所在的区服", "Choose your server channel"),
             texts=[self._ui_text('官服', 'Official'), self._ui_text('b服', 'Bilibili'), self._ui_text('国际服', 'Global')],
-            parent=self.aboutSoftwareGroup
+            parent=self.coreSettingsGroup
         )
         self.gameLanguageCard = ComboBoxSettingCard(
             config.game_language,
@@ -262,7 +275,7 @@ class SettingInterface(ScrollArea):
             'Used for automation OCR matching, supports only Simplified/Traditional Chinese'
             if is_non_chinese_ui_language() else '用于自动化OCR匹配，仅支持简体/繁体中文',
             texts=['简体中文 / Simplified Chinese', '繁體中文 / Traditional Chinese'],
-            parent=self.aboutSoftwareGroup
+            parent=self.coreSettingsGroup
         )
         self.isLogCard = SwitchSettingCard(
             FIF.DEVELOPER_TOOLS,
@@ -280,20 +293,12 @@ class SettingInterface(ScrollArea):
             configItem=config.showScreenshot,
             parent=self.aboutSoftwareGroup
         )
-        self.windowTrackingInputCard = SwitchSettingCard(
-            FIF.MOVE,
-            self._ui_text('后台不抢鼠标', 'Don\'t take mouse control'),
-            self._ui_text('开启后后台点击和滚轮尽量不影响你当前鼠标操作',
-                          'Enable background input that minimizes interference with your current mouse actions'),
-            configItem=config.windowTrackingInput,
-            parent=self.aboutSoftwareGroup
-        )
         self.windowTrackingAlphaCard = SliderSettingCard(
             configItem=config.windowTrackingAlpha,
             icon=FIF.HIDE,
-            title=self._ui_text('窗口追踪透明度', 'Tracking window opacity'),
-            content=self._ui_text('数值越低越隐形：1=极度隐藏，255=正常显示',
-                                  'Lower value means more invisible: 1 = highly hidden, 255 = normal visibility'),
+            title=self._ui_text('隐身模式可见度', 'Stealth mode visibility'),
+            content=self._ui_text('数值越低越隐形：1=极度隐藏，255=正常显示。建议设置1',
+                                  'Lower value means more invisible: 1 = highly hidden, 255 = normal visibility. Recommended to set to 1'),
             parent=self.aboutSoftwareGroup,
             min_value=1,
             max_value=255,
@@ -380,12 +385,14 @@ class SettingInterface(ScrollArea):
         self.personalGroup.addSettingCard(self.zoomCard)
         self.personalGroup.addSettingCard(self.languageCard)
 
+        # Add Core Settings cards
+        self.coreSettingsGroup.addSettingCard(self.stealthModeCard)
+        self.coreSettingsGroup.addSettingCard(self.serverCard)
+        self.coreSettingsGroup.addSettingCard(self.gameLanguageCard)
+
         self.aboutSoftwareGroup.addSettingCard(self.windowTrackingAlphaCard)
-        self.aboutSoftwareGroup.addSettingCard(self.windowTrackingInputCard)
         self.aboutSoftwareGroup.addSettingCard(self.updateOnStartUpCard)
         self.aboutSoftwareGroup.addSettingCard(self.checkPrereleaseForStableCard)
-        self.aboutSoftwareGroup.addSettingCard(self.serverCard)
-        self.aboutSoftwareGroup.addSettingCard(self.gameLanguageCard)
         self.aboutSoftwareGroup.addSettingCard(self.isLogCard)
         self.aboutSoftwareGroup.addSettingCard(self.showScreenshotCard)
         self.aboutSoftwareGroup.addSettingCard(self.saveScaleCacheCard)
@@ -403,6 +410,7 @@ class SettingInterface(ScrollArea):
         headerSpacer = QWidget(self.scrollWidget)
         headerSpacer.setFixedHeight(6)
         self.expandLayout.addWidget(headerSpacer)
+        self.expandLayout.addWidget(self.coreSettingsGroup)
         self.expandLayout.addWidget(self.personalGroup)
         self.expandLayout.addWidget(self.aboutSoftwareGroup)
 
@@ -485,10 +493,6 @@ class SettingInterface(ScrollArea):
                     self._ui_text("最新版本：获取失败", "Latest version: Failed to fetch")
                 )
     def _sync_stealth_controls(self, checked: bool, alpha: int):
-        try:
-            self.windowTrackingInputCard.setChecked(bool(checked), emit=False)
-        except Exception:
-            pass
         try:
             if hasattr(self, "windowTrackingAlphaCard") and self.windowTrackingAlphaCard is not None:
                 self.windowTrackingAlphaCard.sync_from_config()
