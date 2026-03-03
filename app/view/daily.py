@@ -327,6 +327,12 @@ class Daily(QFrame, Ui_home, BaseInterface):
         self.ScrollArea.enableTransparentBackground()
         self.ScrollArea_tips.enableTransparentBackground()
 
+        # 将“日程提醒”整个卡片移动到日志栏下方，保持原边框与高度
+        self.gridLayout_2.removeWidget(self.SimpleCardWidget)
+        self.gridLayout_2.removeWidget(self.SimpleCardWidget_tips)
+        self.gridLayout_2.addWidget(self.SimpleCardWidget, 0, 2, 1, 1)
+        self.gridLayout_2.addWidget(self.SimpleCardWidget_tips, 1, 2, 1, 1)
+
     def _connect_to_slot(self):
         self.PushButton_start.clicked.connect(self.on_start_button_click)
         self.PrimaryPushButton_path_tutorial.clicked.connect(self.on_path_tutorial_click)
@@ -1160,14 +1166,14 @@ class Daily(QFrame, Ui_home, BaseInterface):
         items_list = []
         try:
             for key, value in tips_dic.items():
-                if self.SimpleCardWidget_tips.findChild(BodyLabel, name=f"BodyLabel_tip_{index + 1}"):
-                    BodyLabel_tip = self.SimpleCardWidget_tips.findChild(BodyLabel, name=f"BodyLabel_tip_{index + 1}")
+                if self.scrollAreaWidgetContents_tips.findChild(BodyLabel, name=f"BodyLabel_tip_{index + 1}"):
+                    BodyLabel_tip = self.scrollAreaWidgetContents_tips.findChild(BodyLabel, name=f"BodyLabel_tip_{index + 1}")
                 else:
                     # 创建label
                     BodyLabel_tip = BodyLabel(self.scrollAreaWidgetContents_tips)
                     BodyLabel_tip.setObjectName(f"BodyLabel_tip_{index + 1}")
-                if self.SimpleCardWidget_tips.findChild(ProgressBar, name=f"ProgressBar_tip{index + 1}"):
-                    ProgressBar_tip = self.SimpleCardWidget_tips.findChild(ProgressBar,
+                if self.scrollAreaWidgetContents_tips.findChild(ProgressBar, name=f"ProgressBar_tip{index + 1}"):
+                    ProgressBar_tip = self.scrollAreaWidgetContents_tips.findChild(ProgressBar,
                                                                            name=f"ProgressBar_tip{index + 1}")
                 else:
                     # 创建进度条
