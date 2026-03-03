@@ -163,13 +163,13 @@ class DisplayInterface(ScrollArea):
         quick_jump.addSampleCard(
             icon=os.path.join(self.basedir, "setting.svg"),
             title="Settings" if self._is_non_chinese_ui else "设置",
-            content="App settings" if self._is_non_chinese_ui else self.tr("软件相关设置"),
+            content="Please set up the automata acacia settings first" if self._is_non_chinese_ui else self.tr("首次下载请先设置自律姬"),
             routeKey="settingInterface",
             index=0,
         )
         quick_jump.addSampleCard(
             icon=os.path.join(self.basedir, "play.svg"),
-            title="Start Now" if self._is_non_chinese_ui else "立刻日常",
+            title="Start Daily" if self._is_non_chinese_ui else "立刻日常",
             content="SAA handles daily tasks in one click" if self._is_non_chinese_ui else self.tr("自律姬帮你一键种草。"),
             routeKey="Home-Start-Now",
             index=0,
