@@ -117,7 +117,7 @@ class PersonModule:
                     time.sleep(0.5)
                     continue
                 else:
-                    self.logger.warn(f"未找到对应速战，检查是否已刷取或是否解锁{person_name}的速战")
+                    self.logger.warning(f"未找到对应速战，检查是否已刷取或是否解锁{person_name}的速战")
                     break
             else:
                 self.scroll_page()
@@ -138,7 +138,7 @@ class PersonModule:
                 self.logger.info(f"找到对应的“速战”：({pos},{min_distance})")
                 return pos
             else:
-                self.logger.warn(
+                self.logger.warning(
                     f"“速战”距离大于{250 / self.auto.scale_x}：({pos},{min_distance})，不是{person_name}的速战")
                 return None
         return pos

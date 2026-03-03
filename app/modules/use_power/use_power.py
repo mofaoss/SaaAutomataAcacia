@@ -243,7 +243,7 @@ class UsePowerModule:
                                            offset=(-34 / self.auto.scale_x, 140 / self.auto.scale_y),
                                            is_log=self.is_log):
                     if not self.wait_activity_task_tab(timeout_seconds=8):
-                        self.logger.warn(f"第{attempt}次进入活动页面失败，准备重试")
+                        self.logger.warning(f"第{attempt}次进入活动页面失败，准备重试")
                         continue
                     clicked_task = self.auto.click_element('任务', 'text', crop=(0, 1280 / 1440, 1, 1),
                                                            is_log=self.is_log)
@@ -252,7 +252,7 @@ class UsePowerModule:
                                                                is_log=self.is_log)
 
             if not clicked_task:
-                self.logger.warn(f"第{attempt}次未找到活动任务入口，准备重试")
+                self.logger.warning(f"第{attempt}次未找到活动任务入口，准备重试")
                 continue
 
             if self.wait_activity_reward_page(timeout_seconds=8):
@@ -264,7 +264,7 @@ class UsePowerModule:
                     self.logger.info("已打开活动奖励页面，当前无可领取奖励")
                 return True
 
-            self.logger.warn(f"第{attempt}次活动奖励页面未打开，准备重试")
+            self.logger.warning(f"第{attempt}次活动奖励页面未打开，准备重试")
 
         return False
 
@@ -305,7 +305,7 @@ class UsePowerModule:
                         enter_maneuver_flag = True
                         continue
                     else:
-                        self.logger.warn("活动奖励页面未成功打开，继续重试")
+                        self.logger.warning("活动奖励页面未成功打开，继续重试")
                         time.sleep(0.5)
                         continue
 
@@ -315,7 +315,7 @@ class UsePowerModule:
                     finish_flag = True
                     enter_maneuver_flag = True
                     self.auto.press_key('esc')
-                    self.logger.warn("材料本未解锁“深渊”难度")
+                    self.logger.warning("材料本未解锁“深渊”难度")
                     time.sleep(0.5)
                     continue
                 if self.auto.click_element('速战', 'text', crop=(1368 / 1920, 963 / 1080, 1592 / 1920, 1),
@@ -395,7 +395,7 @@ class UsePowerModule:
                         if self.wait_activity_reward_page(timeout_seconds=8):
                             enter_task = True
                         else:
-                            self.logger.warn("等待活动任务奖励页面超时，重试打开任务")
+                            self.logger.warning("等待活动任务奖励页面超时，重试打开任务")
                         continue
                 else:
                     if self.auto.find_element("恢复感知", "text",
@@ -500,7 +500,7 @@ class UsePowerModule:
                     scroll_no_progress_count += 1
                     no_progress_count = 0
                     if scroll_no_progress_count >= 10:
-                        self.logger.warn("查找“浴火之战”连续滚动无进展，尝试重置页面")
+                        self.logger.warning("查找“浴火之战”连续滚动无进展，尝试重置页面")
                         stage = stage_enter_action
                         scroll_no_progress_count = 0
                     continue
@@ -527,7 +527,7 @@ class UsePowerModule:
                     scroll_no_progress_count += 1
                     no_progress_count = 0
                     if scroll_no_progress_count >= 10:
-                        self.logger.warn("查找“深渊”连续滚动无进展，尝试重置页面")
+                        self.logger.warning("查找“深渊”连续滚动无进展，尝试重置页面")
                         stage = stage_enter_action
                         scroll_no_progress_count = 0
                     continue
@@ -542,7 +542,7 @@ class UsePowerModule:
 
             no_progress_count += 1
             if no_progress_count >= 8:
-                self.logger.warn("常规后勤当前页面无进展，重试")
+                self.logger.warning("常规后勤当前页面无进展，重试")
                 self.auto.back_to_home()
                 time.sleep(0.4)
                 no_progress_count = 0

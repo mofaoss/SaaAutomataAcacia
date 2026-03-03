@@ -160,7 +160,7 @@ class ShoppingModule:
                         is_selected = True
                         continue
                     else:
-                        self.logger.warn(self._ui_text(f'商店没有{self._display_name(text)}',
+                        self.logger.warning(self._ui_text(f'商店没有{self._display_name(text)}',
                                                       f'{self._display_name(text)} not found in shop'))
                         finish_list.append(text)
                         # 更新text
@@ -183,7 +183,7 @@ class ShoppingModule:
                     continue
                 if self.auto.find_element('不足', 'text', crop=(866 / 1920, 513 / 1080, 1048 / 1920, 880 / 1080),
                                           is_log=self.is_log):
-                    self.logger.warn(self._ui_text('买不起了，杂鱼~', 'Insufficient currency'))
+                    self.logger.warning(self._ui_text('买不起了，杂鱼~', 'Insufficient currency'))
                     break
                 if self.auto.click_element('最大', 'text', crop=(1713 / 1920, 822 / 1080, 1, 895 / 1080),
                                            is_log=self.is_log):
@@ -263,7 +263,7 @@ class ShoppingModule:
     def scroll_to_bottom(self, scroll_times=3):
         for _ in range(scroll_times):
             if not self.scroll_once():
-                self.logger.warn(self._ui_text("商店滚动失败：本轮所有滚轮点位均未生效",
+                self.logger.warning(self._ui_text("商店滚动失败：本轮所有滚轮点位均未生效",
                                               "Shop scroll failed: all fallback points were ineffective"))
 
     def scroll_once(self):

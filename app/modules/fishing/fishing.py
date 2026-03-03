@@ -51,7 +51,7 @@ class FishingModule:
                 self.start_fish()
                 self.after_fish()
             except Exception as e:
-                self.logger.warn(e)
+                self.logger.warning(e)
                 break
 
     def enter_fish(self):
@@ -173,7 +173,7 @@ class FishingModule:
                     if self.is_use_time_judge:
                         # 识别出未进入黄色区域，则进行时间判断、
                         if time.time() - self.start_time > 2.2:
-                            self.logger.warn("咋回事？强制收杆一次")
+                            self.logger.warning("咋回事？强制收杆一次")
                             self.start_time = time.time()
                             self.auto.press_key(self.press_key)
             # 低性能模式判断方案
@@ -210,7 +210,7 @@ class FishingModule:
                 break
             if self.auto.find_element('鱼跑掉了', 'text', crop=(858 / 1920, 151 / 1080, 1054 / 1920, 280 / 1080),
                                       is_log=self.is_log):
-                self.logger.warn("鱼跑了，空军！")
+                self.logger.warning("鱼跑了，空军！")
                 break
             # 如果回到了未甩杆状态，也退出
             if not self.is_spin_rod():

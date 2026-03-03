@@ -42,7 +42,7 @@ class BaseTask:
 
         # 记录结果
         status = "符合" if is_16_9 else "不符合"
-        self.logger.warn(
+        self.logger.warning(
             f"窗口客户区尺寸: {client_width}x{client_height} "
             f"({actual_ratio:.3f}:1), {status}16:9标准比例"
         )
@@ -50,7 +50,7 @@ class BaseTask:
             self.auto.scale_x = 1920 / client_width
             self.auto.scale_y = 1080 / client_height
         else:
-            self.logger.warn("游戏窗口不符合16:9比例，请手动调整。")
+            self.logger.warning("游戏窗口不符合16:9比例，请手动调整。")
 
         return is_16_9
 

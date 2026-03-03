@@ -271,12 +271,12 @@ class MainWindow(FluentWindow):
 
             if self.homeInterface.CheckBox_open_game_directly.isChecked():
                 if config.LineEdit_game_directory.value == './':
-                    logger.warn(f"未配置游戏路径，请先根据教程配置路径")
+                    logger.warning(f"未配置游戏路径，请先根据教程配置路径")
                 else:
                     logger.info(f"开始自动运行日常")
                     self.homeInterface.on_start_button_click()
             else:
-                logger.warn(f'未勾选"自动打开游戏"')
+                logger.warning(f'未勾选"自动打开游戏"')
 
         self._finish_splash_screen()
         QTimer.singleShot(0, self._show_update_popup_if_needed)
@@ -585,7 +585,7 @@ class MainWindow(FluentWindow):
         self._splashFrameRendered = False
         self.splashScreen.iconWidget.show()
         self.splashScreen.setIconSize(self.SPLASH_ICON_SIZE)
-        logger.warn(f'启动动画不可用，已回退静态 logo：{reason}')
+        logger.warning(f'启动动画不可用，已回退静态 logo：{reason}')
 
     def _finish_splash_screen(self):
         if self.splashMovie is not None and self.splashShownAt is not None:

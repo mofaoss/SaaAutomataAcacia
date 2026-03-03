@@ -153,12 +153,12 @@ class StartThread(QThread):
         self._is_running = False
         if reason:
             self._interrupted_reason = reason
-            self.logger.warn(f"检测到中断，停止自动任务：{reason}")
+            self.logger.warning(f"检测到中断，停止自动任务：{reason}")
         if self.session.auto is not None:
             try:
                 self.session.stop()
             except Exception as e:
-                self.logger.warn(f"停止自动任务时发生异常，已忽略：{e}")
+                self.logger.warning(f"停止自动任务时发生异常，已忽略：{e}")
 
     def run(self):
         self.is_running_signal.emit('start')
@@ -225,7 +225,7 @@ class StartThread(QThread):
         except Exception as e:
             ocr.stop_ocr()
             if str(e) != '已停止':
-                self.logger.warn(e)
+                self.logger.warning(e)
             # traceback.print_exc()
         finally:
             if self.session.auto is not None:
@@ -1047,7 +1047,7 @@ class Daily(QFrame, BaseInterface):
             if self.launch_process is not None and self.launch_process.poll() is not None:
                 self._clear_launch_watch_state()
                 self._set_launch_pending_state(False)
-                logger.warn('启动流程已中断：检测到游戏进程退出，已取消本次自动任务')
+                logger.warning('启动流程已中断：检测到游戏进程退出，已取消本次自动任务')
                 InfoBar.warning(
                     title=self._ui_text('启动已中断', 'Launch interrupted'),
                     content=self._ui_text('检测到游戏被关闭或启动失败，已停止后续任务。',
@@ -1063,7 +1063,7 @@ class Daily(QFrame, BaseInterface):
             if self.launch_deadline and time.time() > self.launch_deadline:
                 self._clear_launch_watch_state()
                 self._set_launch_pending_state(False)
-                logger.warn('等待游戏窗口超时，已取消本次自动任务')
+                logger.warning('等待游戏窗口超时，已取消本次自动任务')
                 InfoBar.warning(
                     title=self._ui_text('等待超时', 'Launch timeout'),
                     content=self._ui_text('长时间未检测到游戏窗口，已停止后续任务。',
@@ -1088,18 +1088,24 @@ class Daily(QFrame, BaseInterface):
             return
 
         checkbox_dic = {}
+        login_task_checked = False
         sequence = self._normalize_task_sequence(config.daily_task_sequence.value)
         for task_cfg in sequence:
-            meta = TASK_REGISTRY.get(task_cfg.get("id"))
+            task_id = task_cfg.get("id")
+            meta = TASK_REGISTRY.get(task_id)
             if not meta:
                 continue
             option_key = meta["option_key"]
-            task_item = self.task_widget_map.get(task_cfg.get("id"))
+            task_item = self.task_widget_map.get(task_id)
             is_checked = bool(task_item.checkbox.isChecked()) if task_item else False
-            checkbox_dic[option_key] = is_checked and self.should_run_task(task_cfg)
+            if task_id == "task_login":
+                login_task_checked = is_checked
+                checkbox_dic[option_key] = is_checked
+            else:
+                checkbox_dic[option_key] = is_checked and self.should_run_task(task_cfg)
 
         # 开启游戏:勾选了自动登录、游戏窗口未打开且勾选了自动登录游戏
-        if config.CheckBox_open_game_directly.value and not is_exist_snowbreak() and config.CheckBox_entry_1.value:
+        if config.CheckBox_open_game_directly.value and not is_exist_snowbreak() and login_task_checked:
             self.checkbox_dic = checkbox_dic
             self.open_game_directly()
         else:
@@ -1183,7 +1189,7 @@ class Daily(QFrame, BaseInterface):
                 return
 
             self._stop_running_guard()
-            logger.warn('检测到游戏窗口已关闭，正在停止当前自动任务')
+            logger.warning('检测到游戏窗口已关闭，正在停止当前自动任务')
             if self.start_thread is not None and self.start_thread.isRunning():
                 self.start_thread.stop(reason=self._ui_text('用户中断：游戏窗口已关闭',
                                                             'Interrupted by user: game window closed'))
@@ -1199,7 +1205,7 @@ class Daily(QFrame, BaseInterface):
             if self.game_hwnd:
                 win32gui.SendMessage(self.game_hwnd, win32con.WM_CLOSE, 0, 0)
             else:
-                self.logger.warn('home未获取窗口句柄，无法关闭游戏')
+                self.logger.warning('home未获取窗口句柄，无法关闭游戏')
             self.parent.close()
         elif self.ComboBox_after_use.currentIndex() == 2:
             self.parent.close()
@@ -1207,7 +1213,7 @@ class Daily(QFrame, BaseInterface):
             if self.game_hwnd:
                 win32gui.SendMessage(self.game_hwnd, win32con.WM_CLOSE, 0, 0)
             else:
-                self.logger.warn('home未获取窗口句柄，无法关闭游戏')
+                self.logger.warning('home未获取窗口句柄，无法关闭游戏')
 
     def set_checkbox_enable(self, enable: bool):
         for checkbox in self.findChildren(CheckBox):

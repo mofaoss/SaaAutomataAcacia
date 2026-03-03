@@ -111,7 +111,7 @@ class WaterBombModule:
                 continue
             if self.auto.click_element('重新开始', 'text', crop=(1670 / 1920, 954 / 1080, 1800 / 1920, 1000 / 1080),
                                        is_log=self.is_log, threshold=self.template_threshold):
-                self.logger.warn(f"对战失败，连胜中断")
+                self.logger.warning(f"对战失败，连胜中断")
                 self.is_speed_up = False
                 self.current_win = 0
                 # 新一轮，重置计时器
@@ -122,7 +122,7 @@ class WaterBombModule:
             if self.auto.click_element('翻倍连战', 'text', crop=(1670 / 1920, 954 / 1080, 1800 / 1920, 1000 / 1080),
                                        is_log=self.is_log, threshold=self.template_threshold):
                 self.current_win += 1
-                self.logger.warn(f"对战胜利，当前连胜为：{self.current_win}")
+                self.logger.warning(f"对战胜利，当前连胜为：{self.current_win}")
                 if self.current_win >= self.end_win:
                     self.logger.info(f'已达成{self.end_win}连胜')
                     self.auto.press_key('esc')
@@ -175,7 +175,7 @@ class WaterBombModule:
                         self.update_hp_and_bullet()
                         self.update_extra_status()
                         win_prob, current_strategy = self.get_action_and_probability()
-                        self.logger.warn(self.get_status_dic())
+                        self.logger.warning(self.get_status_dic())
                         self.logger.info(f'当前最佳操作为：{current_strategy}, 胜率为：{win_prob}')
                         if win_prob == 0:
                             self.restart()
@@ -270,7 +270,7 @@ class WaterBombModule:
                 self.logger.error('重开超时')
                 break
         self.is_speed_up = False
-        self.logger.warn('胜率为0，选择重开')
+        self.logger.warning('胜率为0，选择重开')
 
     def handle_shooting(self, person):
         """处理开枪策略下的逻辑"""

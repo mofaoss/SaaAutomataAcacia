@@ -60,7 +60,7 @@ class DrinkModule:
             if self.auto.find_element('玩法', 'text', crop=(1000 / 2560, 682 / 1440, 1555 / 2560, 750 / 1440),
                                       is_log=self.is_log):
                 self.enter_success = False
-                self.logger.warn("玩法未解锁")
+                self.logger.warning("玩法未解锁")
                 break
 
             if self.auto.click_element(self.select_list, 'text',

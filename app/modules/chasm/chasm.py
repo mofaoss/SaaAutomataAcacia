@@ -13,7 +13,7 @@ class ChasmModule:
 
     def run(self):
         if not self.is_in_time_range():
-            self.logger.warn('当前未开放拟境')
+            self.logger.warning('当前未开放拟境')
         else:
             self.is_log = config.isLog.value
             self.auto.back_to_home()
@@ -35,7 +35,7 @@ class ChasmModule:
                 break
             if self.auto.find_element(['拟境重构'], 'text', crop=(1516 / 1920, 145 / 1080, 1620 / 1920, 174 / 1080),
                                        is_log=self.is_log):
-                self.logger.warn('当前未开放拟境')
+                self.logger.warning('当前未开放拟境')
                 return False
             if self.auto.click_element('确定', 'text', crop=(1888 / 2560, 980 / 1440, 2020 / 2560, 1059 / 1440),
                                        is_log=self.is_log):
@@ -93,7 +93,7 @@ class ChasmModule:
             if not self.auto.find_element("app/resource/images/chasm/reward.png", "image",
                                               threshold=0.65, crop=(62 / 1920, 857 / 1080, 193 / 1920, 973 / 1080),
                                               is_log=self.is_log):
-                self.logger.warn('当前未开放拟境')
+                self.logger.warning('当前未开放拟境')
                 break
 
             if enter_flag:

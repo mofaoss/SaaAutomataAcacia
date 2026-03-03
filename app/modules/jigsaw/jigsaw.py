@@ -271,7 +271,7 @@ class JigsawModule:
                     self.give_score_and_display_best()
                     break
                     # if len(self.piece_solution) < config.SpinBox_max_solutions.value:
-                    #     logger.warn(
+                    #     logger.warning(
                     #         f'目前总共只有{len(self.piece_solution)}种能填满全部格子的方案，不足{config.SpinBox_max_solutions.value}')
                     # if self.place_jigsaw(best_solution):
                     #     if self.after_place():
@@ -287,7 +287,7 @@ class JigsawModule:
                     #     logger.error("未能正确拼完，可以按照给出的最优方案手动拼完")
                     #     break
                 else:
-                    self.logger.warn("没有找到能填满全部格子的方案")
+                    self.logger.warning("没有找到能填满全部格子的方案")
                     break
             else:
                 self.logger.error("未识别出对应的地图")

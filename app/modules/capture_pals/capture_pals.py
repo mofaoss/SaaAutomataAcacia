@@ -253,7 +253,7 @@ class CapturePalsModule:
             result = self.capture_once(island)
 
             if result == "CAP_REACHED":
-                self.logger.warn(f"{island.name}：检测到每日抓帕鲁上限，停止该岛定点抓帕鲁")
+                self.logger.warning(f"{island.name}：检测到每日抓帕鲁上限，停止该岛定点抓帕鲁")
                 break
 
             if result == "NO_COLLECT_HINT":
@@ -285,12 +285,12 @@ class CapturePalsModule:
             result = self.capture_once(island)
 
             if result == "CAP_REACHED":
-                self.logger.warn(f"{island.name}：检测到每日抓帕鲁上限，停止该岛巡逻抓帕鲁")
+                self.logger.warning(f"{island.name}：检测到每日抓帕鲁上限，停止该岛巡逻抓帕鲁")
                 break
 
             if result == "NO_COLLECT_HINT":
                 no_collect_streak += 1
-                self.logger.warn(
+                self.logger.warning(
                     f"{island.name}：本轮未找到F抓帕鲁提示，连续次数={no_collect_streak}/{self.PATROL_NO_COLLECT_MAX}"
                 )
                 if no_collect_streak >= self.PATROL_NO_COLLECT_MAX:
@@ -331,7 +331,7 @@ class CapturePalsModule:
             """返回 True 表示该岛已完结/异常，需要立即停止"""
             if result == "CAP_REACHED":
                 st.done = True
-                self.logger.warn(f"{st.profile.name}：检测到每日抓帕鲁上限（同步模式将不再前往该岛）")
+                self.logger.warning(f"{st.profile.name}：检测到每日抓帕鲁上限（同步模式将不再前往该岛）")
                 return True
 
             if result == "NO_COLLECT_HINT":
@@ -419,14 +419,14 @@ class CapturePalsModule:
         # ==========================================
         while self.auto.running:
             if all_finished_or_error():
-                self.logger.warn("同步抓帕鲁：所有任务完成或异常，结束")
+                self.logger.warning("同步抓帕鲁：所有任务完成或异常，结束")
                 return
 
             # A. 检查当前岛是否还可用
             if not available(current):
                 current, other = other, current # 交换
                 if not available(current):
-                    self.logger.warn("同步抓帕鲁：无剩余可用岛，结束")
+                    self.logger.warning("同步抓帕鲁：无剩余可用岛，结束")
                     return
                 # 交换后需要进入新岛
                 if not enter_island(current):
