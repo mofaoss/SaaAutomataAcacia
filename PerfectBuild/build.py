@@ -116,7 +116,7 @@ class PerfectBuild:
             "--show-memory",
             "--standalone",
             "--assume-yes-for-downloads",
-            "--plugin-enable=pyqt5",
+            "--plugin-enable=pyside6",
             f"--output-dir={output_dir}",
             "--windows-uac-admin",
             "--windows-console-mode=disable",
