@@ -1,10 +1,12 @@
 from __future__ import annotations
 
-from PySide6.QtCore import QSize, Qt
+from PySide6.QtCore import QSize, Qt, Signal
 from PySide6.QtWidgets import (
-    QFrame,
+    QAbstractSpinBox,
+    QAbstractItemView,
     QGridLayout,
     QHBoxLayout,
+    QListWidgetItem,
     QSizePolicy,
     QVBoxLayout,
     QWidget,
@@ -14,16 +16,387 @@ from qfluentwidgets import (
     BodyLabel,
     CheckBox,
     ComboBox,
+    FluentIcon as FIF,
     LineEdit,
+    ListWidget,
     PopUpAniStackedWidget,
     PrimaryPushButton,
     PushButton,
     ScrollArea,
     SimpleCardWidget,
+    SpinBox,
     StrongBodyLabel,
     TitleLabel,
     ToolButton,
 )
+
+
+class TaskListView(ListWidget):
+    orderChanged = Signal(list)
+
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self.setDragDropMode(QAbstractItemView.DragDropMode.InternalMove)
+        self.setDefaultDropAction(Qt.DropAction.MoveAction)
+        self.setStyleSheet(
+            "TaskListView { background: transparent; border: none; outline: none; }"
+            "TaskListView::item { background: transparent; }"
+        )
+        self.model().rowsMoved.connect(self._emit_order_changed)
+
+    def _emit_order_changed(self):
+        self.orderChanged.emit(self.get_task_order())
+
+    def add_task_item(self, task_item_widget):
+        item = QListWidgetItem(self)
+        item.setSizeHint(QSize(200, 38))
+        item.setData(Qt.ItemDataRole.UserRole, task_item_widget.task_id)
+        self.addItem(item)
+        self.setItemWidget(item, task_item_widget)
+
+    def get_task_order(self):
+        return [
+            self.item(i).data(Qt.ItemDataRole.UserRole)
+            for i in range(self.count())
+            if self.item(i).data(Qt.ItemDataRole.UserRole)
+        ]
+
+
+class TaskItemWidget(QWidget):
+    checkbox_state_changed = Signal(str, bool)
+    settings_clicked = Signal(str)
+
+    def __init__(self, task_id, zh_name, en_name, is_enabled, is_non_chinese_ui, parent=None):
+        super().__init__(parent)
+        self.task_id = task_id
+
+        layout = QHBoxLayout(self)
+        layout.setContentsMargins(4, 4, 4, 4)
+        layout.setSpacing(6)
+
+        self.checkbox = CheckBox(parent=self)
+        cb_font = self.checkbox.font()
+        if cb_font.pointSize() <= 0:
+            cb_font.setPointSize(10)
+            self.checkbox.setFont(cb_font)
+        self.checkbox.setChecked(is_enabled)
+        self.checkbox.stateChanged.connect(
+            lambda: self.checkbox_state_changed.emit(self.task_id, self.checkbox.isChecked())
+        )
+
+        self.label = BodyLabel(en_name if is_non_chinese_ui else zh_name, self)
+
+        self.btn = ToolButton(self)
+        self.btn.setIcon(FIF.SETTING)
+        btn_font = self.btn.font()
+        btn_font.setPointSize(10)
+        self.btn.setFont(btn_font)
+        self.btn.clicked.connect(lambda: self.settings_clicked.emit(self.task_id))
+
+        layout.addWidget(self.checkbox, 0)
+        layout.addWidget(self.label, 1)
+        layout.addStretch(1)
+        layout.addWidget(self.btn, 0)
+
+
+class ExecutionRuleWidget(QWidget):
+    deleted = Signal(QWidget)
+    changed = Signal()
+
+    def __init__(self, is_non_chinese_ui=False, parent=None):
+        super().__init__(parent)
+        self.is_non_chinese_ui = is_non_chinese_ui
+
+        layout = QHBoxLayout(self)
+        layout.setContentsMargins(0, 0, 0, 0)
+        layout.setSpacing(6)
+
+        self.freq_combo = ComboBox(self)
+        self.freq_combo.addItems(
+            ["Daily", "Weekly", "Monthly"] if is_non_chinese_ui else ["每天", "每周", "每月"]
+        )
+        self.week_combo = ComboBox(self)
+        self.week_combo.addItems(
+            ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"]
+            if is_non_chinese_ui
+            else ["周一", "周二", "周三", "周四", "周五", "周六", "周日"]
+        )
+        self.month_combo = ComboBox(self)
+        self.month_combo.addItems(
+            [str(day) for day in range(1, 32)]
+            if is_non_chinese_ui
+            else [f"{day}日" for day in range(1, 32)]
+        )
+        self.month_combo.setFixedWidth(72)
+
+        self.time_edit = LineEdit(self)
+        self.time_edit.setText("05:00")
+        self.time_edit.setFixedWidth(70)
+
+        self.runs_spin = SpinBox(self)
+        self.runs_spin.setRange(1, 99)
+        self.runs_spin.setMinimumWidth(120)
+        self.runs_spin.setPrefix("Count: " if is_non_chinese_ui else "次数: ")
+        self.runs_spin.setButtonSymbols(QAbstractSpinBox.ButtonSymbols.NoButtons)
+
+        self.delete_btn = ToolButton(self)
+        self.delete_btn.setIcon(FIF.DELETE)
+
+        for w in [self.freq_combo, self.week_combo, self.month_combo, self.time_edit, self.runs_spin, self.delete_btn]:
+            font = w.font()
+            font.setPointSize(10)
+            w.setFont(font)
+
+        layout.addWidget(self.freq_combo)
+        layout.addWidget(self.week_combo)
+        layout.addWidget(self.month_combo)
+        time_label_text = "Time:" if is_non_chinese_ui else "时间:"
+        layout.addWidget(BodyLabel(time_label_text, self))
+        layout.addWidget(self.time_edit)
+        layout.addWidget(BodyLabel("after" if is_non_chinese_ui else "后", self))
+        layout.addWidget(self.runs_spin)
+        layout.addWidget(self.delete_btn)
+        layout.addStretch(1)
+
+        self.freq_combo.currentIndexChanged.connect(self._update_visibility)
+        self.delete_btn.clicked.connect(lambda: self.deleted.emit(self))
+
+        for w in [self.freq_combo, self.week_combo, self.month_combo]:
+            w.currentIndexChanged.connect(self.changed)
+        for w in [self.runs_spin]:
+            w.valueChanged.connect(self.changed)
+        self.time_edit.editingFinished.connect(self.changed)
+
+        self._update_visibility()
+
+    def _update_visibility(self):
+        idx = self.freq_combo.currentIndex()
+        self.week_combo.setVisible(idx == 1)
+        self.month_combo.setVisible(idx == 2)
+        self.changed.emit()
+
+    def set_data(self, data: dict):
+        types = ["daily", "weekly", "monthly"]
+        try:
+            idx = types.index(data.get("type", "daily"))
+            self.freq_combo.setCurrentIndex(idx)
+            if idx == 1:
+                self.week_combo.setCurrentIndex(data.get("day", 0))
+            elif idx == 2:
+                month_day = int(data.get("day", 1))
+                month_day = max(1, min(31, month_day))
+                self.month_combo.setCurrentIndex(month_day - 1)
+            self.time_edit.setText(data.get("time", "05:00"))
+            self.runs_spin.setValue(data.get("max_runs", 1))
+        except Exception:
+            pass
+        self._update_visibility()
+
+    def get_data(self):
+        t = ["daily", "weekly", "monthly"]
+        idx = self.freq_combo.currentIndex()
+        day = self.week_combo.currentIndex() if idx == 1 else (self.month_combo.currentIndex() + 1)
+        return {
+            "type": t[idx],
+            "day": day,
+            "time": self.time_edit.text(),
+            "max_runs": self.runs_spin.value(),
+        }
+
+
+class SharedSchedulingPanel(QWidget):
+    config_changed = Signal(str, dict)
+
+    def __init__(self, is_non_chinese_ui=False, parent=None):
+        super().__init__(parent)
+        self.task_id = None
+        self.is_non_chinese_ui = is_non_chinese_ui
+        self.setFixedHeight(220)
+
+        self.setStyleSheet("SharedSchedulingPanel { border-top: 1px solid rgba(0,0,0,0.1); }")
+
+        main_layout = QVBoxLayout(self)
+        main_layout.setContentsMargins(8, 8, 8, 8)
+        main_layout.setSpacing(6)
+
+        activation_row = QHBoxLayout()
+        activation_row.setContentsMargins(0, 0, 0, 0)
+        activation_row.setSpacing(6)
+
+        enable_text = "Enable Cycle" if is_non_chinese_ui else "启用周期"
+        self.enable_checkbox = CheckBox(enable_text, self)
+        font = self.enable_checkbox.font()
+        font.setPointSize(10)
+        self.enable_checkbox.setFont(font)
+        activation_row.addWidget(self.enable_checkbox)
+        activation_row.addStretch(1)
+
+        activation_label_text = "Activation:" if is_non_chinese_ui else "生效周期："
+        self.activation_label = StrongBodyLabel(activation_label_text, self)
+        activation_row.addWidget(self.activation_label)
+        activation_row.addSpacing(2)
+
+        self.activation_widget = QWidget(self)
+        self.activation_widget.setStyleSheet("background: transparent;")
+        self.activation_widget.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Fixed)
+        self.activation_widget.setMaximumHeight(42)
+        self.activation_layout = QVBoxLayout(self.activation_widget)
+        self.activation_layout.setContentsMargins(0, 0, 0, 0)
+        self.activation_layout.setSpacing(0)
+        self.activation_layout.addStretch(1)
+        activation_row.addWidget(self.activation_widget, 1)
+
+        main_layout.addLayout(activation_row)
+
+        exec_title = "Execution Triggers (Add multiple times)" if is_non_chinese_ui else "执行策略（可添加多个时间点）"
+        main_layout.addWidget(StrongBodyLabel(exec_title, self))
+
+        self.rules_scroll = ScrollArea(self)
+        self.rules_scroll.setWidgetResizable(True)
+        self.rules_scroll.setStyleSheet("QScrollArea { background: transparent; border: none; }")
+
+        self.rules_widget = QWidget(self.rules_scroll)
+        self.rules_widget.setStyleSheet("background: transparent;")
+        self.rules_layout = QVBoxLayout(self.rules_widget)
+        self.rules_layout.setContentsMargins(0, 0, 0, 0)
+        self.rules_layout.setSpacing(6)
+        self.rules_layout.addStretch(1)
+
+        self.rules_scroll.setWidget(self.rules_widget)
+        main_layout.addWidget(self.rules_scroll, 1)
+
+        add_text = "Add Trigger" if is_non_chinese_ui else "添加时间"
+        self.add_btn = PushButton(FIF.ADD, add_text, self)
+        btn_font = self.add_btn.font()
+        btn_font.setPointSize(10)
+        self.add_btn.setFont(btn_font)
+        self.add_btn.clicked.connect(lambda: self._add_rule({}))
+        main_layout.addWidget(self.add_btn)
+
+        self.enable_checkbox.stateChanged.connect(self._emit_change)
+
+    def _iter_activation_rule_widgets(self):
+        for i in range(self.activation_layout.count() - 1):
+            widget = self.activation_layout.itemAt(i).widget()
+            if isinstance(widget, ExecutionRuleWidget):
+                yield widget
+
+    def _add_activation_rule(self, data):
+        w = ExecutionRuleWidget(self.is_non_chinese_ui, self)
+        w.runs_spin.setVisible(False)
+        w.runs_spin.setEnabled(False)
+        w.runs_spin.setValue(1)
+        w.delete_btn.setVisible(False)
+        w.delete_btn.setEnabled(False)
+        w.deleted.connect(self._remove_activation_rule)
+        w.changed.connect(self._emit_change)
+        if data:
+            w.set_data(data)
+        self.activation_layout.insertWidget(self.activation_layout.count() - 1, w)
+        self._update_activation_delete_btns()
+        self._emit_change()
+
+    def _remove_activation_rule(self, w):
+        if len(list(self._iter_activation_rule_widgets())) <= 1:
+            return
+        self.activation_layout.removeWidget(w)
+        w.deleteLater()
+        self._update_activation_delete_btns()
+        self._emit_change()
+
+    def _update_activation_delete_btns(self):
+        rules = list(self._iter_activation_rule_widgets())
+        for w in rules:
+            w.delete_btn.setVisible(False)
+            w.delete_btn.setEnabled(False)
+
+    def _iter_rule_widgets(self):
+        for i in range(self.rules_layout.count() - 1):
+            widget = self.rules_layout.itemAt(i).widget()
+            if isinstance(widget, ExecutionRuleWidget):
+                yield widget
+
+    def _add_rule(self, data):
+        w = ExecutionRuleWidget(self.is_non_chinese_ui, self)
+        w.deleted.connect(self._remove_rule)
+        w.changed.connect(self._emit_change)
+        if data:
+            w.set_data(data)
+        self.rules_layout.insertWidget(self.rules_layout.count() - 1, w)
+        self._update_delete_btns()
+        self._emit_change()
+
+    def _remove_rule(self, w):
+        if len(list(self._iter_rule_widgets())) <= 1:
+            return
+        self.rules_layout.removeWidget(w)
+        w.deleteLater()
+        self._update_delete_btns()
+        self._emit_change()
+
+    def _update_delete_btns(self):
+        rules = list(self._iter_rule_widgets())
+        can_delete = len(rules) > 1
+        for w in rules:
+            w.delete_btn.setVisible(can_delete)
+
+    def load_task(self, task_id, config_dict):
+        self.task_id = task_id
+
+        self.enable_checkbox.blockSignals(True)
+
+        self.enable_checkbox.setChecked(config_dict.get("use_periodic", True))
+
+        self.enable_checkbox.blockSignals(False)
+
+        while self.activation_layout.count() > 1:
+            item = self.activation_layout.takeAt(0)
+            widget = item.widget()
+            if widget:
+                widget.deleteLater()
+
+        activation_rules = config_dict.get("activation_config")
+        if activation_rules is None:
+            activation_rules = config_dict.get("refresh_config", {}) or {}
+        if isinstance(activation_rules, dict):
+            activation_rules = [activation_rules]
+        if not activation_rules:
+            activation_rules = [{"type": "daily", "time": "05:00", "max_runs": 1}]
+
+        self._add_activation_rule(activation_rules[0])
+
+        self._update_activation_delete_btns()
+
+        while self.rules_layout.count() > 1:
+            item = self.rules_layout.takeAt(0)
+            widget = item.widget()
+            if widget:
+                widget.deleteLater()
+
+        rules = config_dict.get("execution_config", [{"type": "daily", "time": "05:00", "max_runs": 1}])
+        if isinstance(rules, dict):
+            rules = [rules]
+        if not rules:
+            rules = [{"type": "daily", "time": "05:00", "max_runs": 1}]
+
+        for rule in rules:
+            self._add_rule(rule)
+
+        self._update_delete_btns()
+
+    def _emit_change(self):
+        if not self.task_id:
+            return
+
+        activation_rules = [w.get_data() for w in self._iter_activation_rule_widgets()]
+        rules = [w.get_data() for w in self._iter_rule_widgets()]
+
+        new_cfg = {
+            "use_periodic": self.enable_checkbox.isChecked(),
+            "activation_config": activation_rules,
+            "execution_config": rules,
+        }
+        self.config_changed.emit(self.task_id, new_cfg)
 
 
 class BaseDailyPage(QWidget):
@@ -40,7 +413,7 @@ class BaseDailyPage(QWidget):
 
 class EnterGamePage(BaseDailyPage):
     def __init__(self, parent=None):
-        super().__init__("page_5", parent)
+        super().__init__("page_5", parent=parent)
 
         top_line = QHBoxLayout()
         self.StrongBodyLabel_4 = StrongBodyLabel(self)
@@ -64,7 +437,6 @@ class EnterGamePage(BaseDailyPage):
 
         self.BodyLabel_enter_tip = BodyLabel(self)
         self.BodyLabel_enter_tip.setObjectName("BodyLabel_enter_tip")
-        self.BodyLabel_enter_tip.setText("")
         self.BodyLabel_enter_tip.setTextFormat(Qt.TextFormat.MarkdownText)
         self.BodyLabel_enter_tip.setWordWrap(True)
 
@@ -77,7 +449,7 @@ class EnterGamePage(BaseDailyPage):
 
 class CollectSuppliesPage(BaseDailyPage):
     def __init__(self, parent=None):
-        super().__init__("page_3", parent)
+        super().__init__("page_3", parent=parent)
 
         self.CheckBox_mail = CheckBox(self)
         self.CheckBox_mail.setObjectName("CheckBox_mail")
@@ -118,7 +490,7 @@ class CollectSuppliesPage(BaseDailyPage):
 
 class ShopPage(BaseDailyPage):
     def __init__(self, parent=None):
-        super().__init__("page_shop", parent)
+        super().__init__("page_shop", parent=parent)
 
         self.ScrollArea = ScrollArea(self)
         self.ScrollArea.setObjectName("ScrollArea")
@@ -166,7 +538,7 @@ class ShopPage(BaseDailyPage):
 
 class UsePowerPage(BaseDailyPage):
     def __init__(self, parent=None):
-        super().__init__("page_2", parent)
+        super().__init__("page_2", parent=parent)
 
         first_line = QHBoxLayout()
         self.CheckBox_is_use_power = CheckBox(self)
@@ -192,7 +564,7 @@ class UsePowerPage(BaseDailyPage):
 
 class PersonPage(BaseDailyPage):
     def __init__(self, parent=None):
-        super().__init__("page_4", parent)
+        super().__init__("page_4", parent=parent)
 
         self.StrongBodyLabel_3 = StrongBodyLabel(self)
         self.StrongBodyLabel_3.setObjectName("StrongBodyLabel_3")
@@ -235,7 +607,7 @@ class PersonPage(BaseDailyPage):
         self.finalize()
 
     @staticmethod
-    def _line(label: BodyLabel, edit: LineEdit) -> QHBoxLayout:
+    def _line(label, edit):
         line = QHBoxLayout()
         line.addWidget(label, 1)
         line.addWidget(edit, 2)
@@ -243,9 +615,10 @@ class PersonPage(BaseDailyPage):
 
 
 class DailyView(QWidget):
-    def __init__(self, parent=None):
+    def __init__(self, parent=None, is_non_chinese_ui=False):
         super().__init__(parent)
         self.setObjectName("daily")
+        self.is_non_chinese_ui = is_non_chinese_ui
 
         self.gridLayout_2 = QGridLayout(self)
         self.gridLayout_2.setObjectName("gridLayout_2")
@@ -258,42 +631,28 @@ class DailyView(QWidget):
         self._build_log_card()
         self._build_tips_card()
 
-        self.gridLayout_2.setRowStretch(0, 2)
-        self.gridLayout_2.setRowStretch(1, 1)
+        # Force the top row to expand and the bottom row to stay compact
+        self.gridLayout_2.setRowStretch(0, 1)
+        self.gridLayout_2.setRowStretch(1, 0)
 
     def _build_option_card(self):
         self.SimpleCardWidget_option = SimpleCardWidget(self)
         self.SimpleCardWidget_option.setObjectName("SimpleCardWidget_option")
-        self.SimpleCardWidget_option.setMinimumSize(QSize(237, 320))
+        self.SimpleCardWidget_option.setMinimumWidth(200)
 
         layout = QVBoxLayout(self.SimpleCardWidget_option)
         layout.setContentsMargins(9, 9, 9, 9)
         layout.setSpacing(6)
 
-        option_rows = [
-            ("CheckBox_entry_1", "ToolButton_entry", True),
-            ("CheckBox_stamina_2", "ToolButton_collect", True),
-            ("CheckBox_shop_3", "ToolButton_shop", True),
-            ("CheckBox_use_power_4", "ToolButton_use_power", True),
-            ("CheckBox_person_5", "ToolButton_person", True),
-            ("CheckBox_chasm_6", "ToolButton_chasm", False),
-            ("CheckBox_reward_7", "ToolButton_reward", False),
-        ]
-
-        for checkbox_name, button_name, enabled in option_rows:
-            row = QHBoxLayout()
-            checkbox = CheckBox(self.SimpleCardWidget_option)
-            checkbox.setObjectName(checkbox_name)
-            button = ToolButton(self.SimpleCardWidget_option)
-            button.setObjectName(button_name)
-            button.setEnabled(enabled)
-            setattr(self, checkbox_name, checkbox)
-            setattr(self, button_name, button)
-            row.addWidget(checkbox, 1)
-            row.addWidget(button)
-            layout.addLayout(row)
+        self.taskListWidget = TaskListView(self.SimpleCardWidget_option)
+        self.taskListWidget.setObjectName("taskListWidget")
+        layout.addWidget(self.taskListWidget, 1)
 
         btn_row = QHBoxLayout()
+        hint_text = "Drag to reorder" if self.is_non_chinese_ui else "拖动可调整任务顺序"
+        self.hint_label = BodyLabel(hint_text, self.SimpleCardWidget_option)
+        self.hint_label.setObjectName("BodyLabel_drag_hint")
+        btn_row.addWidget(self.hint_label, 1)
         btn_row.addStretch(1)
         self.PushButton_select_all = PushButton(self.SimpleCardWidget_option)
         self.PushButton_select_all.setObjectName("PushButton_select_all")
@@ -301,16 +660,17 @@ class DailyView(QWidget):
         self.PushButton_no_select.setObjectName("PushButton_no_select")
         btn_row.addWidget(self.PushButton_select_all)
         btn_row.addWidget(self.PushButton_no_select)
+
         layout.addSpacing(6)
         layout.addLayout(btn_row)
-        layout.addStretch(1)
 
         self.gridLayout_2.addWidget(self.SimpleCardWidget_option, 0, 0, 1, 1)
 
     def _build_action_card(self):
         self.SimpleCardWidget_3 = SimpleCardWidget(self)
         self.SimpleCardWidget_3.setObjectName("SimpleCardWidget_3")
-        self.SimpleCardWidget_3.setMinimumSize(QSize(237, 165))
+        self.SimpleCardWidget_3.setMinimumWidth(237)
+        self.SimpleCardWidget_3.setFixedHeight(220)
 
         layout = QVBoxLayout(self.SimpleCardWidget_3)
         self.BodyLabel = BodyLabel(self.SimpleCardWidget_3)
@@ -334,9 +694,10 @@ class DailyView(QWidget):
     def _build_setting_card(self):
         self.SimpleCardWidget_2 = SimpleCardWidget(self)
         self.SimpleCardWidget_2.setObjectName("SimpleCardWidget_2")
-        self.SimpleCardWidget_2.setMinimumSize(QSize(237, 320))
+        self.SimpleCardWidget_2.setMinimumWidth(237)
 
         layout = QVBoxLayout(self.SimpleCardWidget_2)
+        layout.setContentsMargins(9, 9, 9, 9)
         layout.setSpacing(4)
 
         self.TitleLabel_setting = TitleLabel(self.SimpleCardWidget_2)
@@ -358,29 +719,28 @@ class DailyView(QWidget):
         self.PopUpAniStackedWidget.addWidget(self.page_person)
 
         layout.addWidget(self.TitleLabel_setting)
-        layout.addWidget(self.PopUpAniStackedWidget)
+        layout.addWidget(self.PopUpAniStackedWidget, 1)
 
-        self.gridLayout_2.addWidget(self.SimpleCardWidget_2, 0, 1, 1, 1)
+        self.shared_scheduling_panel = SharedSchedulingPanel(self.is_non_chinese_ui, self.SimpleCardWidget_2)
+        self.shared_scheduling_panel.setObjectName("shared_scheduling_panel")
+        layout.addWidget(self.shared_scheduling_panel, 0)
+
+        self.gridLayout_2.addWidget(self.SimpleCardWidget_2, 0, 1, 2, 1)
 
         self._alias_page_widgets()
 
     def _alias_page_widgets(self):
         page_attrs = [
-            # enter
             "StrongBodyLabel_4", "PrimaryPushButton_path_tutorial", "CheckBox_open_game_directly",
             "LineEdit_game_directory", "PushButton_select_directory", "BodyLabel_enter_tip",
-            # collect
             "CheckBox_mail", "CheckBox_redeem_code", "CheckBox_dormitory", "CheckBox_fish_bait",
             "PushButton_reset_codes", "PrimaryPushButton_import_codes", "textBrowser_import_codes",
             "BodyLabel_collect_supplies",
-            # shop
             "ScrollArea", "scrollAreaWidgetContents", "gridLayout", "StrongBodyLabel", "widget", "widget_2",
             "CheckBox_buy_3", "CheckBox_buy_4", "CheckBox_buy_5", "CheckBox_buy_6", "CheckBox_buy_7",
             "CheckBox_buy_8", "CheckBox_buy_9", "CheckBox_buy_10", "CheckBox_buy_11", "CheckBox_buy_12",
             "CheckBox_buy_13", "CheckBox_buy_14", "CheckBox_buy_15",
-            # use power
             "ComboBox_power_usage", "StrongBodyLabel_2", "CheckBox_is_use_power", "ComboBox_power_day", "BodyLabel_6",
-            # person
             "BodyLabel_8", "LineEdit_c4", "BodyLabel_person_tip", "BodyLabel_5", "LineEdit_c3",
             "CheckBox_is_use_chip", "BodyLabel_3", "LineEdit_c1", "StrongBodyLabel_3", "BodyLabel_4", "LineEdit_c2",
         ]
@@ -395,7 +755,9 @@ class DailyView(QWidget):
     def _build_log_card(self):
         self.SimpleCardWidget = SimpleCardWidget(self)
         self.SimpleCardWidget.setObjectName("SimpleCardWidget")
-        self.SimpleCardWidget.setMinimumSize(QSize(246, 485))
+        self.SimpleCardWidget.setMinimumWidth(246)
+        self.SimpleCardWidget.setMinimumHeight(0)
+        self.SimpleCardWidget.setSizePolicy(QSizePolicy.Policy.Preferred, QSizePolicy.Policy.Ignored)
 
         layout = QVBoxLayout(self.SimpleCardWidget)
         layout.setSpacing(4)
@@ -414,7 +776,10 @@ class DailyView(QWidget):
     def _build_tips_card(self):
         self.SimpleCardWidget_tips = SimpleCardWidget(self)
         self.SimpleCardWidget_tips.setObjectName("SimpleCardWidget_tips")
-        self.SimpleCardWidget_tips.setMinimumSize(QSize(237, 165))
+        self.SimpleCardWidget_tips.setMinimumWidth(237)
+        self.SimpleCardWidget_tips.setMinimumHeight(0)
+        self.SimpleCardWidget_tips.setSizePolicy(QSizePolicy.Policy.Preferred, QSizePolicy.Policy.Ignored)
+        self.SimpleCardWidget_tips.setFixedHeight(220)
 
         layout = QVBoxLayout(self.SimpleCardWidget_tips)
         layout.setSpacing(3)

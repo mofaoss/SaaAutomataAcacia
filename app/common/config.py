@@ -131,6 +131,30 @@ class Config(QConfig):
     CheckBox_chasm_6 = ConfigItem("home_interface_option", "CheckBox_chasm", False, BoolValidator())
     CheckBox_reward_7 = ConfigItem("home_interface_option", "CheckBox_reward", False, BoolValidator())
 
+    daily_task_sequence = ConfigItem("DailyTasks", "TaskSequence", [
+        {"id": "task_login", "enabled": True, "use_periodic": True,
+            "activation_config": [{"type": "daily", "day": 0, "time": "05:00", "max_runs": 1}],
+         "execution_config": [{"type": "daily", "day": 0, "time": "05:00", "max_runs": 1}], "last_run": 0},
+        {"id": "task_supplies", "enabled": True, "use_periodic": True,
+            "activation_config": [{"type": "daily", "day": 0, "time": "05:00", "max_runs": 1}],
+         "execution_config": [{"type": "daily", "day": 0, "time": "05:00", "max_runs": 1}], "last_run": 0},
+        {"id": "task_shop", "enabled": True, "use_periodic": True,
+            "activation_config": [{"type": "daily", "day": 0, "time": "05:00", "max_runs": 1}],
+         "execution_config": [{"type": "daily", "day": 0, "time": "05:00", "max_runs": 1}], "last_run": 0},
+        {"id": "task_stamina", "enabled": True, "use_periodic": True,
+            "activation_config": [{"type": "daily", "day": 0, "time": "05:00", "max_runs": 1}],
+         "execution_config": [{"type": "daily", "day": 0, "time": "05:00", "max_runs": 1}], "last_run": 0},
+        {"id": "task_shards", "enabled": True, "use_periodic": True,
+            "activation_config": [{"type": "daily", "day": 0, "time": "05:00", "max_runs": 1}],
+         "execution_config": [{"type": "daily", "day": 0, "time": "05:00", "max_runs": 1}], "last_run": 0},
+        {"id": "task_chasm", "enabled": False, "use_periodic": True,
+            "activation_config": [{"type": "weekly", "day": 0, "time": "05:00", "max_runs": 1}],
+         "execution_config": [{"type": "weekly", "day": 0, "time": "05:00", "max_runs": 1}], "last_run": 0},
+        {"id": "task_reward", "enabled": False, "use_periodic": True,
+            "activation_config": [{"type": "daily", "day": 0, "time": "05:00", "max_runs": 1}],
+         "execution_config": [{"type": "daily", "day": 0, "time": "05:00", "max_runs": 1}], "last_run": 0},
+    ])
+
     CheckBox_buy_3 = ConfigItem("home_interface_shopping", "CheckBox_buy_3", False, BoolValidator())
     CheckBox_buy_4 = ConfigItem("home_interface_shopping", "CheckBox_buy_4", False, BoolValidator())
     CheckBox_buy_5 = ConfigItem("home_interface_shopping", "CheckBox_buy_5", False, BoolValidator())

@@ -1,5 +1,4 @@
 import copy
-import html
 import os
 import re
 import sys
@@ -7,7 +6,7 @@ import time
 import traceback
 from datetime import datetime
 from functools import partial
-from typing import Dict, Any
+from typing import Dict, Any, List
 
 import win32con
 import win32gui
@@ -21,13 +20,11 @@ from app.common.config import config, is_non_chinese_ui_language
 from app.common.data_models import Coordinates, UpdateData, RedeemCode, ApiData, ApiResponse, parse_config_update_data
 from app.common.logger import logger
 from app.common.signal_bus import signalBus
-from app.common.setting import REPO_URL
 from app.common.style_sheet import StyleSheet
 from utils.game_launcher import launch_game_with_guard
 from utils.net_utils import get_cloudflare_data, get_date_from_api
 from utils.ui_utils import get_all_children
-from utils.updater_utils import get_gitee_text, get_local_version, is_remote_version_newer, get_github_release_channels, \
-    is_prerelease_version
+from utils.updater_utils import get_gitee_text
 from utils.win_utils import is_exist_snowbreak
 from app.modules.base_task.base_task import BaseTask
 from app.modules.chasm.chasm import ChasmModule
@@ -40,8 +37,61 @@ from app.modules.shopping.shopping import ShoppingModule
 from app.modules.use_power.use_power import UsePowerModule
 from app.repackage.custom_message_box import CustomMessageBox
 from app.repackage.tree import TreeFrame_person, TreeFrame_weapon
-from app.view.daily_view import DailyView
+from app.view.daily_view import DailyView, TaskItemWidget
 from app.view.base_interface import BaseInterface
+
+
+TASK_REGISTRY = {
+    "task_login": {
+        "module_class": EnterGameModule,
+        "ui_page_index": 0,
+        "option_key": "CheckBox_entry_1",
+        "zh_name": "自动登录",
+        "en_name": "Auto Login",
+    },
+    "task_supplies": {
+        "module_class": CollectSuppliesModule,
+        "ui_page_index": 1,
+        "option_key": "CheckBox_stamina_2",
+        "zh_name": "领取物资",
+        "en_name": "Collect Supplies",
+    },
+    "task_shop": {
+        "module_class": ShoppingModule,
+        "ui_page_index": 2,
+        "option_key": "CheckBox_shop_3",
+        "zh_name": "商店购买",
+        "en_name": "Shop",
+    },
+    "task_stamina": {
+        "module_class": UsePowerModule,
+        "ui_page_index": 3,
+        "option_key": "CheckBox_use_power_4",
+        "zh_name": "刷体力",
+        "en_name": "Use Stamina",
+    },
+    "task_shards": {
+        "module_class": PersonModule,
+        "ui_page_index": 4,
+        "option_key": "CheckBox_person_5",
+        "zh_name": "人物碎片",
+        "en_name": "Character Shards",
+    },
+    "task_chasm": {
+        "module_class": ChasmModule,
+        "ui_page_index": None,
+        "option_key": "CheckBox_chasm_6",
+        "zh_name": "精神拟境",
+        "en_name": "Neural Simulation",
+    },
+    "task_reward": {
+        "module_class": GetRewardModule,
+        "ui_page_index": None,
+        "option_key": "CheckBox_reward_7",
+        "zh_name": "领取奖励",
+        "en_name": "Claim Rewards",
+    },
+}
 
 
 class CloudflareUpdateThread(QThread):
@@ -261,7 +311,7 @@ class Daily(QFrame, BaseInterface):
         self.person_text_to_key = {**self.person_dic, **self.person_dic_en}
         self.weapon_text_to_key = {**self.weapon_dic, **self.weapon_dic_en}
 
-        self.ui = DailyView(self)
+        self.ui = DailyView(self, is_non_chinese_ui=self._is_non_chinese_ui)
         root_layout = QVBoxLayout(self)
         root_layout.setContentsMargins(0, 0, 0, 0)
         root_layout.setSpacing(0)
@@ -269,6 +319,9 @@ class Daily(QFrame, BaseInterface):
         self.setObjectName(text.replace(' ', '-'))
         self.parent = parent
         self.logger = logger
+        self.task_widget_map: Dict[str, TaskItemWidget] = {}
+        self._task_sequence_cache: List[Dict[str, Any]] = []
+        self._init_task_list_widgets()
 
         self.is_running = False
         self.select_person = TreeFrame_person(
@@ -303,6 +356,8 @@ class Daily(QFrame, BaseInterface):
         if config.checkUpdateAtStartUp.value:
             # self.update_online()
             self.update_online_cloudflare()
+        else:
+            self.get_tips()
 
     def __getattr__(self, item):
         ui = self.__dict__.get('ui')
@@ -367,6 +422,8 @@ class Daily(QFrame, BaseInterface):
         self.gridLayout.addWidget(self.select_weapon, 2, 0)
 
         self._load_config()
+        self._sync_task_sequence_from_ui()
+        self._load_initial_task_panel()
         # 和其他控件有相关状态判断的，要放在load_config后
         self.ComboBox_power_day.setEnabled(self.CheckBox_is_use_power.isChecked())
         self.PushButton_select_directory.setEnabled(self.CheckBox_open_game_directly.isChecked())
@@ -391,17 +448,167 @@ class Daily(QFrame, BaseInterface):
         self.PrimaryPushButton_import_codes.clicked.connect(self.on_import_codes_click)
         self.PushButton_reset_codes.clicked.connect(self.on_reset_codes_click)
 
-        self.ToolButton_entry.clicked.connect(lambda: self.set_current_index(0))
-        self.ToolButton_collect.clicked.connect(lambda: self.set_current_index(1))
-        self.ToolButton_shop.clicked.connect(lambda: self.set_current_index(2))
-        self.ToolButton_use_power.clicked.connect(lambda: self.set_current_index(3))
-        self.ToolButton_person.clicked.connect(lambda: self.set_current_index(4))
+        for task_id, task_item in self.task_widget_map.items():
+            task_item.settings_clicked.connect(self._on_task_settings_clicked)
+            task_item.checkbox_state_changed.connect(self._on_task_checkbox_changed)
+
+        self.taskListWidget.orderChanged.connect(self._on_task_order_changed)
+        self.ui.shared_scheduling_panel.config_changed.connect(self._on_shared_config_changed)
 
         self.CheckBox_open_game_directly.stateChanged.connect(self.change_auto_open)
 
         signalBus.sendHwnd.connect(self.set_hwnd)
 
         self._connect_to_save_changed()
+
+    def _normalize_task_sequence(self, sequence):
+        defaults = copy.deepcopy(config.daily_task_sequence.defaultValue)
+        default_by_id = {item["id"]: item for item in defaults}
+
+        normalized = []
+        seen = set()
+        for item in sequence or []:
+            task_id = item.get("id")
+            if task_id not in default_by_id:
+                continue
+            merged = copy.deepcopy(default_by_id[task_id])
+            merged.update(item)
+            activation_rules = merged.get("activation_config")
+            if activation_rules is None:
+                activation_rules = merged.get("refresh_config", {}) or {}
+            if isinstance(activation_rules, dict):
+                activation_rules = [activation_rules]
+            if not activation_rules:
+                activation_rules = [{"type": "daily", "day": 0, "time": "05:00", "max_runs": 1}]
+            merged["activation_config"] = activation_rules
+            merged.pop("refresh_config", None)
+
+            execution_rules = merged.get("execution_config") or []
+            if isinstance(execution_rules, dict):
+                execution_rules = [execution_rules]
+            if not execution_rules:
+                execution_rules = [{"type": "daily", "day": 0, "time": "05:00", "max_runs": 1}]
+            merged["execution_config"] = execution_rules
+            normalized.append(merged)
+            seen.add(task_id)
+
+        for item in defaults:
+            if item["id"] not in seen:
+                normalized.append(copy.deepcopy(item))
+
+        return normalized
+
+    def _save_task_sequence(self, sequence):
+        self._task_sequence_cache = sequence
+        config.set(config.daily_task_sequence, sequence)
+
+    def _init_task_list_widgets(self):
+        sequence = self._normalize_task_sequence(config.daily_task_sequence.value)
+        self._save_task_sequence(sequence)
+
+        self.taskListWidget.clear()
+        self.task_widget_map.clear()
+
+        for task_cfg in sequence:
+            task_id = task_cfg.get("id")
+            meta = TASK_REGISTRY.get(task_id)
+            if not meta:
+                continue
+
+            task_item = TaskItemWidget(
+                task_id=task_id,
+                zh_name=meta["zh_name"],
+                en_name=meta["en_name"],
+                is_enabled=bool(task_cfg.get("enabled", True)),
+                is_non_chinese_ui=self._is_non_chinese_ui,
+                parent=self.taskListWidget,
+            )
+            task_item.checkbox.setObjectName(meta["option_key"])
+            self.taskListWidget.add_task_item(task_item)
+            self.task_widget_map[task_id] = task_item
+            setattr(self, meta["option_key"], task_item.checkbox)
+
+    def _sync_task_sequence_from_ui(self):
+        sequence = self._normalize_task_sequence(config.daily_task_sequence.value)
+        task_by_id = {item["id"]: item for item in sequence}
+
+        for task_id, task_item in self.task_widget_map.items():
+            if task_id in task_by_id:
+                task_by_id[task_id]["enabled"] = task_item.checkbox.isChecked()
+
+        ordered = []
+        for task_id in self.taskListWidget.get_task_order():
+            if task_id in task_by_id:
+                ordered.append(task_by_id.pop(task_id))
+        ordered.extend(task_by_id.values())
+        self._save_task_sequence(ordered)
+
+    def _load_initial_task_panel(self):
+        sequence = self._normalize_task_sequence(config.daily_task_sequence.value)
+        for task_cfg in sequence:
+            task_id = task_cfg.get("id")
+            if task_id in TASK_REGISTRY:
+                self._on_task_settings_clicked(task_id)
+                break
+
+    def _on_task_checkbox_changed(self, task_id: str, is_checked: bool):
+        sequence = self._normalize_task_sequence(config.daily_task_sequence.value)
+        for task_cfg in sequence:
+            if task_cfg.get("id") == task_id:
+                task_cfg["enabled"] = bool(is_checked)
+                break
+        self._save_task_sequence(sequence)
+
+    def _on_task_order_changed(self, task_id_order: list):
+        sequence = self._normalize_task_sequence(config.daily_task_sequence.value)
+        task_by_id = {item["id"]: item for item in sequence}
+        ordered = []
+        for task_id in task_id_order:
+            if task_id in task_by_id:
+                ordered.append(task_by_id.pop(task_id))
+        ordered.extend(task_by_id.values())
+        self._save_task_sequence(ordered)
+
+    def _on_task_settings_clicked(self, task_id: str):
+        meta = TASK_REGISTRY.get(task_id)
+        if not meta:
+            return
+
+        page_index = meta.get("ui_page_index")
+        if page_index is not None:
+            self.set_current_index(page_index)
+
+        sequence = self._normalize_task_sequence(config.daily_task_sequence.value)
+        task_cfg = next((item for item in sequence if item.get("id") == task_id), None)
+        if task_cfg is None:
+            task_cfg = copy.deepcopy({
+                "id": task_id,
+                "enabled": True,
+                "use_periodic": True,
+                "activation_config": [{"type": "daily", "day": 0, "time": "05:00", "max_runs": 1}],
+                "execution_config": [{"type": "daily", "day": 0, "time": "05:00", "max_runs": 1}],
+                "last_run": 0,
+            })
+            sequence.append(task_cfg)
+            self._save_task_sequence(sequence)
+
+        self.ui.shared_scheduling_panel.load_task(task_id, task_cfg)
+
+    def _on_shared_config_changed(self, task_id: str, new_config: dict):
+        sequence = self._normalize_task_sequence(config.daily_task_sequence.value)
+        updated = False
+        for task_cfg in sequence:
+            if task_cfg.get("id") == task_id:
+                task_cfg.update(new_config)
+                updated = True
+                break
+
+        if not updated:
+            task_cfg = {"id": task_id, "enabled": True, "last_run": 0}
+            task_cfg.update(new_config)
+            sequence.append(task_cfg)
+
+        self._save_task_sequence(sequence)
 
     def _load_config(self):
         for widget in self.findChildren(QWidget):
@@ -569,84 +776,9 @@ class Daily(QFrame, BaseInterface):
         # 获取本地保存的信息
         self.get_tips()
 
-    def _select_update_candidate(self, local_version: str, release_channels: Dict[str, Any]):
-        stable = release_channels.get("latest") if isinstance(release_channels, dict) else None
-        prerelease = release_channels.get("prerelease") if isinstance(release_channels, dict) else None
-        should_check_prerelease = is_prerelease_version(local_version) or bool(config.checkPrereleaseForStable.value)
-
-        candidates = []
-        for channel_name, release_data in (("latest", stable), ("prerelease", prerelease)):
-            if channel_name == "prerelease" and not should_check_prerelease:
-                continue
-            if not release_data:
-                continue
-            remote_version = release_data.get("version")
-            if not remote_version:
-                continue
-            if is_remote_version_newer(local_version, remote_version):
-                candidates.append({
-                    "channel": channel_name,
-                    "version": remote_version,
-                    "download_url": release_data.get("download_url"),
-                    "is_prerelease": channel_name == "prerelease"
-                })
-
-        if not candidates:
-            return None, stable, prerelease
-
-        best = candidates[0]
-        for candidate in candidates[1:]:
-            if is_remote_version_newer(best["version"], candidate["version"]):
-                best = candidate
-
-        return best, stable, prerelease
-
-    def _emit_update_clickable_log(self, best: Dict[str, Any], local_version: str):
-        download_url = str(best.get("download_url") or "").strip()
-        update_tag_zh = "测试版" if best.get("is_prerelease") else "新版本"
-        update_tag_en = "pre-release" if best.get("is_prerelease") else "update"
-
-        if download_url:
-            download_anchor = f"<a href=\"{html.escape(download_url, quote=True)}\">{self._ui_text('点击下载最新', 'Click to download latest')}</a>"
-            logger.warning(self._ui_text(
-                f"【发现{update_tag_zh}】{local_version} → {best['version']}\n"
-                f"{download_anchor}",
-                f"[{update_tag_en.title()} Available] {local_version} -> {best['version']}\n"
-                f"{download_anchor}"
-            ))
-            return
-
-        logger.warning(self._ui_text(
-            f"【发现{update_tag_zh}】{local_version} → {best['version']}\n"
-            f"暂未找到可直接下载的安装包链接",
-            f"[{update_tag_en.title()} Available] {local_version} -> {best['version']}\n"
-            f"No direct downloadable installer URL found"
-        ))
-
-    def _notify_version_update(self, local_version: str, release_channels: Dict[str, Any]):
-        best, stable, prerelease = self._select_update_candidate(local_version, release_channels)
-
-        stable_ver = stable.get("version") if stable else None
-        prerelease_ver = prerelease.get("version") if prerelease else None
-
-        if best is None:
-            if not (stable_ver or prerelease_ver):
-                logger.warning(self._ui_text(
-                    "未获取到仓库 release 版本（latest/prerelease），已跳过版本更新检查",
-                    "No repository release versions found (latest/prerelease), skipped update check"
-                ))
-            return
-
-        self._emit_update_clickable_log(best, local_version)
-
     def _handle_update_logic(self, raw_data: Dict[str, Any], online_data: Dict[str, Any], response: ApiResponse):
         """处理更新数据的业务逻辑"""
         local_config_data = parse_config_update_data(config.update_data.value)
-
-        # 版本更新检查：同时识别 latest 与 prerelease
-        release_channels = get_github_release_channels(REPO_URL)
-        local_version = get_local_version()
-        self._notify_version_update(local_version, release_channels)
 
         if not local_config_data:
             # 首次获取数据或本地数据格式不正确
@@ -956,11 +1088,15 @@ class Daily(QFrame, BaseInterface):
             return
 
         checkbox_dic = {}
-        for checkbox in self.SimpleCardWidget_option.findChildren(CheckBox):
-            if checkbox.isChecked():
-                checkbox_dic[checkbox.objectName()] = True
-            else:
-                checkbox_dic[checkbox.objectName()] = False
+        sequence = self._normalize_task_sequence(config.daily_task_sequence.value)
+        for task_cfg in sequence:
+            meta = TASK_REGISTRY.get(task_cfg.get("id"))
+            if not meta:
+                continue
+            option_key = meta["option_key"]
+            task_item = self.task_widget_map.get(task_cfg.get("id"))
+            is_checked = bool(task_item.checkbox.isChecked()) if task_item else False
+            checkbox_dic[option_key] = is_checked and self.should_run_task(task_cfg)
 
         # 开启游戏:勾选了自动登录、游戏窗口未打开且勾选了自动登录游戏
         if config.CheckBox_open_game_directly.value and not is_exist_snowbreak() and config.CheckBox_entry_1.value:
@@ -972,11 +1108,7 @@ class Daily(QFrame, BaseInterface):
     def after_start_button_click(self, checkbox_dic):
         if any(checkbox_dic.values()):
             if not self.is_running:
-                # 对字典进行排序
-                sorted_dict = dict(
-                    sorted(checkbox_dic.items(), key=lambda item: int(re.search(r'\d+', item[0]).group())))
-                # logger.debug(sorted_dict)
-                self.start_thread = StartThread(sorted_dict, self)
+                self.start_thread = StartThread(checkbox_dic, self)
                 self.start_thread.is_running_signal.connect(self.handle_start)
                 self.start_thread.start()
             else:
@@ -1083,25 +1215,93 @@ class Daily(QFrame, BaseInterface):
 
     def set_current_index(self, index):
         try:
+            if index < 0 or index >= len(self.setting_name_list):
+                return
             self.TitleLabel_setting.setText(self._ui_text("设置", "Settings") + "-" + self.setting_name_list[index])
             self.PopUpAniStackedWidget.setCurrentIndex(index)
         except Exception as e:
             self.logger.error(e)
+
+    def should_run_task(self, task_config: Dict[str, Any], now: datetime = None) -> bool:
+        if not task_config.get("enabled", False):
+            return False
+        if not task_config.get("use_periodic", True):
+            return True
+
+        if now is None:
+            now = datetime.now()
+
+        def _normalize_rules(value, default_rules):
+            if value is None:
+                return copy.deepcopy(default_rules)
+            if isinstance(value, dict):
+                value = [value]
+            if not value:
+                return copy.deepcopy(default_rules)
+            return value
+
+        def _minutes_from_rule(rule):
+            rule_time = str(rule.get("time", "00:00"))
+            parts = rule_time.split(":")
+            if len(parts) != 2:
+                return None
+            try:
+                hour = int(parts[0])
+                minute = int(parts[1])
+            except ValueError:
+                return None
+            if hour < 0 or hour > 23 or minute < 0 or minute > 59:
+                return None
+            return hour * 60 + minute
+
+        def _is_rule_matched(rule):
+            rule_type = str(rule.get("type", "daily")).lower()
+            if rule_type not in {"daily", "weekly", "monthly"}:
+                rule_type = "daily"
+
+            target_minutes = _minutes_from_rule(rule)
+            if target_minutes is None:
+                return False
+
+            now_minutes = now.hour * 60 + now.minute
+            if now_minutes < target_minutes:
+                return False
+
+            if rule_type == "weekly":
+                try:
+                    return now.weekday() == int(rule.get("day", 0))
+                except (TypeError, ValueError):
+                    return False
+
+            if rule_type == "monthly":
+                try:
+                    return now.day == int(rule.get("day", 1))
+                except (TypeError, ValueError):
+                    return False
+
+            return True
+
+        default_rules = [{"type": "daily", "day": 0, "time": "05:00", "max_runs": 1}]
+
+        activation_config = task_config.get("activation_config")
+        if activation_config is None:
+            activation_config = task_config.get("refresh_config")
+        activation_rules = _normalize_rules(activation_config, default_rules)
+
+        if not any(_is_rule_matched(rule) for rule in activation_rules):
+            return False
+
+        execution_rules = _normalize_rules(task_config.get("execution_config"), default_rules)
+        return any(_is_rule_matched(rule) for rule in execution_rules)
 
     def _ui_text(self, zh_text: str, en_text: str) -> str:
         return en_text if self._is_non_chinese_ui else zh_text
 
     def _apply_home_i18n(self):
         self.TitleLabel.setText(self._ui_text("日志", "Log"))
-        self.CheckBox_entry_1.setText(self._ui_text("自动登录", "Auto Login"))
-        self.CheckBox_stamina_2.setText(self._ui_text("领取物资", "Collect Supplies"))
-        self.CheckBox_shop_3.setText(self._ui_text("商店购买", "Shop"))
-        self.CheckBox_use_power_4.setText(self._ui_text("刷体力", "Use Stamina"))
-        self.CheckBox_person_5.setText(self._ui_text("角色碎片", "Character Shards"))
-        self.CheckBox_chasm_6.setText(self._ui_text("精神拟境", "Neural Simulation"))
-        self.CheckBox_reward_7.setText(self._ui_text("领取奖励", "Claim Rewards"))
         self.PushButton_select_all.setText(self._ui_text("全选", "Select All"))
         self.PushButton_no_select.setText(self._ui_text("清空", "Clear"))
+        self.hint_label.setText(self._ui_text("拖动可调整任务顺序", "Drag to reorder"))
         self.BodyLabel.setText(self._ui_text("结束后进行", "After Finish"))
         self.PushButton_start.setText(self._ui_text("开始", "Start"))
         self.PrimaryPushButton_path_tutorial.setText(self._ui_text("查看教程", "Tutorial"))
@@ -1140,23 +1340,33 @@ class Daily(QFrame, BaseInterface):
         self.CheckBox_buy_14.setText(self._ui_text("单极纤维", "Monopolar Fibers"))
         self.CheckBox_buy_15.setText(self._ui_text("光纤轴突", "Fiber Axon"))
 
+        for task_id, task_item in self.task_widget_map.items():
+            meta = TASK_REGISTRY.get(task_id)
+            if not meta:
+                continue
+            task_item.label.setText(meta["en_name"] if self._is_non_chinese_ui else meta["zh_name"])
+
     def save_changed(self, widget, *args):
         # logger.debug(f"触发save_changed:{widget.objectName()}")
         # 当与配置相关的控件状态改变时调用此函数保存配置
+        config_item = getattr(config, widget.objectName(), None)
+        if config_item is None:
+            return
+
         if isinstance(widget, CheckBox):
-            config.set(getattr(config, widget.objectName(), None), widget.isChecked())
+            config.set(config_item, widget.isChecked())
             if widget.objectName() == 'CheckBox_is_use_power':
                 self.ComboBox_power_day.setEnabled(widget.isChecked())
             elif widget.objectName() == 'CheckBox_open_game_directly':
                 self.PushButton_select_directory.setEnabled(widget.isChecked())
         elif isinstance(widget, ComboBox):
-            config.set(getattr(config, widget.objectName(), None), widget.currentIndex())
+            config.set(config_item, widget.currentIndex())
         elif isinstance(widget, LineEdit):
             # 对坐标进行数据转换处理
             if 'x1' in widget.objectName() or 'x2' in widget.objectName() or 'y1' in widget.objectName() or 'y2' in widget.objectName():
-                config.set(getattr(config, widget.objectName(), None), int(widget.text()))
+                config.set(config_item, int(widget.text()))
             else:
-                config.set(getattr(config, widget.objectName(), None), widget.text())
+                config.set(config_item, widget.text())
 
     def save_item_changed(self, index, check_state):
         # print(index, check_state)
