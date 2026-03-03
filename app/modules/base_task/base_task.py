@@ -55,8 +55,6 @@ class BaseTask:
             # 保存原始窗口矩形位置
             original_rect = win32gui.GetWindowRect(hwnd)
             config.set(config.is_resize, original_rect)
-            current_x = original_rect[0]
-            current_y = original_rect[1]
             # 若不符合比例则进行窗口调整
             if not is_16_9:
                 window_rect = win32gui.GetWindowRect(hwnd)
@@ -72,11 +70,11 @@ class BaseTask:
                 win32gui.SetWindowPos(
                     hwnd,
                     win32con.HWND_TOP,
-                    current_x,
-                    current_y,
+                    0,
+                    0,
                     target_window_width,
                     target_window_height,
-                    win32con.SWP_NOZORDER | win32con.SWP_NOACTIVATE
+                    win32con.SWP_NOZORDER | win32con.SWP_NOACTIVATE | win32con.SWP_NOMOVE
                 )
 
                 self.logger.warn(f"已调整窗口到16:9客户区（目标{target_client_width}x{target_client_height}）")
@@ -116,42 +114,3 @@ class BaseTask:
         else:
             self.logger.debug(f'延用auto：{self.auto.hwnd}')
             return True
-        # else:
-        #     if switch:
-        #         timeout = Timer(10).start()
-        #         while True:
-        #             try:
-        #                 self.auto = Automation(auto_dict[name][0], auto_dict[name][1], self.logger)
-        #                 self.logger.info(f'切换auto成功')
-        #                 return True
-        #             except Exception as e:
-        #                 self.logger.warn(f'未找到{auto_dict[name][0]}，等待1秒')
-        #                 time.sleep(1)
-        #             if timeout.reached():
-        #                 self.logger.error(f'切换auto超时')
-        #                 break
-
-    # def chose_auto(self, only_game=False):
-    #     """
-    #     自动选择auto，有游戏窗口时选游戏，没有游戏窗口时选启动器，都没有的时候循环，寻找频率1次/s
-    #     :return:
-    #     """
-    #     timeout = Timer(20).start()
-    #     while True:
-    #         # 每次循环重新导入
-    #         from app.modules.automation.automation import auto_starter, auto_game
-    #         if win32gui.FindWindow(None, config.LineEdit_game_name.value) or only_game:
-    #             if not auto_game:
-    #                 instantiate_automation(auto_type='game')  # 尝试实例化 auto_game
-    #             self.auto = auto_game
-    #             flag = 'game'
-    #         else:
-    #             if not auto_starter:
-    #                 instantiate_automation(auto_type='starter')  # 尝试实例化 auto_starter
-    #             self.auto = auto_starter
-    #             flag = 'starter'
-    #         if self.auto:
-    #             return flag
-    #         if timeout.reached():
-    #             logger.error("获取auto超时")
-    #             break
