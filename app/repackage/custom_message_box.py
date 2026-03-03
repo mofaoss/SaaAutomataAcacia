@@ -1,8 +1,7 @@
 import sys
-from PyQt5 import QtCore
-from PyQt5.QtCore import Qt, QUrl
-from PyQt5.QtGui import QIcon, QColor
-from PyQt5.QtWidgets import QApplication, QWidget, QHBoxLayout, QTextBrowser
+from PySide6.QtCore import Qt, QUrl
+from PySide6.QtGui import QIcon, QColor
+from PySide6.QtWidgets import QApplication, QWidget, QHBoxLayout, QTextBrowser
 
 from qfluentwidgets import MessageBoxBase, SubtitleLabel, LineEdit, PushButton, CaptionLabel, setTheme, Theme, \
     PixmapLabel, BodyLabel, TextEdit
@@ -37,7 +36,7 @@ class CustomMessageBox(MessageBoxBase):
             self.hideCancelButton()
         elif self.content_type == 'markdown':
             widget = BodyLabel(self)
-            widget.setTextFormat(QtCore.Qt.MarkdownText)
+            widget.setTextFormat(Qt.TextFormat.MarkdownText)
             widget.setWordWrap(True)
         elif self.content_type == 'text_edit':
             widget = TextEdit(self)

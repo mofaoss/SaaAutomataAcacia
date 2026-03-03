@@ -4,9 +4,9 @@ from functools import partial
 
 import cv2
 import numpy as np
-from PyQt5.QtCore import QRect
-from PyQt5.QtGui import QPainter, QColor, QPixmap
-from PyQt5.QtWidgets import QFrame, QWidget, QLabel
+from PySide6.QtCore import QRect
+from PySide6.QtGui import QPainter, QColor, QPixmap
+from PySide6.QtWidgets import QFrame, QWidget, QLabel, QVBoxLayout
 from fuzzywuzzy import process
 from qfluentwidgets import SpinBox, CheckBox, ComboBox, LineEdit, Slider
 
@@ -24,19 +24,23 @@ from app.modules.maze.maze import MazeModule
 from app.modules.operation_action.operation_action import OperationModule
 from app.modules.water_bomb.water_bomb import WaterBombModule
 from app.modules.capture_pals.capture_pals import CapturePalsModule
-from app.ui.additional_features_interface import Ui_additional_features
+from app.view.additional_features_view import AdditionalFeaturesView
 from app.view.base_interface import BaseInterface
 from app.view.subtask import AdjustColor, SubTask
 
 
-class Additional(QFrame, Ui_additional_features, BaseInterface):
+class Additional(QFrame, BaseInterface):
 
     def __init__(self, text: str, parent=None):
-        super().__init__()
+        super().__init__(parent)
         self._is_non_chinese_ui = is_non_chinese_ui_language()
         self.setting_name_list = ['商店', '体力', '奖励']
 
-        self.setupUi(self)
+        self.ui = AdditionalFeaturesView(self)
+        root_layout = QVBoxLayout(self)
+        root_layout.setContentsMargins(0, 0, 0, 0)
+        root_layout.setSpacing(0)
+        root_layout.addWidget(self.ui)
         self.setObjectName(text.replace(' ', '-'))
         self.parent = parent
 
@@ -56,6 +60,12 @@ class Additional(QFrame, Ui_additional_features, BaseInterface):
         self._initWidget()
         self._load_config()
         self._connect_to_slot()
+
+    def __getattr__(self, item):
+        ui = self.__dict__.get('ui')
+        if ui is not None and hasattr(ui, item):
+            return getattr(ui, item)
+        raise AttributeError(f"'{self.__class__.__name__}' object has no attribute '{item}'")
 
     def _initWidget(self):
         # 正向链接

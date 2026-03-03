@@ -2,7 +2,7 @@ import re
 import importlib
 from functools import lru_cache
 
-from PyQt5.QtWidgets import QWidget, QComboBox, QTabWidget
+from PySide6.QtWidgets import QWidget, QComboBox, QTabWidget
 from qfluentwidgets import InfoBar
 
 from app.common.config import is_traditional_ui_language

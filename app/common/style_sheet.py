@@ -1,5 +1,8 @@
 # coding: utf-8
 from enum import Enum
+from pathlib import Path
+
+from PySide6.QtCore import QFile
 
 from qfluentwidgets import StyleSheetBase, Theme, isDarkTheme, qconfig
 
@@ -20,4 +23,9 @@ class StyleSheet(StyleSheetBase, Enum):
 
     def path(self, theme=Theme.AUTO):
         theme = qconfig.theme if theme == Theme.AUTO else theme
-        return f":/app/resource/qss/{theme.value.lower()}/{self.value}.qss"
+        qrc_path = f":/app/resource/qss/{theme.value.lower()}/{self.value}.qss"
+        if QFile.exists(qrc_path):
+            return qrc_path
+
+        file_path = Path(__file__).resolve().parents[1] / "resource" / "qss" / theme.value.lower() / f"{self.value}.qss"
+        return str(file_path)

@@ -3,9 +3,9 @@ import os
 import sys
 from pathlib import Path
 
-from PyQt5.QtCore import Qt, QTranslator, QSize, QObject, QThread, QTimer, pyqtSignal, QPoint
-from PyQt5.QtGui import QMovie, QPixmap
-from PyQt5.QtWidgets import QApplication, QWidget, QVBoxLayout, QLabel
+from PySide6.QtCore import Qt, QTranslator, QSize, QObject, QThread, QTimer, Signal, QPoint
+from PySide6.QtGui import QMovie, QPixmap, QFont
+from PySide6.QtWidgets import QApplication, QWidget, QVBoxLayout, QLabel
 
 from app.common.config import config, resolve_configured_locale
 
@@ -14,15 +14,15 @@ class EarlySplash(QWidget):
     MAX_ANIMATION_SIZE = 220
 
     def __init__(self):
-        super().__init__(None, Qt.FramelessWindowHint | Qt.SplashScreen | Qt.WindowStaysOnTopHint)
-        self.setAttribute(Qt.WA_TranslucentBackground, True)
-        self.setAttribute(Qt.WA_AlwaysStackOnTop, True)
-        self.setAttribute(Qt.WA_ShowWithoutActivating, True)
+        super().__init__(None, Qt.WindowType.FramelessWindowHint | Qt.WindowType.SplashScreen | Qt.WindowType.WindowStaysOnTopHint)
+        self.setAttribute(Qt.WidgetAttribute.WA_TranslucentBackground, True)
+        self.setAttribute(Qt.WidgetAttribute.WA_AlwaysStackOnTop, True)
+        self.setAttribute(Qt.WidgetAttribute.WA_ShowWithoutActivating, True)
 
         self.movie = None
         self.label = QLabel(self)
-        self.label.setAlignment(Qt.AlignCenter)
-        self.label.setAttribute(Qt.WA_TranslucentBackground, True)
+        self.label.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        self.label.setAttribute(Qt.WidgetAttribute.WA_TranslucentBackground, True)
 
         layout = QVBoxLayout(self)
         layout.setContentsMargins(0, 0, 0, 0)
@@ -80,7 +80,7 @@ class EarlySplash(QWidget):
         logo_path = next((str(path) for path in logo_candidates if path.exists()), None)
         if logo_path:
             pixmap = QPixmap(logo_path)
-            display = pixmap.scaled(180, 180, Qt.KeepAspectRatio, Qt.SmoothTransformation)
+            display = pixmap.scaled(180, 180, Qt.AspectRatioMode.KeepAspectRatio, Qt.TransformationMode.SmoothTransformation)
             self.label.setPixmap(display)
             self.resize(display.size())
             self.label.setFixedSize(display.size())
@@ -144,7 +144,6 @@ class StartupController(QObject):
             self.splash.close_with_cleanup()
             raise
 
-        self.app.processEvents()
         QTimer.singleShot(0, self._run_next_task)
 
     def _on_import_ready(self, imported: dict):
@@ -182,8 +181,8 @@ class StartupController(QObject):
 
 
 class RuntimeImportWorker(QThread):
-    ready = pyqtSignal(dict)
-    failed = pyqtSignal(str)
+    ready = Signal(dict)
+    failed = Signal(str)
 
     def run(self):
         try:
@@ -208,10 +207,13 @@ def main():
     else:
         QApplication.setHighDpiScaleFactorRoundingPolicy(
             Qt.HighDpiScaleFactorRoundingPolicy.PassThrough)
-        QApplication.setAttribute(Qt.AA_EnableHighDpiScaling)
 
     app = QApplication(sys.argv)
-    app.setAttribute(Qt.AA_DontCreateNativeWidgetSiblings)
+    app_font = app.font()
+    if app_font.pointSize() <= 0:
+        app_font.setPointSize(10)
+        app.setFont(app_font)
+    app.setAttribute(Qt.ApplicationAttribute.AA_DontCreateNativeWidgetSiblings)
 
     early_splash = EarlySplash()
     early_splash.show_centered(app)

@@ -1,7 +1,7 @@
 # coding:utf-8
-from PyQt5.QtCore import Qt, QUrl
-from PyQt5.QtGui import QDesktopServices
-from PyQt5.QtWidgets import QWidget, QFrame, QLabel, QVBoxLayout, QHBoxLayout, QGraphicsOpacityEffect
+from PySide6.QtCore import Qt, QUrl
+from PySide6.QtGui import QDesktopServices
+from PySide6.QtWidgets import QWidget, QFrame, QLabel, QVBoxLayout, QHBoxLayout, QGraphicsOpacityEffect
 
 from qfluentwidgets import IconWidget, TextWrap, FlowLayout, CardWidget, FluentIcon, SwitchButton
 from ..common.signal_bus import signalBus
@@ -45,9 +45,9 @@ class SampleCard(CardWidget):
         self.hBoxLayout.setContentsMargins(20, 0, 0, 0)
         self.vBoxLayout.setSpacing(2)
         self.vBoxLayout.setContentsMargins(0, 0, 0, 0)
-        self.vBoxLayout.setAlignment(Qt.AlignVCenter)
+        self.vBoxLayout.setAlignment(Qt.AlignmentFlag.AlignVCenter)
 
-        self.hBoxLayout.setAlignment(Qt.AlignVCenter)
+        self.hBoxLayout.setAlignment(Qt.AlignmentFlag.AlignVCenter)
         self.hBoxLayout.addWidget(self.iconWidget)
         self.hBoxLayout.addLayout(self.vBoxLayout)
         self.vBoxLayout.addStretch(1)
@@ -68,14 +68,14 @@ class SampleCard(CardWidget):
         self.iconOpacityEffect.setOpacity(1)
         self.titleOpacityEffect.setOpacity(1)
         self.contentOpacityEffect.setOpacity(1)
-        self.setCursor(Qt.PointingHandCursor)  # 设置鼠标指针为手形
+        self.setCursor(Qt.CursorShape.PointingHandCursor)  # 设置鼠标指针为手形
 
     def leaveEvent(self, event):
         super().leaveEvent(event)
         self.iconOpacityEffect.setOpacity(0.8)
         self.titleOpacityEffect.setOpacity(0.8)
         self.contentOpacityEffect.setOpacity(0.8)
-        self.setCursor(Qt.ArrowCursor)  # 恢复鼠标指针的默认形状
+        self.setCursor(Qt.CursorShape.ArrowCursor)  # 恢复鼠标指针的默认形状
 
 
 class SampleCard_URL(CardWidget):
@@ -121,9 +121,9 @@ class SampleCard_URL(CardWidget):
         self.hBoxLayout.setContentsMargins(20, 0, 0, 0)
         self.vBoxLayout.setSpacing(2)
         self.vBoxLayout.setContentsMargins(0, 0, 0, 0)
-        self.vBoxLayout.setAlignment(Qt.AlignVCenter)
+        self.vBoxLayout.setAlignment(Qt.AlignmentFlag.AlignVCenter)
 
-        self.hBoxLayout.setAlignment(Qt.AlignVCenter)
+        self.hBoxLayout.setAlignment(Qt.AlignmentFlag.AlignVCenter)
         self.hBoxLayout.addWidget(self.iconWidget)
         self.hBoxLayout.addLayout(self.vBoxLayout)
         self.hBoxLayout.addStretch(2)
@@ -147,7 +147,7 @@ class SampleCard_URL(CardWidget):
         self.titleOpacityEffect.setOpacity(1)
         self.contentOpacityEffect.setOpacity(1)
         self.urlOpacityEffect.setOpacity(1)
-        self.setCursor(Qt.PointingHandCursor)  # 设置鼠标指针为手形
+        self.setCursor(Qt.CursorShape.PointingHandCursor)  # 设置鼠标指针为手形
 
     def leaveEvent(self, event):
         super().leaveEvent(event)
@@ -155,7 +155,7 @@ class SampleCard_URL(CardWidget):
         self.titleOpacityEffect.setOpacity(0.8)
         self.contentOpacityEffect.setOpacity(0.8)
         self.urlOpacityEffect.setOpacity(0.8)
-        self.setCursor(Qt.ArrowCursor)  # 恢复鼠标指针的默认形状
+        self.setCursor(Qt.CursorShape.ArrowCursor)  # 恢复鼠标指针的默认形状
 
 
 class SampleCard_Switch(CardWidget):
@@ -195,9 +195,9 @@ class SampleCard_Switch(CardWidget):
         self.hBoxLayout.setContentsMargins(20, 0, 14, 0)
         self.vBoxLayout.setSpacing(2)
         self.vBoxLayout.setContentsMargins(0, 0, 0, 0)
-        self.vBoxLayout.setAlignment(Qt.AlignVCenter)
+        self.vBoxLayout.setAlignment(Qt.AlignmentFlag.AlignVCenter)
 
-        self.hBoxLayout.setAlignment(Qt.AlignVCenter)
+        self.hBoxLayout.setAlignment(Qt.AlignmentFlag.AlignVCenter)
         self.hBoxLayout.addWidget(self.iconWidget)
         self.hBoxLayout.addLayout(self.vBoxLayout)
         self.hBoxLayout.addStretch(2)
@@ -231,14 +231,14 @@ class SampleCard_Switch(CardWidget):
         self.iconOpacityEffect.setOpacity(1)
         self.titleOpacityEffect.setOpacity(1)
         self.contentOpacityEffect.setOpacity(1)
-        self.setCursor(Qt.PointingHandCursor)
+        self.setCursor(Qt.CursorShape.PointingHandCursor)
 
     def leaveEvent(self, event):
         super().leaveEvent(event)
         self.iconOpacityEffect.setOpacity(0.8)
         self.titleOpacityEffect.setOpacity(0.8)
         self.contentOpacityEffect.setOpacity(0.8)
-        self.setCursor(Qt.ArrowCursor)
+        self.setCursor(Qt.CursorShape.ArrowCursor)
 
 
 class SampleCardView(QWidget):

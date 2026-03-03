@@ -1,6 +1,6 @@
 import sys
+import warnings
 
-from PyQt5.QtWidgets import QTextBrowser
 import win32gui
 
 from app.common.logger import logger, stdout_stream, stderr_stream
@@ -16,19 +16,24 @@ class BaseInterface:
         sys.stdout = stdout_stream
         # 报错输出
         sys.stderr = stderr_stream
-        if isinstance(log_widget, QTextBrowser):
+        if hasattr(log_widget, "setOpenExternalLinks"):
             log_widget.setOpenExternalLinks(True)
         # 先断开可能存在的所有连接
-        try:
-            stdout_stream.message.disconnect()
-            stderr_stream.message.disconnect()
-        except TypeError:
-            pass  # 没有连接存在时会抛出TypeError
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore", RuntimeWarning)
+            try:
+                stdout_stream.message.disconnect()
+            except Exception:
+                pass
+            try:
+                stderr_stream.message.disconnect()
+            except Exception:
+                pass
         # 将新消息信号连接到对应输出位置
         stdout_stream.message.connect(lambda message: self.__updateDisplay(message, log_widget))
         stderr_stream.message.connect(lambda message: self.__updateDisplay(message, log_widget))
 
-    def __updateDisplay(self, message, log_widget: QTextBrowser):
+    def __updateDisplay(self, message, log_widget):
         # 将消息添加到 textBrowser，自动识别 HTML
         log_widget.insertHtml(message)
         log_widget.insertPlainText('\n')  # 为下一行消息留出空间

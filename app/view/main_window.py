@@ -7,11 +7,11 @@ import sys
 import threading
 import time
 from pathlib import Path
-from PyQt5.QtCore import QSize, QTimer, QThread, Qt, QUrl
-from PyQt5.QtGui import QIcon, QImage, QPixmap, QMovie, QDesktopServices
-from PyQt5.QtWidgets import QApplication, QFrame, QLabel
-from qfluentwidgets import FluentIcon as FIF, SystemThemeListener, isDarkTheme, MessageBox, InfoBar, InfoBarPosition
-from qfluentwidgets import NavigationItemPosition, MSFluentWindow, NavigationBarPushButton, FlyoutView, \
+from PySide6.QtCore import QSize, QTimer, QThread, Qt, QUrl
+from PySide6.QtGui import QIcon, QImage, QPixmap, QMovie, QDesktopServices
+from PySide6.QtWidgets import QApplication, QFrame, QLabel
+from qfluentwidgets import FluentIcon as FIF, SystemThemeListener, MessageBox, InfoBar, InfoBarPosition
+from qfluentwidgets import NavigationItemPosition, FluentWindow, FlyoutView, \
     Flyout, setThemeColor
 
 from ..common.config import config
@@ -38,11 +38,13 @@ class InstallOcr(QThread):
         self.ocr_installer.install_ocr()
 
 
-class MainWindow(MSFluentWindow):
+class MainWindow(FluentWindow):
 
     SPLASH_ICON_SIZE = QSize(150, 150)
     SPLASH_MOVIE_SIZE = QSize(160, 160)
     SPLASH_PREFERRED_MIN_MS = 1200
+    DEFAULT_WINDOW_WIDTH = 1280
+    DEFAULT_WINDOW_HEIGHT = 800
 
     def __init__(self):
         super().__init__()
@@ -133,7 +135,7 @@ class MainWindow(MSFluentWindow):
         return unique
 
     def _create_display_interface(self):
-        from ..ui.display_interface import DisplayInterface
+        from .display import DisplayInterface
         self.displayInterface = DisplayInterface(self)
         self._localize_widget_if_needed(self.displayInterface)
 
@@ -168,11 +170,7 @@ class MainWindow(MSFluentWindow):
         self._localize_widget_if_needed(self.settingInterface)
 
     def _create_support_button(self):
-        self.support_button = NavigationBarPushButton(
-            FIF.HEART,
-            self._to_traditional_if_needed(self._ui_text('赞赏', 'Support')),
-            isSelectable=False
-        )
+        self.support_button = None
 
     def _run_next_init_task(self):
         if not self._init_tasks:
@@ -180,7 +178,6 @@ class MainWindow(MSFluentWindow):
 
         task = self._init_tasks.pop(0)
         task()
-        QApplication.processEvents()
         QTimer.singleShot(0, self._run_next_init_task)
 
     def _run_next_deferred_init_task(self):
@@ -190,7 +187,6 @@ class MainWindow(MSFluentWindow):
 
         task = self._deferred_init_tasks.pop(0)
         task()
-        QApplication.processEvents()
         QTimer.singleShot(0, self._run_next_deferred_init_task)
 
     def _defer_load_remaining_interfaces(self):
@@ -220,7 +216,7 @@ class MainWindow(MSFluentWindow):
     def _create_home_and_add_nav(self):
         if self.homeInterface is None:
             self._create_home_interface()
-        self._register_nav_item('home', self.homeInterface, FIF.HOME, self._ui_text('日常', 'Daily'), FIF.HOME_FILL)
+        self._register_nav_item('home', self.homeInterface, FIF.HOME, self._ui_text('日常', 'Daily'))
 
     def _create_additional_and_add_nav(self):
         if self.additionalInterface is None:
@@ -256,13 +252,10 @@ class MainWindow(MSFluentWindow):
             self.settingInterface,
             Icon.SETTINGS,
             self.tr('Settings'),
-            Icon.SETTINGS_FILLED,
-            NavigationItemPosition.BOTTOM,
+            position=NavigationItemPosition.BOTTOM,
         )
 
     def _finalize_startup(self):
-        self.themeListener.start()
-
         ocr_thread = threading.Thread(target=self.init_ocr)
         ocr_thread.daemon = True
         ocr_thread.start()
@@ -329,7 +322,7 @@ class MainWindow(MSFluentWindow):
             InfoBar.success(
                 title=self._ui_text("更新提示", "Update"),
                 content=self._ui_text("已是最新版", "Already up to date"),
-                orient=Qt.Horizontal,
+                orient=Qt.Orientation.Horizontal,
                 isClosable=True,
                 position=InfoBarPosition.TOP_RIGHT,
                 duration=6000,
@@ -350,7 +343,7 @@ class MainWindow(MSFluentWindow):
         info_bar = InfoBar.warning(
             title=self._ui_text("更新提示", "Update"),
             content=content_html,
-            orient=Qt.Horizontal,
+            orient=Qt.Orientation.Horizontal,
             isClosable=True,
             position=InfoBarPosition.TOP_RIGHT,
             duration=10000,
@@ -358,7 +351,7 @@ class MainWindow(MSFluentWindow):
         )
 
         if hasattr(info_bar, "contentLabel") and info_bar.contentLabel is not None:
-            info_bar.contentLabel.setTextFormat(Qt.RichText)
+            info_bar.contentLabel.setTextFormat(Qt.TextFormat.RichText)
             info_bar.contentLabel.setOpenExternalLinks(False)
 
             def _on_link_activated(_):
@@ -385,6 +378,12 @@ class MainWindow(MSFluentWindow):
         signalBus.showScreenshot.connect(self.showScreenshot)
         # signalBus.check_ocr_progress.connect(self.update_ring)
 
+    def setMicaEffectEnabled(self, enabled):
+        return
+
+    def isMicaEffectEnabled(self):
+        return False
+
     def initNavigation(self):
         # self.navigationInterface.setAcrylicEnabled(True)
 
@@ -393,11 +392,11 @@ class MainWindow(MSFluentWindow):
         if self._startup_target_index == 2 and self.additionalInterface is not None:
             startup_top_interface = (self.additionalInterface, FIF.APPLICATION, self._ui_text('小工具', 'Tools'))
         elif self._startup_target_index == 1 and self.homeInterface is not None:
-            startup_top_interface = (self.homeInterface, FIF.HOME, self._ui_text('日常', 'Daily'), FIF.HOME_FILL)
+            startup_top_interface = (self.homeInterface, FIF.HOME, self._ui_text('日常', 'Daily'))
         elif self.displayInterface is not None:
             startup_top_interface = (self.displayInterface, FIF.PHOTO, self._ui_text('展示页', 'Display'))
         elif self.homeInterface is not None:
-            startup_top_interface = (self.homeInterface, FIF.HOME, self._ui_text('日常', 'Daily'), FIF.HOME_FILL)
+            startup_top_interface = (self.homeInterface, FIF.HOME, self._ui_text('日常', 'Daily'))
         elif self.additionalInterface is not None:
             startup_top_interface = (self.additionalInterface, FIF.APPLICATION, self._ui_text('小工具', 'Tools'))
 
@@ -409,13 +408,21 @@ class MainWindow(MSFluentWindow):
                 key = 'home'
             self._register_nav_item(key, startup_top_interface[0], *startup_top_interface[1:])
 
-        # add custom widget to bottom
-        self.navigationInterface.addWidget(
-            'avatar',
-            self.support_button,
-            self.onSupport,
-            NavigationItemPosition.BOTTOM
+        self.support_button = self.navigationInterface.addItem(
+            routeKey='support',
+            icon=FIF.HEART,
+            text=self._to_traditional_if_needed(self._ui_text('赞赏', 'Support')),
+            onClick=self.onSupport,
+            selectable=False,
+            position=NavigationItemPosition.BOTTOM,
         )
+
+        self.navigationInterface.setCollapsible(True)
+        self.navigationInterface.setMinimumExpandWidth(110)
+        self.navigationInterface.setExpandWidth(110)
+
+        QTimer.singleShot(200, self.navigationInterface.expand)
+
         if self._startup_target_index == 2 and self.additionalInterface is not None:
             self.stackedWidget.setCurrentWidget(self.additionalInterface, False)
         elif self._startup_target_index == 1 and self.homeInterface is not None:
@@ -442,8 +449,8 @@ class MainWindow(MSFluentWindow):
         # logger.info(f"区域截图识别每次平均耗时：{benchmark(ocr.run, 'app/resource/images/start_game/age.png')}")
 
     def initWindow(self):
-        self.resize(960, 860)
-        self.setMinimumWidth(760)
+        self.resize(self.DEFAULT_WINDOW_WIDTH, self.DEFAULT_WINDOW_HEIGHT)
+        self.setMinimumSize(1000, 680)
         base_dir = Path(getattr(sys, '_MEIPASS', Path(__file__).resolve().parents[2]))
         head_icon_path = base_dir / 'app/resource/images/logo.png'
         self.setWindowIcon(QIcon(str(head_icon_path)))
@@ -454,7 +461,7 @@ class MainWindow(MSFluentWindow):
         # 触发重绘，使一开始的背景颜色正确
         # self.setCustomBackgroundColor(QColor(240, 244, 249), QColor(32, 32, 32))
         # self.setBackgroundColor(QColor(240, 244, 249))
-        self.setMicaEffectEnabled(config.get(config.micaEnabled))
+        self.setMicaEffectEnabled(False)
 
         position = config.position.value
         if position:
@@ -503,7 +510,7 @@ class MainWindow(MSFluentWindow):
         self.splashScreen.setIconSize(QSize(0, 0))
         self.splashScreen.iconWidget.hide()
         self.splashMovieLabel = QLabel(self.splashScreen)
-        self.splashMovieLabel.setAlignment(Qt.AlignCenter)
+        self.splashMovieLabel.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.splashMovieLabel.resize(self.splashScreen.size())
         self.splashMovieLabel.setMinimumSize(self.SPLASH_MOVIE_SIZE)
         self.splashMovieLabel.setMovie(self.splashMovie)
@@ -617,7 +624,8 @@ class MainWindow(MSFluentWindow):
         view.widgetLayout.insertSpacing(1, 5)
         view.widgetLayout.addSpacing(5)
 
-        w = Flyout.make(view, self.support_button, self)
+        target = self.support_button if self.support_button is not None else self.navigationInterface
+        w = Flyout.make(view, target, self)
         view.closed.connect(w.close)
 
     def _ui_text(self, zh_text: str, en_text: str) -> str:
@@ -739,10 +747,6 @@ class MainWindow(MSFluentWindow):
     def _onThemeChangedFinished(self):
         super()._onThemeChangedFinished()
 
-        # retry
-        if self.isMicaEffectEnabled():
-            QTimer.singleShot(100, lambda: self.windowEffect.setMicaEffect(self.winId(), isDarkTheme()))
-
     def showMessageBox(self, title, content):
         massage = MessageBox(title, content, self)
         if massage.exec():
@@ -807,7 +811,7 @@ class MainWindow(MSFluentWindow):
         screenshot_pixmap = ndarray_to_qpixmap(screenshot)
         # 按比例缩放图像
         scaled_pixmap = screenshot_pixmap.scaled(
-            200, 200, Qt.KeepAspectRatio, Qt.SmoothTransformation
+            200, 200, Qt.AspectRatioMode.KeepAspectRatio, Qt.TransformationMode.SmoothTransformation
         )
         self.message_window.content.setPixmap(scaled_pixmap)
         if self.message_window.exec():

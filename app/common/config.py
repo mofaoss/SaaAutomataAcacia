@@ -4,7 +4,7 @@ import locale as pylocale
 import ctypes
 from enum import Enum
 
-from PyQt5.QtCore import QLocale
+from PySide6.QtCore import QLocale
 from qfluentwidgets import (qconfig, QConfig, ConfigItem, OptionsConfigItem, BoolValidator,
                             OptionsValidator, Theme, ConfigSerializer)
 

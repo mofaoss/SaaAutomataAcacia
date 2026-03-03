@@ -5,9 +5,9 @@ import sys
 import html
 from functools import partial
 
-from PyQt5.QtCore import Qt, QUrl, QThread
-from PyQt5.QtGui import QDesktopServices, QFont
-from PyQt5.QtWidgets import QWidget, QLabel
+from PySide6.QtCore import Qt, QUrl, QThread
+from PySide6.QtGui import QDesktopServices, QFont
+from PySide6.QtWidgets import QWidget, QLabel
 from qfluentwidgets import FluentIcon as FIF
 from qfluentwidgets import InfoBar
 from qfluentwidgets import SettingCardGroup as CardGroup
@@ -258,8 +258,7 @@ class SettingInterface(ScrollArea):
         self.__initWidget()
 
     def __initWidget(self):
-        self.resize(1000, 800)
-        self.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
+        self.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
         self.setViewportMargins(0, 100, 0, 20)
         self.setWidget(self.scrollWidget)
         self.setWidgetResizable(True)

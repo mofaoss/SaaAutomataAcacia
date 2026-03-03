@@ -1,18 +1,22 @@
-from PyQt5.QtWidgets import QFrame
+from PySide6.QtWidgets import QFrame, QVBoxLayout
 from qfluentwidgets import InfoBar
 
 from app.common.config import is_non_chinese_ui_language
 from app.modules.trigger.auto_f import AutoFModule
 from app.modules.trigger.nita_auto_e import NitaAutoEModule
-from app.ui.trigger_interface import Ui_trigger
 from app.view.base_interface import BaseInterface
 from app.view.subtask import SubTask
+from app.view.trigger_view import TriggerView
 
 
-class Trigger(QFrame, Ui_trigger, BaseInterface):
+class Trigger(QFrame, BaseInterface):
     def __init__(self, text: str, parent=None):
-        super().__init__()
-        self.setupUi(self)
+        super().__init__(parent)
+        self.ui = TriggerView(self)
+        root_layout = QVBoxLayout(self)
+        root_layout.setContentsMargins(0, 0, 0, 0)
+        root_layout.setSpacing(0)
+        root_layout.addWidget(self.ui)
         self._is_non_chinese_ui = is_non_chinese_ui_language()
         self.setObjectName(text.replace(' ', '-'))
         self.parent = parent
@@ -22,6 +26,12 @@ class Trigger(QFrame, Ui_trigger, BaseInterface):
 
         self._initWidget()
         self._connect_to_slot()
+
+    def __getattr__(self, item):
+        ui = self.__dict__.get('ui')
+        if ui is not None and hasattr(ui, item):
+            return getattr(ui, item)
+        raise AttributeError(f"'{self.__class__.__name__}' object has no attribute '{item}'")
 
     def _initWidget(self):
         self.TitleLabel_trigger.setText(self._ui_text("触发列表", "Trigger List"))

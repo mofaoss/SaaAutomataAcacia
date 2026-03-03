@@ -1,12 +1,12 @@
 from typing import Union
 
-from PyQt5.QtCore import pyqtSignal, Qt
-from PyQt5.QtGui import QIcon
+from PySide6.QtCore import Signal, Qt
+from PySide6.QtGui import QIcon
 from qfluentwidgets import SettingCard, qconfig, FluentIconBase, LineEdit
 
 
 class TextEditCard(SettingCard):
-    textChanged = pyqtSignal(str)
+    textChanged = Signal(str)
 
     def __init__(self, configItem, icon: Union[str, QIcon, FluentIconBase], title, placeholder, content=None,
                  parent=None):
@@ -35,7 +35,7 @@ class TextEditCard(SettingCard):
         self.setCurrentText()
 
         # 将文本框加入布局
-        self.hBoxLayout.addWidget(self.line_edit, 0, Qt.AlignRight)
+        self.hBoxLayout.addWidget(self.line_edit, 0, Qt.AlignmentFlag.AlignRight)
         self.hBoxLayout.addSpacing(16)
 
         self.line_edit.editingFinished.connect(self.__textChanged)

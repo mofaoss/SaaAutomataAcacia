@@ -1,22 +1,22 @@
 # coding: utf-8
-from PyQt5.QtCore import QObject, pyqtSignal
+from PySide6.QtCore import QObject, Signal
 
 
 class SignalBus(QObject):
     """ Signal bus """
 
-    checkUpdateSig = pyqtSignal(int)
-    micaEnableChanged = pyqtSignal(bool)
-    switchToSampleCard = pyqtSignal(str, int)
-    updatePiecesNum = pyqtSignal(dict)
-    jigsawDisplaySignal = pyqtSignal(list)
-    showMessageBox = pyqtSignal(str, str)
-    updateFishKey = pyqtSignal(str)
-    showScreenshot = pyqtSignal(object)
-    sendHwnd = pyqtSignal(int)
-    windowTrackingStealthChanged = pyqtSignal(bool, int)
+    checkUpdateSig = Signal(int)
+    micaEnableChanged = Signal(bool)
+    switchToSampleCard = Signal(str, int)
+    updatePiecesNum = Signal(dict)
+    jigsawDisplaySignal = Signal(list)
+    showMessageBox = Signal(str, str)
+    updateFishKey = Signal(str)
+    showScreenshot = Signal(object)
+    sendHwnd = Signal(int)
+    windowTrackingStealthChanged = Signal(bool, int)
 
-    # check_ocr_progress = pyqtSignal(int, str)
+    # check_ocr_progress = Signal(int, str)
 
 
 signalBus = SignalBus()

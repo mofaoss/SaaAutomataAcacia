@@ -1,8 +1,8 @@
 from typing import Union
 
-from PyQt5.QtCore import Qt
-from PyQt5.QtGui import QIcon
-from PyQt5.QtWidgets import QLabel
+from PySide6.QtCore import Qt
+from PySide6.QtGui import QIcon
+from PySide6.QtWidgets import QLabel
 from qfluentwidgets import SettingCard, qconfig, FluentIconBase, Slider
 
 
@@ -14,18 +14,18 @@ class SliderSettingCard(SettingCard):
         self.min_value = min_value
         self.max_value = max_value
 
-        self.slider = Slider(Qt.Horizontal, self)
+        self.slider = Slider(Qt.Orientation.Horizontal, self)
         self.slider.setMinimum(self.min_value)
         self.slider.setMaximum(self.max_value)
         self.slider.setFixedWidth(220)
 
         self.valueLabel = QLabel(self)
         self.valueLabel.setMinimumWidth(36)
-        self.valueLabel.setAlignment(Qt.AlignRight | Qt.AlignVCenter)
+        self.valueLabel.setAlignment(Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignVCenter)
 
-        self.hBoxLayout.addWidget(self.slider, 0, Qt.AlignRight)
+        self.hBoxLayout.addWidget(self.slider, 0, Qt.AlignmentFlag.AlignRight)
         self.hBoxLayout.addSpacing(8)
-        self.hBoxLayout.addWidget(self.valueLabel, 0, Qt.AlignRight)
+        self.hBoxLayout.addWidget(self.valueLabel, 0, Qt.AlignmentFlag.AlignRight)
         self.hBoxLayout.addSpacing(16)
 
         self._set_current_value()

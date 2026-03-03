@@ -1,15 +1,15 @@
 import logging
 import sys
 
-from PyQt5.QtCore import QObject, pyqtSignal
-from PyQt5.QtWidgets import QTextBrowser
+from PySide6.QtCore import QObject, Signal
+from PySide6.QtWidgets import QTextBrowser
 
 
 class Stream(QObject):
     """
     自定义输出流，捕获 print 的输出
     """
-    message = pyqtSignal(str)
+    message = Signal(str)
 
     def __init__(self, original_stream):
         super().__init__()

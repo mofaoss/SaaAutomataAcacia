@@ -11,8 +11,8 @@ from typing import Dict, Any
 
 import win32con
 import win32gui
-from PyQt5.QtCore import QThread, pyqtSignal, Qt, QTimer
-from PyQt5.QtWidgets import QFrame, QWidget, QTreeWidgetItemIterator, QFileDialog
+from PySide6.QtCore import QThread, Signal, Qt, QTimer
+from PySide6.QtWidgets import QFrame, QWidget, QTreeWidgetItemIterator, QFileDialog, QVBoxLayout
 from qfluentwidgets import FluentIcon as FIF, InfoBar, InfoBarPosition, CheckBox, ComboBox, ToolButton, LineEdit, \
     BodyLabel, ProgressBar, FlyoutView, Flyout
 from win11toast import toast
@@ -38,14 +38,14 @@ from app.modules.shopping.shopping import ShoppingModule
 from app.modules.use_power.use_power import UsePowerModule
 from app.repackage.custom_message_box import CustomMessageBox
 from app.repackage.tree import TreeFrame_person, TreeFrame_weapon
-from app.ui.home_interface import Ui_home
+from app.view.daily_view import DailyView
 from app.view.base_interface import BaseInterface
 
 
 class CloudflareUpdateThread(QThread):
     """异步获取Cloudflare数据的线程"""
-    update_finished = pyqtSignal(dict)  # 成功获取数据
-    update_failed = pyqtSignal(str)  # 获取失败
+    update_finished = Signal(dict)  # 成功获取数据
+    update_failed = Signal(str)  # 获取失败
 
     def run(self):
         try:
@@ -59,8 +59,8 @@ class CloudflareUpdateThread(QThread):
 
 
 class StartThread(QThread, BaseTask):
-    is_running_signal = pyqtSignal(str)
-    stop_signal = pyqtSignal()  # 添加停止信号
+    is_running_signal = Signal(str)
+    stop_signal = Signal()  # 添加停止信号
 
     def __init__(self, checkbox_dic):
         super().__init__()
@@ -175,9 +175,9 @@ def no_select(widget):
         checkbox.setChecked(False)
 
 
-class Daily(QFrame, Ui_home, BaseInterface):
+class Daily(QFrame, BaseInterface):
     def __init__(self, text: str, parent=None):
-        super().__init__()
+        super().__init__(parent)
         self._is_non_chinese_ui = is_non_chinese_ui_language()
         self.setting_name_list = [
             self._ui_text('登录', 'Login'),
@@ -233,7 +233,11 @@ class Daily(QFrame, Ui_home, BaseInterface):
         self.person_text_to_key = {**self.person_dic, **self.person_dic_en}
         self.weapon_text_to_key = {**self.weapon_dic, **self.weapon_dic_en}
 
-        self.setupUi(self)
+        self.ui = DailyView(self)
+        root_layout = QVBoxLayout(self)
+        root_layout.setContentsMargins(0, 0, 0, 0)
+        root_layout.setSpacing(0)
+        root_layout.addWidget(self.ui)
         self.setObjectName(text.replace(' ', '-'))
         self.parent = parent
         self.logger = logger
@@ -270,6 +274,12 @@ class Daily(QFrame, Ui_home, BaseInterface):
         if config.checkUpdateAtStartUp.value:
             # self.update_online()
             self.update_online_cloudflare()
+
+    def __getattr__(self, item):
+        ui = self.__dict__.get('ui')
+        if ui is not None and hasattr(ui, item):
+            return getattr(ui, item)
+        raise AttributeError(f"'{self.__class__.__name__}' object has no attribute '{item}'")
 
     def _initWidget(self):
         self._apply_home_i18n()
@@ -375,7 +385,10 @@ class Daily(QFrame, Ui_home, BaseInterface):
             item_key = self.person_text_to_key.get(item.value().text(0))
             config_item = getattr(config, item_key, None) if item_key else None
             if config_item is not None:
-                item.value().setCheckState(0, Qt.Checked if config_item.value else Qt.Unchecked)
+                item.value().setCheckState(
+                    0,
+                    Qt.CheckState.Checked if config_item.value else Qt.CheckState.Unchecked,
+                )
             item += 1
 
         item2 = QTreeWidgetItemIterator(self.select_weapon.tree)
@@ -383,7 +396,10 @@ class Daily(QFrame, Ui_home, BaseInterface):
             item_key2 = self.weapon_text_to_key.get(item2.value().text(0))
             config_item2 = getattr(config, item_key2, None) if item_key2 else None
             if config_item2 is not None:
-                item2.value().setCheckState(0, Qt.Checked if config_item2.value else Qt.Unchecked)
+                item2.value().setCheckState(
+                    0,
+                    Qt.CheckState.Checked if config_item2.value else Qt.CheckState.Unchecked,
+                )
             item2 += 1
 
     def _connect_to_save_changed(self):
@@ -610,7 +626,7 @@ class Daily(QFrame, Ui_home, BaseInterface):
             InfoBar.success(
                 title='获取更新成功',
                 content=f"检测到新的 兑换码 活动信息",
-                orient=Qt.Horizontal,
+                orient=Qt.Orientation.Horizontal,
                 isClosable=True,
                 position=InfoBarPosition.TOP_RIGHT,
                 duration=10000,
@@ -644,7 +660,7 @@ class Daily(QFrame, Ui_home, BaseInterface):
                 InfoBar.success(
                     title='获取更新成功',
                     content=f"检测到新的{content}",
-                    orient=Qt.Horizontal,
+                    orient=Qt.Orientation.Horizontal,
                     isClosable=True,
                     position=InfoBarPosition.TOP_RIGHT,
                     duration=10000,
@@ -667,7 +683,7 @@ class Daily(QFrame, Ui_home, BaseInterface):
             InfoBar.success(
                 title='获取更新成功',
                 content=f"检测到新的 兑换码 活动信息",
-                orient=Qt.Horizontal,
+                orient=Qt.Orientation.Horizontal,
                 isClosable=True,
                 position=InfoBarPosition.TOP_RIGHT,
                 duration=10000,
@@ -711,7 +727,7 @@ class Daily(QFrame, Ui_home, BaseInterface):
                 InfoBar.success(
                     title='获取更新成功',
                     content=f"检测到新的{content}",
-                    orient=Qt.Horizontal,
+                    orient=Qt.Orientation.Horizontal,
                     isClosable=True,
                     position=InfoBarPosition.TOP_RIGHT,
                     duration=10000,
@@ -746,7 +762,7 @@ class Daily(QFrame, Ui_home, BaseInterface):
         InfoBar.success(
             title='重置成功',
             content=f"已重置 导入展示 {content}",
-            orient=Qt.Horizontal,
+            orient=Qt.Orientation.Horizontal,
             isClosable=True,
             position=InfoBarPosition.TOP_RIGHT,
             duration=2000,
@@ -789,7 +805,7 @@ class Daily(QFrame, Ui_home, BaseInterface):
             InfoBar.success(
                 title='已开启',
                 content=f"点击“开始”按钮时将自动启动游戏",
-                orient=Qt.Horizontal,
+                orient=Qt.Orientation.Horizontal,
                 isClosable=True,
                 position=InfoBarPosition.TOP_RIGHT,
                 duration=2000,
@@ -799,7 +815,7 @@ class Daily(QFrame, Ui_home, BaseInterface):
             InfoBar.success(
                 title='已关闭',
                 content=f"点击“开始”按钮时不会自动启动游戏",
-                orient=Qt.Horizontal,
+                orient=Qt.Orientation.Horizontal,
                 isClosable=True,
                 position=InfoBarPosition.TOP_RIGHT,
                 duration=2000,
@@ -864,7 +880,7 @@ class Daily(QFrame, Ui_home, BaseInterface):
                     title=self._ui_text('启动已中断', 'Launch interrupted'),
                     content=self._ui_text('检测到游戏被关闭或启动失败，已停止后续任务。',
                                           'Game was closed or failed to launch. Pending tasks were cancelled.'),
-                    orient=Qt.Horizontal,
+                    orient=Qt.Orientation.Horizontal,
                     isClosable=True,
                     position=InfoBarPosition.TOP_RIGHT,
                     duration=4000,
@@ -880,7 +896,7 @@ class Daily(QFrame, Ui_home, BaseInterface):
                     title=self._ui_text('等待超时', 'Launch timeout'),
                     content=self._ui_text('长时间未检测到游戏窗口，已停止后续任务。',
                                           'Game window not detected in time. Pending tasks were cancelled.'),
-                    orient=Qt.Horizontal,
+                    orient=Qt.Orientation.Horizontal,
                     isClosable=True,
                     position=InfoBarPosition.TOP_RIGHT,
                     duration=4000,
@@ -931,7 +947,7 @@ class Daily(QFrame, Ui_home, BaseInterface):
             InfoBar.error(
                 title=self._ui_text('未勾选工作', 'No task selected'),
                 content=self._ui_text("需要至少勾选一项工作才能开始", "Select at least one task before starting"),
-                orient=Qt.Horizontal,
+                orient=Qt.Orientation.Horizontal,
                 isClosable=False,  # disable close button
                 position=InfoBarPosition.TOP_RIGHT,
                 duration=2000,
@@ -969,7 +985,7 @@ class Daily(QFrame, Ui_home, BaseInterface):
                 InfoBar.error(
                     title=self._ui_text('未成功初始化auto', 'Auto init failed'),
                     content=self._ui_text(f"未打开游戏，{text}，然后再点击开始", f"Game is not opened, {text}, then click Start again"),
-                    orient=Qt.Horizontal,
+                    orient=Qt.Orientation.Horizontal,
                     isClosable=True,
                     position=InfoBarPosition.TOP_RIGHT,
                     duration=5000,
@@ -985,7 +1001,7 @@ class Daily(QFrame, Ui_home, BaseInterface):
                     title=self._ui_text('任务已停止', 'Task stopped'),
                     content=self._ui_text('检测到游戏窗口关闭，任务终止。',
                                           'Game window was closed. Current task stopped gracefully.'),
-                    orient=Qt.Horizontal,
+                    orient=Qt.Orientation.Horizontal,
                     isClosable=True,
                     position=InfoBarPosition.TOP_RIGHT,
                     duration=4000,
@@ -1184,7 +1200,7 @@ class Daily(QFrame, Ui_home, BaseInterface):
                 InfoBar.error(
                     title='活动日程更新失败',
                     content=f"本地没有存储信息且未获取到url",
-                    orient=Qt.Horizontal,
+                    orient=Qt.Orientation.Horizontal,
                     isClosable=True,
                     position=InfoBarPosition.TOP_RIGHT,
                     duration=2000,

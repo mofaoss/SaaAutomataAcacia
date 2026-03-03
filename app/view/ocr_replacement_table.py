@@ -2,20 +2,20 @@ import json
 import os
 import sys
 
-from PyQt5.QtCore import Qt
-from PyQt5.QtWidgets import QFrame, QTableWidgetItem
+from PySide6.QtCore import Qt
+from PySide6.QtWidgets import QFrame, QTableWidgetItem
 from qfluentwidgets import InfoBar, InfoBarPosition
 
 from app.common.config import is_non_chinese_ui_language
 from app.common.style_sheet import StyleSheet
-from app.ui.ocr_replacement_table import Ui_ocrtable
+from app.view.ocr_replacement_table_view import OcrReplacementTableView
 
 
-class OcrReplacementTable(QFrame, Ui_ocrtable):
+class OcrReplacementTable(QFrame):
     def __init__(self, text: str, parent=None):
         super().__init__()
 
-        self.setupUi(self)
+        self.ui = OcrReplacementTableView(self)
         self._is_non_chinese_ui = is_non_chinese_ui_language()
         self.setObjectName(text.replace(' ', '-'))
         self.parent = parent
@@ -26,6 +26,11 @@ class OcrReplacementTable(QFrame, Ui_ocrtable):
 
         self._initWidget()
         self._connect_to_slot()
+
+    def __getattr__(self, name):
+        if "ui" in self.__dict__ and hasattr(self.ui, name):
+            return getattr(self.ui, name)
+        raise AttributeError(f"{self.__class__.__name__} object has no attribute '{name}'")
 
     def _initWidget(self):
         self.BodyLabel.setText(self._ui_text("替换类型", "Replacement Type"))
@@ -106,7 +111,7 @@ class OcrReplacementTable(QFrame, Ui_ocrtable):
                     InfoBar.error(
                         title=self._ui_text('类型错误', 'Type Error'),
                         content=self._ui_text("类型值支持“直接替换”或“条件替换”", "Type supports only 'Direct Replace' or 'Conditional Replace'"),
-                        orient=Qt.Horizontal,
+                        orient=Qt.Orientation.Horizontal,
                         isClosable=True,  # disable close button
                         position=InfoBarPosition.TOP_RIGHT,
                         duration=2000,
@@ -137,7 +142,7 @@ class OcrReplacementTable(QFrame, Ui_ocrtable):
             InfoBar.info(
                 title=self._ui_text('修改成功', 'Updated'),
                 content=self._ui_text("已成功修改对应的替换规则", "Replacement rule updated successfully"),
-                orient=Qt.Horizontal,
+                orient=Qt.Orientation.Horizontal,
                 isClosable=True,  # disable close button
                 position=InfoBarPosition.TOP_RIGHT,
                 duration=2000,
@@ -161,7 +166,7 @@ class OcrReplacementTable(QFrame, Ui_ocrtable):
                 InfoBar.error(
                     title=self._ui_text('替换文本不能为空', 'Text cannot be empty'),
                     content=self._ui_text("输入需要替换的前后文本", "Please input both before and after text"),
-                    orient=Qt.Horizontal,
+                    orient=Qt.Orientation.Horizontal,
                     isClosable=True,  # disable close button
                     position=InfoBarPosition.TOP_RIGHT,
                     duration=2000,
@@ -179,7 +184,7 @@ class OcrReplacementTable(QFrame, Ui_ocrtable):
             InfoBar.info(
                 title=self._ui_text('添加成功', 'Added'),
                 content=self._ui_text("已成功添加新的替换规则", "New replacement rule added successfully"),
-                orient=Qt.Horizontal,
+                orient=Qt.Orientation.Horizontal,
                 isClosable=True,  # disable close button
                 position=InfoBarPosition.TOP_RIGHT,
                 duration=2000,
@@ -243,7 +248,7 @@ class OcrReplacementTable(QFrame, Ui_ocrtable):
                     InfoBar.error(
                         title=self._ui_text('删除失败', 'Delete Failed'),
                         content=self._ui_text(f"{key_type} 不在 JSON 中！", f"{key_type} is not in JSON!"),
-                        orient=Qt.Horizontal,
+                        orient=Qt.Orientation.Horizontal,
                         isClosable=True,  # disable close button
                         position=InfoBarPosition.TOP_RIGHT,
                         duration=2000,
@@ -255,7 +260,7 @@ class OcrReplacementTable(QFrame, Ui_ocrtable):
                         title=self._ui_text('删除失败', 'Delete Failed'),
                         content=self._ui_text(f"键 '{key_to_delete}' 不存在于 {key_type} 中！",
                                               f"Key '{key_to_delete}' does not exist in {key_type}!"),
-                        orient=Qt.Horizontal,
+                        orient=Qt.Orientation.Horizontal,
                         isClosable=True,  # disable close button
                         position=InfoBarPosition.TOP_RIGHT,
                         duration=2000,
@@ -268,7 +273,7 @@ class OcrReplacementTable(QFrame, Ui_ocrtable):
                 InfoBar.info(
                     title=self._ui_text('删除成功', 'Deleted'),
                     content=self._ui_text("已删除对应行", "Selected row deleted"),
-                    orient=Qt.Horizontal,
+                    orient=Qt.Orientation.Horizontal,
                     isClosable=True,  # disable close button
                     position=InfoBarPosition.TOP_RIGHT,
                     duration=2000,
@@ -278,7 +283,7 @@ class OcrReplacementTable(QFrame, Ui_ocrtable):
                 InfoBar.error(
                     title=self._ui_text('未选中需要删除的行', 'No row selected'),
                     content=self._ui_text("选中需要删除的行之后再点击删除", "Select a row to delete first, then click Delete"),
-                    orient=Qt.Horizontal,
+                    orient=Qt.Orientation.Horizontal,
                     isClosable=True,  # disable close button
                     position=InfoBarPosition.TOP_RIGHT,
                     duration=2000,

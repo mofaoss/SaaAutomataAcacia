@@ -1,6 +1,6 @@
 import cv2
 import numpy as np
-from PyQt5.QtCore import QThread, pyqtSignal
+from PySide6.QtCore import QThread, Signal
 import win32gui
 from app.common.config import config
 from app.common.logger import logger
@@ -9,7 +9,7 @@ from app.modules.ocr import ocr
 
 
 class SubTask(QThread, BaseTask):
-    is_running = pyqtSignal(bool)
+    is_running = Signal(bool)
 
     def __init__(self, module):
         super().__init__()
@@ -43,7 +43,7 @@ class SubTask(QThread, BaseTask):
 
 
 class AdjustColor(QThread, BaseTask):
-    color_changed = pyqtSignal()
+    color_changed = Signal()
 
     def __init__(self):
         super().__init__()

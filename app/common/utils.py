@@ -6,7 +6,10 @@ import time
 from pathlib import Path
 from typing import Dict, Any, Optional
 
-import cpufeature
+try:
+    import cpufeature
+except Exception:
+    cpufeature = None
 import cv2
 import numpy as np
 import requests
@@ -275,8 +278,17 @@ def cpu_support_avx2():
     """
     判断 CPU 是否支持 AVX2 指令集。
     """
-    config.set(config.cpu_support_avx2, cpufeature.CPUFeature["AVX2"])
-    return cpufeature.CPUFeature["AVX2"]
+    if cpufeature is None:
+        config.set(config.cpu_support_avx2, False)
+        return False
+
+    try:
+        support = bool(cpufeature.CPUFeature["AVX2"])
+    except Exception:
+        support = False
+
+    config.set(config.cpu_support_avx2, support)
+    return support
 
 
 def count_color_blocks(image, lower_color, upper_color, preview=False):

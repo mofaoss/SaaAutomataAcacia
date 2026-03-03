@@ -1,5 +1,5 @@
-from PyQt5.QtCore import Qt, pyqtSignal
-from PyQt5.QtWidgets import QTreeWidgetItem, QFrame, QHBoxLayout, QTreeWidgetItemIterator, QScrollArea, QApplication
+from PySide6.QtCore import Qt, Signal
+from PySide6.QtWidgets import QTreeWidgetItem, QFrame, QHBoxLayout, QTreeWidgetItemIterator, QScrollArea, QApplication
 from qfluentwidgets import TreeWidget, ScrollArea
 
 from app.common.style_sheet import StyleSheet
@@ -20,7 +20,7 @@ class Frame(QFrame):
 
 
 class TreeFrame_person(Frame):
-    itemStateChanged = pyqtSignal(int, int)
+    itemStateChanged = Signal(int, int)
 
     def __init__(self, parent=None, enableCheck=False, is_non_chinese_ui=False):
         super().__init__(parent)
@@ -69,15 +69,15 @@ class TreeFrame_person(Frame):
         self.tree.itemExpanded.connect(self.adjustSizeToTree)
         self.tree.itemCollapsed.connect(self.adjustSizeToTree)
         # 禁用树状组件的滚动条
-        self.tree.setVerticalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
-        self.tree.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
+        self.tree.setVerticalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
+        self.tree.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
 
         self.setFixedSize(250, 45)
 
         if enableCheck:
             it = QTreeWidgetItemIterator(self.tree)
             while it.value():
-                it.value().setCheckState(0, Qt.Unchecked)
+                it.value().setCheckState(0, Qt.CheckState.Unchecked)
                 it += 1
 
         self.tree.itemChanged.connect(self.onItemChanged)
@@ -139,7 +139,7 @@ class TreeFrame_person(Frame):
 
 
 class TreeFrame_weapon(Frame):
-    itemStateChanged = pyqtSignal(int, int)
+    itemStateChanged = Signal(int, int)
 
     def __init__(self, parent=None, enableCheck=False, is_non_chinese_ui=False):
         super().__init__(parent)
@@ -168,15 +168,15 @@ class TreeFrame_weapon(Frame):
         self.tree.itemExpanded.connect(self.adjustSizeToTree)
         self.tree.itemCollapsed.connect(self.adjustSizeToTree)
         # 禁用树状组件的滚动条
-        self.tree.setVerticalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
-        self.tree.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
+        self.tree.setVerticalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
+        self.tree.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
 
         self.setFixedSize(250, 45)
 
         if enableCheck:
             it = QTreeWidgetItemIterator(self.tree)
             while it.value():
-                it.value().setCheckState(0, Qt.Unchecked)
+                it.value().setCheckState(0, Qt.CheckState.Unchecked)
                 it += 1
 
         self.tree.itemChanged.connect(self.onItemChanged)
