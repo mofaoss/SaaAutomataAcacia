@@ -162,36 +162,58 @@ class DisplayInterface(ScrollArea, BaseInterface):
     def __init__(self, parent=None):
         super().__init__(parent=parent)
         self._is_non_chinese_ui = is_non_chinese_ui_language()
-        self.banner = BannerWidget(self)
-        self.view = QWidget(self)
-        self.vBoxLayout = QVBoxLayout(self.view)
-        self.windowTrackingQuickSwitchCard = None
-        self.gameLanguageNoticeCard = CardWidget(self.view)
-        self.gameLanguageNoticeLayout = QVBoxLayout(self.gameLanguageNoticeCard)
-        self.gameLanguageNoticeTitle = QLabel("Language Notice", self.gameLanguageNoticeCard)
-        self.gameLanguageNoticeLabel = QLabel(self.gameLanguageNoticeCard)
         self.basedir = str(_resolve_display_image_dir())
+        self.windowTrackingQuickSwitchCard = None
 
-        self.__initWidget()
-        self.loadSamples()
+        # 1. 搭建骨架
+        self._setup_ui()
+        # 2. 穿上衣服（国际化翻译）
+        self._apply_i18n()
+        # 3. 添加动态内容（卡片与信号绑定）
+        self._load_samples()
 
-    def __initWidget(self):
-        self.view.setObjectName("view")
+    def _setup_ui(self):
+        """专门负责创建控件、设置布局和样式（视图层职责）"""
         self.setObjectName("displayInterface")
         StyleSheet.DISPLAY_INTERFACE.apply(self)
-
         self.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
-        self.setWidget(self.view)
         self.setWidgetResizable(True)
 
+        self.view = QWidget(self)
+        self.view.setObjectName("view")
+        self.setWidget(self.view)
+
+        self.vBoxLayout = QVBoxLayout(self.view)
         self.vBoxLayout.setContentsMargins(0, 0, 0, 36)
         self.vBoxLayout.setSpacing(40)
+        self.vBoxLayout.setAlignment(Qt.AlignmentFlag.AlignTop)
+
+        self.banner = BannerWidget(self)
         self.vBoxLayout.addWidget(self.banner)
 
+        # 语言提示卡片初始化
+        self.gameLanguageNoticeCard = CardWidget(self.view)
         self.gameLanguageNoticeCard.setFixedHeight(90)
+        self.gameLanguageNoticeLayout = QVBoxLayout(self.gameLanguageNoticeCard)
         self.gameLanguageNoticeLayout.setContentsMargins(24, 14, 24, 14)
         self.gameLanguageNoticeLayout.setSpacing(4)
+
+        self.gameLanguageNoticeTitle = QLabel(self.gameLanguageNoticeCard)
         self.gameLanguageNoticeTitle.setStyleSheet("font-size: 16px; font-weight: 500;")
+
+        self.gameLanguageNoticeLabel = QLabel(self.gameLanguageNoticeCard)
+        self.gameLanguageNoticeLabel.setStyleSheet("color: red;")
+        self.gameLanguageNoticeLabel.setWordWrap(True)
+
+        self.gameLanguageNoticeLayout.addWidget(self.gameLanguageNoticeTitle)
+        self.gameLanguageNoticeLayout.addWidget(self.gameLanguageNoticeLabel)
+
+        # 仅在非中文环境下显示提示卡片
+        self.gameLanguageNoticeCard.setVisible(self._is_non_chinese_ui)
+        self.vBoxLayout.addWidget(self.gameLanguageNoticeCard)
+
+    def _apply_i18n(self):
+        """专门负责文本和多语言翻译（视图层职责）"""
         self.gameLanguageNoticeTitle.setText(
             "Language Notice" if self._is_non_chinese_ui else self.tr("语言提示")
         )
@@ -200,31 +222,13 @@ class DisplayInterface(ScrollArea, BaseInterface):
             if self._is_non_chinese_ui
             else self.tr("注意：自动化识别的游戏语言目前仅支持简体中文与繁体中文。")
         )
-        self.gameLanguageNoticeLabel.setStyleSheet("color: red;")
-        self.gameLanguageNoticeLabel.setWordWrap(True)
-        self.gameLanguageNoticeLayout.addWidget(self.gameLanguageNoticeTitle)
-        self.gameLanguageNoticeLayout.addWidget(self.gameLanguageNoticeLabel)
-        self.gameLanguageNoticeCard.setVisible(is_non_chinese_ui_language())
-        self.vBoxLayout.addWidget(self.gameLanguageNoticeCard)
-        self.vBoxLayout.setAlignment(Qt.AlignmentFlag.AlignTop)
 
-    def _sync_window_tracking_quick_switch(self):
-        if self.windowTrackingQuickSwitchCard is not None:
-            stealth_on = bool(config.windowTrackingInput.value) and int(config.windowTrackingAlpha.value) == 1
-            self.windowTrackingQuickSwitchCard.setChecked(stealth_on, emit=False)
+    def _load_samples(self):
+        """负责组装快速跳转卡片及绑定业务逻辑（控制层职责）"""
+        jump_title = "Quick Access" if self._is_non_chinese_ui else self.tr("快捷跳转")
+        quick_jump = SampleCardView(jump_title, self.view)
 
-    def _toggle_stealth_mode(self, checked: bool):
-        alpha = 1 if checked else 255
-        config.set(config.windowTrackingInput, checked)
-        config.set(config.windowTrackingAlpha, alpha)
-        signalBus.windowTrackingStealthChanged.emit(bool(checked), int(alpha))
-
-    def showEvent(self, event):
-        super().showEvent(event)
-        self._sync_window_tracking_quick_switch()
-
-    def loadSamples(self):
-        quick_jump = SampleCardView("Quick Access" if self._is_non_chinese_ui else self.tr("快捷跳转"), self.view)
+        # 1. 设置卡片
         quick_jump.addSampleCard(
             icon=os.path.join(self.basedir, "setting.svg"),
             title="Settings" if self._is_non_chinese_ui else "设置",
@@ -232,6 +236,8 @@ class DisplayInterface(ScrollArea, BaseInterface):
             routeKey="settingInterface",
             index=0,
         )
+
+        # 2. 自律卡片
         quick_jump.addSampleCard(
             icon=os.path.join(self.basedir, "play.svg"),
             title="Start Daily" if self._is_non_chinese_ui else "开始自律",
@@ -239,6 +245,8 @@ class DisplayInterface(ScrollArea, BaseInterface):
             routeKey="Home-Start-Now",
             index=0,
         )
+
+        # 3. 教程卡片
         quick_jump.addSampleCard(
             icon=os.path.join(self.basedir, "explain.svg"),
             title="Tutorial" if self._is_non_chinese_ui else "使用教程",
@@ -246,13 +254,33 @@ class DisplayInterface(ScrollArea, BaseInterface):
             routeKey="Help-Interface",
             index=0,
         )
+
+        # 4. 隐身模式开关卡片
+        stealth_on = bool(config.windowTrackingInput.value) and int(config.windowTrackingAlpha.value) == 1
         self.windowTrackingQuickSwitchCard = quick_jump.addSampleCard_Switch(
             icon=os.path.join(self.basedir, "electronics.svg"),
             title="Stealth Mode" if self._is_non_chinese_ui else "隐身模式",
-            content="Make the game completely invisible in the background"
-            if self._is_non_chinese_ui else self.tr("游戏完全隐身后台"),
-            checked=bool(config.windowTrackingInput.value) and int(config.windowTrackingAlpha.value) == 1,
+            content="Make the game completely invisible in the background" if self._is_non_chinese_ui else self.tr("游戏完全隐身后台"),
+            checked=stealth_on,
             on_toggle=self._toggle_stealth_mode,
         )
-        self._sync_window_tracking_quick_switch()
+
         self.vBoxLayout.addWidget(quick_jump)
+
+    def _sync_window_tracking_quick_switch(self):
+        """业务状态同步逻辑"""
+        if self.windowTrackingQuickSwitchCard is not None:
+            stealth_on = bool(config.windowTrackingInput.value) and int(config.windowTrackingAlpha.value) == 1
+            self.windowTrackingQuickSwitchCard.setChecked(stealth_on, emit=False)
+
+    def _toggle_stealth_mode(self, checked: bool):
+        """业务执行逻辑"""
+        alpha = 1 if checked else 255
+        config.set(config.windowTrackingInput, checked)
+        config.set(config.windowTrackingAlpha, alpha)
+        signalBus.windowTrackingStealthChanged.emit(bool(checked), int(alpha))
+
+    def showEvent(self, event):
+        """生命周期事件"""
+        super().showEvent(event)
+        self._sync_window_tracking_quick_switch()

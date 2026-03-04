@@ -352,7 +352,7 @@ class Daily(QFrame, BaseInterface):
         raise AttributeError(f"'{self.__class__.__name__}' object has no attribute '{item}'")
 
     def _initWidget(self):
-        # UI 化妆的逻辑全部移交给了 View，这里只保留业务架构的初始化
+
         self.ui.PopUpAniStackedWidget.setCurrentIndex(0)
         self.ui.TitleLabel_setting.setText(self._ui_text("设置", "Settings") + "-" + self.setting_name_list[self.ui.PopUpAniStackedWidget.currentIndex()])
 
