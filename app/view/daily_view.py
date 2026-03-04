@@ -671,6 +671,8 @@ class DailyView(QWidget):
         self.gridLayout_2.setColumnStretch(1, 4) # 中间稍宽
         self.gridLayout_2.setColumnStretch(2, 3) # 右侧稍窄
 
+        self._apply_ui_settings()
+
     def _build_option_card(self):
         self.SimpleCardWidget_option = SimpleCardWidget(self)
         self.SimpleCardWidget_option.setObjectName("SimpleCardWidget_option")
@@ -851,3 +853,112 @@ class DailyView(QWidget):
         layout.addWidget(self.ScrollArea_tips)
 
         self.gridLayout_2.addWidget(self.SimpleCardWidget_tips, 1, 2, 1, 1)
+
+    def _ui_text(self, zh_text: str, en_text: str) -> str:
+        return en_text if self.is_non_chinese_ui else zh_text
+
+    def _apply_ui_settings(self):
+        # 1. 字体和特殊样式设置
+        container_font = self.SimpleCardWidget_option.font()
+        if container_font.pointSize() <= 0:
+            container_font.setPointSize(10)
+            self.SimpleCardWidget_option.setFont(container_font)
+
+        for tool_button in self.SimpleCardWidget_option.findChildren(ToolButton):
+            tool_button.setIcon(FIF.SETTING)
+            btn_font = tool_button.font()
+            if btn_font.pointSize() <= 0:
+                btn_font.setPointSize(10)
+                tool_button.setFont(btn_font)
+
+        # 2. 下拉框初始化
+        self.ComboBox_after_use.addItems([
+            self._ui_text('无动作', 'Do Nothing'),
+            self._ui_text('退出游戏和代理', 'Exit Game and Assistant'),
+            self._ui_text('退出代理', 'Exit Assistant'),
+            self._ui_text('退出游戏', 'Exit Game')
+        ])
+        self.ComboBox_power_day.addItems(['1', '2', '3', '4', '5', '6'])
+        self.ComboBox_power_usage.addItems([
+            self._ui_text('活动材料本', 'Event Stages'),
+            self._ui_text('刷常规后勤', 'Operation Logistics')
+        ])
+
+        # 3. 输入框提示词
+        for line_edit in [self.LineEdit_c1, self.LineEdit_c2, self.LineEdit_c3, self.LineEdit_c4]:
+            line_edit.setPlaceholderText(self._ui_text("未输入", "Not set"))
+
+        # 4. 设置快捷键和 Tooltip
+        self.PushButton_start.setShortcut("F1")
+        self.PushButton_start.setToolTip(self._ui_text("快捷键：F1", "Shortcut: F1"))
+
+        # 5. 长文本 Tips 初始化
+        self.BodyLabel_enter_tip.setText(
+            "### Tips\n* Select your server in Settings\n* Enable \"Auto open game\" and select the correct game path by the tutorial above\n* Click \"Start\" to launch and run automatically"
+            if self.is_non_chinese_ui else
+            "### 提示\n* 去设置里选择你的区服\n* 建议勾选“自动打开游戏”，勾选后根据上方教程选择好对应的路径\n* 点击“开始”按钮会自动打开游戏"
+        )
+        self.BodyLabel_person_tip.setText(
+            "### Tips\n* Enter codename instead of full name, e.g. use \"朝翼\" (Dawnwing) for \"凯茜娅-朝翼\" (Katya-Dawnwing)"
+            if self.is_non_chinese_ui else
+            "### 提示\n* 输入代号而非全名，比如想要刷“凯茜娅-朝翼”，就输入“朝翼”"
+        )
+        self.BodyLabel_collect_supplies.setText(
+            "### Tips\n* Enable \"Redeem Code\" to fetch and redeem online codes automatically\n* Online codes are maintained by developers and may not always be updated in time\n* You can import a txt file for batch redeem (one code per line)"
+            if self.is_non_chinese_ui else
+            "### 提示\n* 勾选“领取兑换码”会自动拉取在线兑换码进行兑换\n* 在线兑换码由开发者维护，更新不一定及时\n* 导入txt文本文件可以批量使用用户兑换码，txt需要一行一个兑换码"
+        )
+        self.BodyLabel_chasm_tip.setText(
+            "### Tips\n* Neural Simulation opens every Tuesday at 10:00" if self.is_non_chinese_ui else "### 提示\n* 拟境每周2的10:00开启"
+        )
+        self.BodyLabel_reward_tip.setText(
+            "### Tips\n* Claim monthly card and daily rewards" if self.is_non_chinese_ui else "### 提示\n* 领取大月卡和日常奖励"
+        )
+
+        # 6. 所有常规控件的文本多语言映射
+        self.TitleLabel.setText(self._ui_text("日志", "Log"))
+        self.PushButton_select_all.setText(self._ui_text("全选", "Select All"))
+        self.PushButton_no_select.setText(self._ui_text("清空", "Clear"))
+        self.hint_label.setText(self._ui_text("拖动调整顺序", "Drag to reorder"))
+        self.BodyLabel.setText(self._ui_text("结束后进行", "After Finish"))
+        self.PushButton_start.setText(self._ui_text("开始", "Start"))
+        self.PrimaryPushButton_path_tutorial.setText(self._ui_text("查看教程", "Tutorial"))
+        self.StrongBodyLabel_4.setText(self._ui_text("启动器中查看游戏路径", "Find game path in launcher"))
+        self.CheckBox_open_game_directly.setText(self._ui_text("自动打开游戏", "Auto open game"))
+        self.PushButton_select_directory.setText(self._ui_text("选择", "Browse"))
+        self.CheckBox_mail.setText(self._ui_text("领取邮件", "Claim Mail"))
+        self.CheckBox_fish_bait.setText(self._ui_text("领取鱼饵", "Claim Bait"))
+        self.CheckBox_dormitory.setText(self._ui_text("宿舍碎片", "Dorm Shards"))
+        self.CheckBox_redeem_code.setText(self._ui_text("领取兑换码", "Redeem Codes"))
+        self.PrimaryPushButton_import_codes.setText(self._ui_text("导入", "Import"))
+        self.PushButton_reset_codes.setText(self._ui_text("重置", "Reset"))
+        self.StrongBodyLabel.setText(self._ui_text("选择要购买的商品", "Select items to buy"))
+        self.StrongBodyLabel_2.setText(self._ui_text("选择体力使用方式", "Stamina usage mode"))
+        self.CheckBox_is_use_power.setText(self._ui_text("自动使用期限", "Auto use expiring"))
+        self.BodyLabel_6.setText(self._ui_text("天内的体力药", "day potion"))
+        self.StrongBodyLabel_3.setText(self._ui_text("选择需要刷碎片的角色", "Select characters for shards"))
+        self.BodyLabel_3.setText(self._ui_text("角色1：", "Character 1:"))
+        self.BodyLabel_4.setText(self._ui_text("角色2：", "Character 2:"))
+        self.BodyLabel_5.setText(self._ui_text("角色3：", "Character 3:"))
+        self.BodyLabel_8.setText(self._ui_text("角色4：", "Character 4:"))
+        self.CheckBox_is_use_chip.setText(self._ui_text("是否使用记忆嵌片", "Use memory chip"))
+        self.TitleLabel_3.setText(self._ui_text("日程提醒", "Schedule"))
+
+        # 商店物资名称
+        shop_items = [
+            ("CheckBox_buy_3", "通用强化套件", "Universal Enhancement Kit"),
+            ("CheckBox_buy_4", "优选强化套件", "Premium Enhancement Kit"),
+            ("CheckBox_buy_5", "精致强化套件", "Exquisite Enhancement Kit"),
+            ("CheckBox_buy_6", "新手战斗记录", "Beginner Battle Record"),
+            ("CheckBox_buy_7", "普通战斗记录", "Standard Battle Record"),
+            ("CheckBox_buy_8", "优秀战斗记录", "Advanced Battle Record"),
+            ("CheckBox_buy_9", "初级职级认证", "Junior Rank Certification"),
+            ("CheckBox_buy_10", "中级职级认证", "Intermediate Rank Certification"),
+            ("CheckBox_buy_11", "高级职级认证", "Senior Rank Certification"),
+            ("CheckBox_buy_12", "合成颗粒", "Synthetic Particles"),
+            ("CheckBox_buy_13", "芳烃塑料", "Hydrocarbon Plastic"),
+            ("CheckBox_buy_14", "单极纤维", "Monopolar Fibers"),
+            ("CheckBox_buy_15", "光纤轴突", "Fiber Axon")
+        ]
+        for attr, zh, en in shop_items:
+            getattr(self, attr).setText(self._ui_text(zh, en))
