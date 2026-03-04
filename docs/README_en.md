@@ -20,18 +20,12 @@
 
 > [!Tip]
 > **Update**
-> 1. Epic update: added **stealth background mode**, allowing the game to run fully hidden in the background.
-> 2. Renamed the project to SaaAutomataAcacia and optimized the loading animation and logo.
-> 3. Added Traditional Chinese and English support, including Traditional Chinese game compatibility.
-> 4. Fixed the issue where Steam could not log in automatically.
-> 5. Added support for farming operation logistics when using stamina.
-> 6. Optimized memory chip usage logic and auto-applies by selected character count.
-> 7. Added Star Exploration Pal Capture.
-> 8. Fixed stamina potion day matching errors (avoids using 11-day/13-day potions when 1-day/3-day is selected).
-> 9. Improved UI, startup speed, and execution reliability.
-> 10. Improved OCR recognition stability for low resolutions.
-> 11. Removed the requirement that windowed auto-scaling must keep the game window fixed at the top-left corner.
-> 12. More features to be updated...
+> 1. Epic update: **Stealth Mode**, allowing the game to run completely hidden in the background
+> 2. The software has been renamed to **Ankaxia · Self‑Discipline Assistant**, with a **fully redesigned UI**
+> 3. Added **custom task lists** and **periodic/scheduled execution** features
+> 4. Added support for **Traditional Chinese and English**, including compatibility with Traditional Chinese game clients
+> 5. Added automated routines for **standard logistics farming** and **Pal capturing in New Star Expedition**
+> 6. Enhanced OCR accuracy; fixed Steam login issues and stamina potion duration recognition; optimized memory shard usage; **removed the windowed‑mode restriction**
 
 > [!Warning]
 >
@@ -113,7 +107,6 @@
 > Special thanks to [vmoranv](https://github.com/vmoranv) for documentation support
 > SaaAutomataAcacia Documentation: https://saadocs.netlify.app/
 
-Demo video:[【基于图像识别的芬妮舞狮尘白自动化代理助手-哔哩哔哩】](https://b23.tv/W9OA85k)
 
 ### ✨ Running
 
