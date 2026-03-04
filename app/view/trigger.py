@@ -34,14 +34,14 @@ class Trigger(QFrame, BaseInterface):
         raise AttributeError(f"'{self.__class__.__name__}' object has no attribute '{item}'")
 
     def _initWidget(self):
-        self.TitleLabel_trigger.setText(self._ui_text("触发列表", "Trigger List"))
-        self.StrongBodyLabel.setText(self._ui_text("自动采集", "Auto Collect"))
-        self.BodyLabel.setText(self._ui_text("自动在采集按钮出现时按下F键", "Automatically press F when collect prompt appears"))
-        self.StrongBodyLabel_2.setText(self._ui_text("妮塔E技能自动qte", "Nita E Auto QTE"))
-        self.BodyLabel_2.setText(self._ui_text("自动在qte阶段按下E键", "Automatically press E during QTE stage"))
+        self.TitleLabel_trigger.setText(self._ui_text("自动辅助", "Trigger List"))
+        self.StrongBodyLabel.setText(self._ui_text("自动采集或劝降", "Auto Collect"))
+        self.BodyLabel.setText(self._ui_text("按钮出现时就按下F键", "Automatically press F when collect prompt appears"))
+        self.StrongBodyLabel_2.setText(self._ui_text("自动妮塔悸响qte", "Nita E Auto QTE"))
+        self.BodyLabel_2.setText(self._ui_text("到qte时机就按下E键", "Automatically press E during QTE stage"))
         self.BodyLabel_trigger_tip.setText(
             self._ui_text(
-                "### 提示\n* 先启动游戏再开启本功能\n* 这里的功能相当于开关，开了就会一直检测，遇到符合的情况就自动触发\n* 不影响手动游玩，更像是辅助半自动",
+                "### 提示\n* 先启动游戏再开启本功能\n* 开启后，遇到符合的情况就自动触发\n* 不影响手动游玩",
                 "### Tips\n* Launch the game before enabling this feature\n* These are toggle switches. Once enabled, detection keeps running and triggers automatically when conditions match\n* It does not block manual gameplay, acting as semi-automation assistance"
             ))
 

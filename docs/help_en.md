@@ -20,7 +20,7 @@ FAQ: [https://saadocs.netlify.app/issue/Q&A](https://saadocs.netlify.app/feature
 
 - Core Check: Must be enabled on first launch
 - Check for updates on startup: Recommended to keep enabled
-- Show OCR results: Enable this if unexpected behavior occurs. It helps you verify whether OCR misrecognized any characters. If you find incorrect characters, add a new rule in the “Replacement Table” on the left.
+- Show OCR results: Enable this if unexpected behavior occurs. It helps you verify whether OCR misrecognized any characters. If you find incorrect characters, add a new rule in the OCR Table on the left.
 - Show runtime window screenshots: Recommended to keep disabled
 - Save zoom ratio: Recommended to keep disabled
 - Proxy settings: Enter your proxy (VPN) port if you use one; leave it empty otherwise

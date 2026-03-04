@@ -193,10 +193,10 @@ class DisplayInterface(ScrollArea, BaseInterface):
 
         # 语言提示卡片初始化
         self.gameLanguageNoticeCard = CardWidget(self.view)
-        self.gameLanguageNoticeCard.setFixedHeight(90)
+        self.gameLanguageNoticeCard.setFixedHeight(45)
         self.gameLanguageNoticeLayout = QVBoxLayout(self.gameLanguageNoticeCard)
-        self.gameLanguageNoticeLayout.setContentsMargins(24, 14, 24, 14)
-        self.gameLanguageNoticeLayout.setSpacing(4)
+        self.gameLanguageNoticeLayout.setContentsMargins(12, 8, 12, 8)
+        self.gameLanguageNoticeLayout.setSpacing(2)
 
         self.gameLanguageNoticeTitle = QLabel(self.gameLanguageNoticeCard)
         self.gameLanguageNoticeTitle.setStyleSheet("font-size: 16px; font-weight: 500;")
@@ -214,9 +214,6 @@ class DisplayInterface(ScrollArea, BaseInterface):
 
     def _apply_i18n(self):
         """专门负责文本和多语言翻译（视图层职责）"""
-        self.gameLanguageNoticeTitle.setText(
-            "Language Notice" if self._is_non_chinese_ui else self.tr("语言提示")
-        )
         self.gameLanguageNoticeLabel.setText(
             "Note: Game language for automation supports only Simplified/Traditional Chinese."
             if self._is_non_chinese_ui

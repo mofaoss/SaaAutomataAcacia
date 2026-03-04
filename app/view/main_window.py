@@ -29,6 +29,7 @@ from ..common import resource  # don't delete
 
 
 logger = logging.getLogger(__name__)
+SIDEBAR_EXPAND_THRESHOLD = 60 # 侧边栏展开判定的阈值像素
 
 
 class InstallOcr(QThread):
@@ -209,22 +210,22 @@ class MainWindow(FluentWindow, BaseInterface):
     def _create_display_and_add_nav(self):
         if self.displayInterface is None:
             self._create_display_interface()
-        self._register_nav_item('display', self.displayInterface, FIF.PHOTO, self._ui_text('首页', 'Display'))
+        self._register_nav_item('display', self.displayInterface, FIF.HOME, self._ui_text('首页', 'Display'))
 
     def _create_home_and_add_nav(self):
         if self.homeInterface is None:
             self._create_home_interface()
-        self._register_nav_item('home', self.homeInterface, FIF.HOME, self._ui_text('日常', 'Daily'))
+        self._register_nav_item('home', self.homeInterface, FIF.PLAY, self._ui_text('日常', 'Daily'))
 
     def _create_additional_and_add_nav(self):
         if self.additionalInterface is None:
             self._create_additional_interface()
-        self._register_nav_item('additional', self.additionalInterface, FIF.APPLICATION, self._ui_text('工具', 'Tools'))
+        self._register_nav_item('additional', self.additionalInterface, FIF.DEVELOPER_TOOLS, self._ui_text('工具', 'Tools'))
 
     def _create_trigger_and_add_nav(self):
         if self.triggerInterface is None:
             self._create_trigger_interface()
-        self._register_nav_item('trigger', self.triggerInterface, FIF.COMPLETED, self._ui_text('辅助', 'Trigger'))
+        self._register_nav_item('trigger', self.triggerInterface, FIF.ROBOT, self._ui_text('辅助', 'Trigger'))
 
     def _create_table_and_add_nav(self):
         if self.tableInterface is None:
@@ -233,7 +234,7 @@ class MainWindow(FluentWindow, BaseInterface):
             'table',
             self.tableInterface,
             FIF.SYNC,
-            self._ui_text('替换', 'Replacement'),
+            self._ui_text('替换', 'OCR'),
             position=NavigationItemPosition.BOTTOM,
         )
 
@@ -368,6 +369,13 @@ class MainWindow(FluentWindow, BaseInterface):
             info_bar.contentLabel.linkActivated.connect(_on_link_activated)
             info_bar.contentLabel.setText(content_html)
 
+    def isSidebarExpanded(self) -> bool:
+        """统一判断侧边栏当前是否处于展开状态"""
+        if not hasattr(self, "navigationInterface") or self.navigationInterface is None:
+            return False
+        # 将所有的物理判定逻辑只写在这里一次
+        return self.navigationInterface.width() > SIDEBAR_EXPAND_THRESHOLD
+
     def open_game_directly(self):
         """直接启动游戏（兼容 Steam/Epic 与国服等不同目录结构）"""
         try:
@@ -383,58 +391,33 @@ class MainWindow(FluentWindow, BaseInterface):
         signalBus.switchToSampleCard.connect(self.switchToSample)
         signalBus.showMessageBox.connect(self.showMessageBox)
         signalBus.showScreenshot.connect(self.showScreenshot)
-        # signalBus.check_ocr_progress.connect(self.update_ring)
 
     def initNavigation(self):
-        # self.navigationInterface.setAcrylicEnabled(True)
-
-        # TODO: add navigation items
-        startup_top_interface = None
-        if self._startup_target_index == 2 and self.additionalInterface is not None:
-            startup_top_interface = (self.additionalInterface, FIF.APPLICATION, self._ui_text('工具', 'Tools'))
-        elif self._startup_target_index == 1 and self.homeInterface is not None:
-            startup_top_interface = (self.homeInterface, FIF.HOME, self._ui_text('日常', 'Daily'))
-        elif self.displayInterface is not None:
-            startup_top_interface = (self.displayInterface, FIF.PHOTO, self._ui_text('首页', 'Display'))
-        elif self.homeInterface is not None:
-            startup_top_interface = (self.homeInterface, FIF.HOME, self._ui_text('日常', 'Daily'))
-        elif self.additionalInterface is not None:
-            startup_top_interface = (self.additionalInterface, FIF.APPLICATION, self._ui_text('工具', 'Tools'))
-
-        if startup_top_interface is not None:
-            key = 'display'
-            if self._startup_target_index == 2:
-                key = 'additional'
-            elif self._startup_target_index == 1:
-                key = 'home'
-            self._register_nav_item(key, startup_top_interface[0], *startup_top_interface[1:])
-
+        # 1. 基础 UI 设置
         self.navigationInterface.setCollapsible(True)
-        self.navigationInterface.setReturnButtonVisible(False)
 
+        # 2. 侧边栏宽度控制
         if self._is_non_chinese_ui:
-            self.navigationInterface.setExpandWidth(220)
+            self.navigationInterface.setExpandWidth(130)
         else:
-            self.navigationInterface.setExpandWidth(170)
+            self.navigationInterface.setExpandWidth(100)
 
+        # 3. 恢复侧边栏折叠/展开记忆状态
         def _restore_nav_state():
-            if not hasattr(self, "navigationInterface") or self.navigationInterface is None:
-                return
-            is_currently_expanded = self.navigationInterface.width() > 100
             should_be_expanded = bool(config.nav_expanded.value)
-            if is_currently_expanded != should_be_expanded:
-                if should_be_expanded and hasattr(self.navigationInterface, "expand"):
-                    self.navigationInterface.expand()
-                elif hasattr(self.navigationInterface, "toggle"):
-                    self.navigationInterface.toggle()
+            if self.isSidebarExpanded() != should_be_expanded:
+                self.navigationInterface.expand() if should_be_expanded else self.navigationInterface.collapse()
 
         QTimer.singleShot(50, _restore_nav_state)
 
-        if self._startup_target_index == 2 and self.additionalInterface is not None:
+        if self._startup_target_index == 2:
+            self._create_additional_and_add_nav()
             self.stackedWidget.setCurrentWidget(self.additionalInterface, False)
-        elif self._startup_target_index == 1 and self.homeInterface is not None:
+        elif self._startup_target_index == 1:
+            self._create_home_and_add_nav()
             self.stackedWidget.setCurrentWidget(self.homeInterface, False)
-        elif self.displayInterface is not None:
+        else:
+            self._create_display_and_add_nav()
             self.stackedWidget.setCurrentWidget(self.displayInterface, False)
 
     def init_ocr(self):
@@ -482,6 +465,7 @@ class MainWindow(FluentWindow, BaseInterface):
         self.setWindowTitle(self._ui_text('安卡希雅·自律姬', 'SaaAutomataAcacia'))
         setThemeColor("#009FAA")
         self.setMicaEffectEnabled(False)
+        self.navigationInterface.setReturnButtonVisible(False)
 
         # 5. 安排窗口就位
         if position and target_screen == QApplication.screenAt(QPoint(position[0], position[1])):
@@ -500,89 +484,6 @@ class MainWindow(FluentWindow, BaseInterface):
         if hasattr(self, 'splashScreen') and self.splashMovieLabel is not None:
             self.splashScreen.resize(self.size())
             self.splashMovieLabel.resize(self.splashScreen.size())
-
-    def _setup_splash_animation(self):
-        if not self._start_splash_movie_from_source(':/app/resource/images/logo_loading.gif'):
-            if not self._start_splash_movie_from_source(':/app/resource/images/loading.gif'):
-                base_dir = Path(getattr(sys, '_MEIPASS', Path(__file__).resolve().parents[2]))
-                file_candidates = [
-                    base_dir / 'app/resource/images/logo_loading.gif',
-                    base_dir / 'app/resource/images/loading.gif',
-                    Path('app/resource/images/logo_loading.gif'),
-                    Path('app/resource/images/loading.gif'),
-                ]
-
-                gif_path = next((str(path) for path in file_candidates if path.exists()), None)
-                if not gif_path:
-                    return
-
-                self._start_splash_movie_from_source(gif_path)
-
-    def _start_splash_movie_from_source(self, source: str) -> bool:
-        movie = QMovie(source)
-        if not movie.isValid():
-            return False
-        movie.setCacheMode(QMovie.CacheNone)
-        movie.setScaledSize(self.SPLASH_MOVIE_SIZE)
-
-        self.splashMovie = movie
-        self._splashFrameRendered = False
-
-        self.splashScreen.setIconSize(QSize(0, 0))
-        self.splashScreen.iconWidget.hide()
-        self.splashMovieLabel = QLabel(self.splashScreen)
-        self.splashMovieLabel.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        self.splashMovieLabel.resize(self.splashScreen.size())
-        self.splashMovieLabel.setMinimumSize(self.SPLASH_MOVIE_SIZE)
-        self.splashMovieLabel.setMovie(self.splashMovie)
-
-        self.splashMovie.frameChanged.connect(self._on_splash_movie_frame_changed)
-        self.splashMovie.error.connect(self._on_splash_movie_error)
-
-        self.splashMovieFallbackTimer = QTimer(self)
-        self.splashMovieFallbackTimer.setSingleShot(True)
-        self.splashMovieFallbackTimer.timeout.connect(self._on_splash_movie_timeout)
-
-        self.splashMovie.start()
-        self.splashMovieFallbackTimer.start(1200)
-        self.splashMovieLabel.raise_()
-        self.splashMovieLabel.show()
-        self.splashShownAt = time.perf_counter()
-        logger.info(f'启动动画已启用：{source}')
-        return True
-
-    def _on_splash_movie_frame_changed(self, frame_number):
-        if frame_number >= 0 and not self._splashFrameRendered:
-            self._splashFrameRendered = True
-            if self.splashMovieFallbackTimer is not None and self.splashMovieFallbackTimer.isActive():
-                self.splashMovieFallbackTimer.stop()
-
-    def _on_splash_movie_error(self, _error):
-        self._fallback_to_static_splash('GIF 播放错误')
-
-    def _on_splash_movie_timeout(self):
-        if not self._splashFrameRendered:
-            self._fallback_to_static_splash('GIF 首帧超时')
-
-    def _fallback_to_static_splash(self, reason: str):
-        if self.splashMovieFallbackTimer is not None:
-            self.splashMovieFallbackTimer.stop()
-            self.splashMovieFallbackTimer.deleteLater()
-            self.splashMovieFallbackTimer = None
-
-        if self.splashMovie is not None:
-            self.splashMovie.stop()
-            self.splashMovie = None
-
-        if self.splashMovieLabel is not None:
-            self.splashMovieLabel.hide()
-            self.splashMovieLabel.deleteLater()
-            self.splashMovieLabel = None
-
-        self._splashFrameRendered = False
-        self.splashScreen.iconWidget.show()
-        self.splashScreen.setIconSize(self.SPLASH_ICON_SIZE)
-        logger.warning(f'启动动画不可用，已回退静态 logo：{reason}')
 
     def _finish_splash_screen(self):
         if self.splashMovie is not None and self.splashShownAt is not None:
@@ -736,8 +637,7 @@ class MainWindow(FluentWindow, BaseInterface):
         self.themeListener.terminate()
         self.themeListener.deleteLater()
         if hasattr(self, "navigationInterface") and self.navigationInterface is not None:
-            is_expanded = self.navigationInterface.width() > 100
-            config.set(config.nav_expanded, is_expanded)
+            config.set(config.nav_expanded, self.isSidebarExpanded())
         try:
             # 保存日志到文件
             self.save_log()
@@ -766,8 +666,6 @@ class MainWindow(FluentWindow, BaseInterface):
             w.scrollToAboutCard()
             if self.updater:
                 self.settingInterface.start_download(self.updater)
-        else:
-            pass
 
     def showScreenshot(self, screenshot):
         """

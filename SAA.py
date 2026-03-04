@@ -57,7 +57,7 @@ class EarlySplash(QWidget):
         if gif_path:
             movie = QMovie(gif_path)
             if movie.isValid():
-                movie.setCacheMode(QMovie.CacheNone)
+                movie.setCacheMode(QMovie.CacheMode.CacheAll)
                 first_frame = movie.currentPixmap()
                 if not first_frame.isNull():
                     display_size = self._fit_size(first_frame.size(), self.MAX_ANIMATION_SIZE)
