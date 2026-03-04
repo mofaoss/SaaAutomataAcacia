@@ -231,8 +231,8 @@ class DisplayInterface(ScrollArea, BaseInterface):
         # 1. 设置卡片
         quick_jump.addSampleCard(
             icon=os.path.join(self.basedir, "setting.svg"),
-            title="Settings" if self._is_non_chinese_ui else "设置",
-            content="Please set up the automata acacia settings first" if self._is_non_chinese_ui else self.tr("首次下载，请先设置"),
+            title="Settings" if self._is_non_chinese_ui else "核心设置",
+            content="Please confirm the settings when you first download" if self._is_non_chinese_ui else self.tr("首次下载，请先确认"),
             routeKey="settingInterface",
             index=0,
         )
