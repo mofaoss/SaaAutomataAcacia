@@ -193,7 +193,7 @@ class Config(QConfig):
     item_weapon_3 = ConfigItem("home_interface_shopping_weapon", "item_weapon_3", False, BoolValidator())
 
     ComboBox_after_use = OptionsConfigItem("home_interface_after_use", "ComboBox_after_use", 0,
-                                           OptionsValidator([-1, 0, 1, 2, 3]))
+                                           OptionsValidator([-1, 0, 1, 2, 3, 4, 5]))
     ComboBox_power_day = OptionsConfigItem("home_interface_power", "ComboBox_power_day", -1,
                                            OptionsValidator([-1, 0, 1, 2, 3, 4, 5]))
     ComboBox_power_usage = OptionsConfigItem("home_interface_power", "ComboBox_power_usage", -1,
