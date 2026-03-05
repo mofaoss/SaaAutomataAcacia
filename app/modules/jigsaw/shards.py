@@ -30,7 +30,6 @@ class ShardExchangeModule:
 
         # 读取用户的勾选状态。
         # 注意：这里的 key ("enable_receive_shards" 等) 需要和你的 UI 界面以及 config.py 里的定义保持一致！
-        # 如果你 config 里是按字典层级存的，可以参考 ShoppingModule 里的 self.config_data["home_interface_shopping"] 写法。
         self.enable_receive = self.config_data.get("enable_receive_shards", True)
         self.enable_gift = self.config_data.get("enable_gift_shards", True)
         self.enable_recycle = self.config_data.get("enable_recycle_shards", True)
@@ -80,7 +79,7 @@ class ShardExchangeModule:
 
     def swipe_to_base_puzzle(self):
         # 注意这里加入 take_screenshot=True 确保刷新了首张截图
-        if self.auto.find_element('基地/在基地内部.png', 'image', crop=self._roi(0, 0, 95, 102), take_screenshot=True, is_log=self.is_log):
+        if self.auto.find_element('app/resource/images/jigsaw/base.png', 'image', crop=self._roi(0, 0, 95, 102), take_screenshot=True, is_log=self.is_log):
             self.logger.info("识别到在基地内部，调整拼图视角...")
 
             # 使用 first_screenshot 的宽高计算实际点击像素坐标
@@ -127,7 +126,7 @@ class ShardExchangeModule:
                     time.sleep(1)
                 continue
 
-            if self.auto.find_element('拼图/赠送碎片.png', 'image', crop=self._roi(495, 618, 567, 74), take_screenshot=False):
+            if self.auto.find_element('app/resource/images/jigsaw/9_piece_present.png', 'image', crop=self._roi(495, 618, 567, 74), take_screenshot=False):
                 self.logger.info("没有更多碎片可以赠送了。")
                 break
 
@@ -228,7 +227,7 @@ class ShardExchangeModule:
             target_ratio = self._roi(*roi_list[i])
             top_left = (int(target_ratio[0] * w), int(target_ratio[1] * h))
             bottom_right = (int(target_ratio[2] * w), int(target_ratio[3] * h))
-            self.auto.click_element_with_pos((top_left, bottom_right), action="mouse_click")
+            self.auto.click_element_with_pos((top_left, bottom_right), action="move_click")
             time.sleep(0.5)
 
             # 点击右侧的“添加”按钮 count - 1 次
@@ -236,7 +235,7 @@ class ShardExchangeModule:
             add_y = int(486 / self.base_h * h)
 
             for _ in range(count - 1):
-                self.auto.mouse_click(add_x, add_y)
+                self.auto.move_click(add_x, add_y)
                 time.sleep(0.5)
 
         self.logger.info("信源选择完毕，等待后续点击确认回收...")

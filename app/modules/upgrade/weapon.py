@@ -96,14 +96,14 @@ class WeaponUpgradeModule:
             return False
 
         # 2. 点击左下角排序按钮
-        if not self._wait_and_click('升级/排序.png', 'image', self._roi(0, 616, 175, 147)):
+        if not self._wait_and_click('app/resource/images/upgrade/排序.png', 'image', self._roi(0, 616, 175, 147)):
             return False
 
         # 3. 排序规则选“等级”
         self._wait_and_click('等级', 'text', self._roi(275, 153, 230, 130))
 
         # 4. 点击倒序图标
-        self._wait_and_click('升级/排序倒序.png', 'image', self._roi(419, 203, 36, 30))
+        self._wait_and_click('app/resource/images/upgrade/排序倒序.png', 'image', self._roi(419, 203, 36, 30))
 
         # 5. 确定排序
         self._wait_and_click('确定', 'text', self._roi(881, 544, 62, 42), delay=1)
@@ -111,7 +111,7 @@ class WeaponUpgradeModule:
         # 6. 选择枪械 (固定坐标: 340, 143)
         self.auto.take_screenshot()
         h, w = self.auto.first_screenshot.shape[:2]
-        self.auto.mouse_click(int(340 / self.base_w * w), int(143 / self.base_h * h))
+        self.auto.move_click(int(340 / self.base_w * w), int(143 / self.base_h * h))
         time.sleep(1)
 
         # 7. 点击枪械培养
@@ -140,13 +140,13 @@ class WeaponUpgradeModule:
             if self.auto.find_element('等级提升', 'text', crop=self._roi(548, 175, 180, 124), take_screenshot=False):
                 self.logger.info("触发【等级提升】，点击空白处关闭弹窗...")
                 h, w = self.auto.first_screenshot.shape[:2]
-                self.auto.mouse_click(int(100 / self.base_w * w), int(100 / self.base_h * h))
+                self.auto.move_click(int(100 / self.base_w * w), int(100 / self.base_h * h))
                 time.sleep(1)
                 continue
 
             # 状态 3: 寻找材料区域
             # 注意：如果画面里有对应的白色/绿色/蓝色材料
-            mat_imgs = ["升级/白材料.png", "升级/绿材料.png", "升级/蓝材料.png", "升级/紫材料.png"]
+            mat_imgs = ["app/resource/images/upgrade/白材料.png", "app/resource/images/upgrade/绿材料.png", "app/resource/images/upgrade/蓝材料.png", "app/resource/images/upgrade/紫材料.png"]
             has_materials_on_screen = any(self.auto.find_element(mat, 'image', crop=self._roi(0, 20, 387, 192), take_screenshot=False) for mat in mat_imgs)
 
             if has_materials_on_screen:
@@ -172,7 +172,7 @@ class WeaponUpgradeModule:
                 continue
 
             # 状态 4: 如果没有看到材料，但是看到了 "+" 号
-            if self.auto.click_element('升级/选择材料.png', 'image', crop=self._roi(828, 386, 193, 189), take_screenshot=False, is_log=self.is_log):
+            if self.auto.click_element('app/resource/images/upgrade/选择材料.png', 'image', crop=self._roi(828, 386, 193, 189), take_screenshot=False, is_log=self.is_log):
                 self.logger.info("发现空的强化槽，点击【+】号打开材料选择面板...")
                 time.sleep(1)
                 continue
