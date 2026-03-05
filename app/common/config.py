@@ -240,27 +240,27 @@ class Config(QConfig):
         [
             {
                 "id": "task_login", "enabled": True, "use_periodic": True, "last_run": 0,
-                "activation_config": [{"type": "daily", "day": 0, "time": "05:00", "max_runs": 1}],
+                "activation_config": [{"type": "daily", "day": 0, "time": "00:00", "max_runs": 1}],
                 "execution_config":  [{"type": "daily", "day": 0, "time": "05:00", "max_runs": 1}]
             },
             {
                 "id": "task_supplies", "enabled": True, "use_periodic": True, "last_run": 0,
-                "activation_config": [{"type": "daily", "day": 0, "time": "05:00", "max_runs": 1}],
+                "activation_config": [{"type": "daily", "day": 0, "time": "00:00", "max_runs": 1}],
                 "execution_config":  [{"type": "daily", "day": 0, "time": "05:00", "max_runs": 1}]
             },
             {
                 "id": "task_shop", "enabled": True, "use_periodic": True, "last_run": 0,
-                "activation_config": [{"type": "daily", "day": 0, "time": "05:00", "max_runs": 1}],
+                "activation_config": [{"type": "daily", "day": 0, "time": "00:00", "max_runs": 1}],
                 "execution_config":  [{"type": "daily", "day": 0, "time": "05:00", "max_runs": 1}]
             },
             {
                 "id": "task_stamina", "enabled": True, "use_periodic": True, "last_run": 0,
-                "activation_config": [{"type": "daily", "day": 0, "time": "05:00", "max_runs": 1}],
+                "activation_config": [{"type": "daily", "day": 0, "time": "00:00", "max_runs": 1}],
                 "execution_config":  [{"type": "daily", "day": 0, "time": "05:00", "max_runs": 1}]
             },
             {
                 "id": "task_shards", "enabled": True, "use_periodic": True, "last_run": 0,
-                "activation_config": [{"type": "daily", "day": 0, "time": "05:00", "max_runs": 1}],
+                "activation_config": [{"type": "daily", "day": 0, "time": "00:00", "max_runs": 1}],
                 "execution_config":  [{"type": "daily", "day": 0, "time": "05:00", "max_runs": 1}]
             },
             {
@@ -270,12 +270,12 @@ class Config(QConfig):
             },
             {
                 "id": "task_operation", "enabled": False, "use_periodic": True, "last_run": 0,
-                "activation_config": [{"type": "daily", "day": 0, "time": "05:00", "max_runs": 1}],
+                "activation_config": [{"type": "daily", "day": 0, "time": "00:00", "max_runs": 1}],
                 "execution_config":  [{"type": "daily", "day": 0, "time": "05:00", "max_runs": 1}]
             },
             {
                 "id": "task_reward", "enabled": False, "use_periodic": True, "last_run": 0,
-                "activation_config": [{"type": "daily", "day": 0, "time": "05:00", "max_runs": 1}],
+                "activation_config": [{"type": "daily", "day": 0, "time": "00:00", "max_runs": 1}],
                 "execution_config":  [{"type": "daily", "day": 0, "time": "05:00", "max_runs": 1}]
             },
             {
