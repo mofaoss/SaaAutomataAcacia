@@ -112,30 +112,37 @@ class DailyModel:
     @staticmethod
     def calculate_time_difference(date_due: str):
         """
-        通过给入终止时间获取剩余时间差和时间百分比
+        通过给入终止时间获取剩余时间差和状态
         :param date_due: 持续时间，格式'03.06-04.17'
-        :return: (剩余天数, 剩余百分比, 是否未开始) 如果活动过期，返回 (0, 0, False)
+        :return: (days, total_day, status)
+                 status: 0 正在进行, 1 未开始, -1 已结束
+                 days: 正在进行返回剩余天数，未开始返回距离开始的天数，已结束返回0
+                 total_day: 该活动的总持续天数（用于统一标尺）
         """
         current_year = datetime.now().year
-        start_time = datetime.strptime(f"{current_year}.{date_due.split('-')[0]}", "%Y.%m.%d")
-        end_time = datetime.strptime(f"{current_year}.{date_due.split('-')[1]}", "%Y.%m.%d")
-        if end_time.month < start_time.month:
-            end_time = datetime.strptime(f"{current_year + 1}.{date_due.split('-')[1]}", "%Y.%m.%d")
+        start_date_str, end_date_str = date_due.split('-')
+        start_time = datetime.strptime(f"{current_year}.{start_date_str}", "%Y.%m.%d")
+        end_time = datetime.strptime(f"{current_year}.{end_date_str}", "%Y.%m.%d")
 
-        now = datetime.now()
-        total_difference = end_time - start_time
-        total_day = total_difference.days + 1
+        # 跨年处理
+        if end_time < start_time:
+            end_time = datetime.strptime(f"{current_year + 1}.{end_date_str}", "%Y.%m.%d")
+
+        # 抹平具体的时分秒，避免时间差因为小时原因少算一天
+        now = datetime.now().replace(hour=0, minute=0, second=0, microsecond=0)
+        total_day = (end_time - start_time).days + 1
 
         if now < start_time:
-            now = start_time
-
-        time_difference = end_time - now
-        days_remaining = time_difference.days + 1
-
-        if days_remaining < 0:
-            return 0, 0, False
-
-        return days_remaining, (days_remaining / total_day) * 100, days_remaining == total_day
+            # 未开始
+            days_to_start = (start_time - now).days
+            return days_to_start, total_day, 1
+        elif now > end_time:
+            # 已结束
+            return 0, total_day, -1
+        else:
+            # 正在进行
+            days_remaining = (end_time - now).days + 1
+            return days_remaining, total_day, 0
 
 # ==========================================
 # 线程与后台任务类保持不变
@@ -1183,9 +1190,14 @@ class Daily(QFrame, BaseInterface):
         if config.isLog.value:
             self.logger.info("获取活动日程成功")
 
-        # 👑 调用独立的 DailyModel 来处理数据
         for key, value in tips_dic.items():
             tips_dic[key] = DailyModel.calculate_time_difference(value)
+
+        max_total_days = 1
+        for key, value in tips_dic.items():
+            days, total_day, status = value
+            if status == 0 and total_day > max_total_days:
+                max_total_days = total_day
 
         index = 0
         items_list = []
@@ -1203,21 +1215,29 @@ class Daily(QFrame, BaseInterface):
                     ProgressBar_tip = ProgressBar(self.ui.scrollAreaWidgetContents_tips)
                     ProgressBar_tip.setObjectName(f"ProgressBar_tip{index + 1}")
 
-                days_remaining, percent, is_finished = value
+                # 接收修改后的返回值
+                days, total_day, status = value
 
-                if days_remaining == 0 and not is_finished:
+                if status == -1: # 已结束
                     BodyLabel_tip.setText(f"{key} {self._ui_text('已结束', 'finished')}")
-                else:
-                    if is_finished:
-                        BodyLabel_tip.setText(f"{key} {self._ui_text('未开始', 'not started')}")
-                    else:
-                        BodyLabel_tip.setText(self._ui_text(f"{key}剩余：{days_remaining}天", f"{key} remaining: {days_remaining} day(s)"))
+                    sort_weight = 99999
+                    ProgressBar_tip.setValue(0)
+                elif status == 1: # 未开始
+                    BodyLabel_tip.setText(self._ui_text(f"{key} 还有 {days} 天开始", f"{key} starts in {days} day(s)"))
+                    sort_weight = 10000 + days
+                    ProgressBar_tip.setValue(0)
+                else: # 正在进行
+                    BodyLabel_tip.setText(self._ui_text(f"{key}剩余：{days}天", f"{key} remaining: {days} day(s)"))
+                    sort_weight = days
 
-                ProgressBar_tip.setValue(int(percent))
-                items_list.append([BodyLabel_tip, ProgressBar_tip, percent])
+                    normalized_percent = int((days / max_total_days) * 100)
+                    ProgressBar_tip.setValue(normalized_percent)
+
+                items_list.append([BodyLabel_tip, ProgressBar_tip, sort_weight])
                 index += 1
 
             items_list.sort(key=lambda x: x[2])
+
             for i in range(len(items_list)):
                 self.ui.gridLayout_tips.addWidget(items_list[i][0], i + 1, 0, 1, 1)
                 self.ui.gridLayout_tips.addWidget(items_list[i][1], i + 1, 1, 1, 1)

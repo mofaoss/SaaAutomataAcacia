@@ -308,7 +308,6 @@ class SharedSchedulingPanel(QWidget):
         # 整体隐藏
         w.set_runs_visible(False)
 
-        # 🟢 这里把 w.runs_spin.setValue(1) 换成下面这句：
         w.runs_edit.setText("1")
 
         w.delete_btn.setVisible(False)
