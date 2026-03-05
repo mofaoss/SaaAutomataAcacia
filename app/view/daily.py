@@ -1040,20 +1040,38 @@ class Daily(QFrame, BaseInterface):
     def after_finish(self):
         idx = self.ui.ComboBox_after_use.currentIndex()
         if idx == 0:
+            # 停止 (Stop / Do nothing)
             return
         elif idx == 1:
+            # 关闭游戏和脚本 (Close game and script)
             if self.game_hwnd:
                 win32gui.SendMessage(self.game_hwnd, win32con.WM_CLOSE, 0, 0)
             else:
                 self.logger.warning('home未获取窗口句柄，无法关闭游戏')
             self.parent.close()
         elif idx == 2:
+            # 仅关闭脚本 (Close script only)
             self.parent.close()
         elif idx == 3:
+            # 仅关闭游戏 (Close game only)
             if self.game_hwnd:
                 win32gui.SendMessage(self.game_hwnd, win32con.WM_CLOSE, 0, 0)
             else:
                 self.logger.warning('home未获取窗口句柄，无法关闭游戏')
+        elif idx == 4:
+            # 循环 (Loop) - 重置状态并重新开始
+            self.logger.info(self._ui_text('触发循环执行，即将重新开始任务...', 'Triggered loop execution, restarting tasks...'))
+            # 稍微等待一下避免连续触发过快
+            QTimer.singleShot(2000, self.on_start_button_click)
+        elif idx == 5:
+            # 关机 (Shutdown)
+            self.logger.warning(self._ui_text('任务结束，系统将在 60 秒后关机', 'Task finished, system will shut down in 60 seconds'))
+            if self.game_hwnd:
+                win32gui.SendMessage(self.game_hwnd, win32con.WM_CLOSE, 0, 0)
+
+            # 使用 os.system 调用 Windows 关机命令。-s 关机, -t 60 延迟60秒
+            os.system('shutdown -s -t 60')
+            self.parent.close()
 
     def set_checkbox_enable(self, enable: bool):
         for checkbox in self.ui.findChildren(CheckBox):
