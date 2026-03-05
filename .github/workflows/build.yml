@@ -167,6 +167,7 @@ jobs:
         env:
           SAA_APP_DIR: ${{ github.workspace }}
           INNO_SETUP_COMPILER: C:\Program Files (x86)\Inno Setup 6\ISCC.exe
+          PYTHONIOENCODING: utf8
         run: |
           Write-Host "Starting Nuitka build..."
           python .\PerfectBuild\build.py --n
