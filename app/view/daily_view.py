@@ -278,8 +278,9 @@ class SharedSchedulingPanel(QWidget):
 
     def _iter_activation_rule_widgets(self):
         for i in range(self.activation_layout.count() - 1):
-            widget = self.activation_layout.itemAt(i).widget()
-            if isinstance(widget, ExecutionRuleWidget):
+            item = self.activation_layout.itemAt(i)
+            widget = item.widget() if item is not None and hasattr(item, "widget") else None
+            if widget is not None and isinstance(widget, ExecutionRuleWidget):
                 yield widget
 
     def _add_activation_rule(self, data):
@@ -313,7 +314,8 @@ class SharedSchedulingPanel(QWidget):
 
     def _iter_rule_widgets(self):
         for i in range(self.rules_layout.count() - 1):
-            widget = self.rules_layout.itemAt(i).widget()
+            item = self.rules_layout.itemAt(i)
+            widget = item.widget() if item is not None and hasattr(item, "widget") else None
             if isinstance(widget, ExecutionRuleWidget):
                 yield widget
 
@@ -811,38 +813,67 @@ class DailyView(QWidget):
         self._alias_page_widgets()
 
     def _alias_page_widgets(self):
-        page_attrs = [
-            "StrongBodyLabel_4", "PrimaryPushButton_path_tutorial", "CheckBox_open_game_directly",
-            "LineEdit_game_directory", "PushButton_select_directory", "BodyLabel_enter_tip",
-            "CheckBox_mail", "CheckBox_redeem_code", "CheckBox_dormitory", "CheckBox_fish_bait",
-            "PushButton_reset_codes", "PrimaryPushButton_import_codes", "TextEdit_import_codes",
-            "BodyLabel_collect_supplies",
-            "ScrollArea", "scrollAreaWidgetContents", "gridLayout", "StrongBodyLabel", "widget", "widget_2",
-            "CheckBox_buy_3", "CheckBox_buy_4", "CheckBox_buy_5", "CheckBox_buy_6", "CheckBox_buy_7",
-            "CheckBox_buy_8", "CheckBox_buy_9", "CheckBox_buy_10", "CheckBox_buy_11", "CheckBox_buy_12",
-            "CheckBox_buy_13", "CheckBox_buy_14", "CheckBox_buy_15",
-            "ComboBox_power_usage", "StrongBodyLabel_2", "CheckBox_is_use_power", "ComboBox_power_day", "BodyLabel_6",
-            "BodyLabel_8", "LineEdit_c4", "BodyLabel_person_tip", "BodyLabel_5", "LineEdit_c3",
-            "CheckBox_is_use_chip", "BodyLabel_3", "LineEdit_c1", "StrongBodyLabel_3", "BodyLabel_4", "LineEdit_c2",
-            "BodyLabel_chasm_tip", "BodyLabel_reward_tip", "BodyLabel_22", "ComboBox_run", "BodyLabel_4",
-            "SpinBox_action_times", "BodyLabel_tip_action"
-        ]
+        # EnterGamePage
+        self.StrongBodyLabel_4 = self.page_enter.StrongBodyLabel_4
+        self.PrimaryPushButton_path_tutorial = self.page_enter.PrimaryPushButton_path_tutorial
+        self.CheckBox_open_game_directly = self.page_enter.CheckBox_open_game_directly
+        self.LineEdit_game_directory = self.page_enter.LineEdit_game_directory
+        self.PushButton_select_directory = self.page_enter.PushButton_select_directory
+        self.BodyLabel_enter_tip = self.page_enter.BodyLabel_enter_tip
 
-        pages = [
-            self.page_enter,
-            self.page_collect,
-            self.page_shop,
-            self.page_use_power,
-            self.page_person,
-            self.page_chasm,
-            self.page_reward,
-            self.page_operation
-        ]
-        for attr in page_attrs:
-            for page in pages:
-                if hasattr(page, attr):
-                    setattr(self, attr, getattr(page, attr))
-                    break
+        # CollectSuppliesPage
+        self.CheckBox_mail = self.page_collect.CheckBox_mail
+        self.CheckBox_redeem_code = self.page_collect.CheckBox_redeem_code
+        self.CheckBox_dormitory = self.page_collect.CheckBox_dormitory
+        self.CheckBox_fish_bait = self.page_collect.CheckBox_fish_bait
+        self.PushButton_reset_codes = self.page_collect.PushButton_reset_codes
+        self.PrimaryPushButton_import_codes = self.page_collect.PrimaryPushButton_import_codes
+        self.TextEdit_import_codes = self.page_collect.TextEdit_import_codes
+        self.BodyLabel_collect_supplies = self.page_collect.BodyLabel_collect_supplies
+
+        # ShopPage
+        self.ScrollArea = self.page_shop.ScrollArea
+        self.scrollAreaWidgetContents = self.page_shop.scrollAreaWidgetContents
+        self.gridLayout = self.page_shop.gridLayout
+        self.StrongBodyLabel = self.page_shop.StrongBodyLabel
+        self.widget = self.page_shop.widget
+        self.widget_2 = self.page_shop.widget_2
+        # 使用循环处理有规律的 CheckBox
+        for i in range(3, 16):
+            name = f"CheckBox_buy_{i}"
+            setattr(self, name, getattr(self.page_shop, name))
+
+        # UsePowerPage
+        self.ComboBox_power_usage = self.page_use_power.ComboBox_power_usage
+        self.StrongBodyLabel_2 = self.page_use_power.StrongBodyLabel_2
+        self.CheckBox_is_use_power = self.page_use_power.CheckBox_is_use_power
+        self.ComboBox_power_day = self.page_use_power.ComboBox_power_day
+        self.BodyLabel_6 = self.page_use_power.BodyLabel_6
+
+        # PersonPage
+        self.BodyLabel_8 = self.page_person.BodyLabel_8
+        self.LineEdit_c4 = self.page_person.LineEdit_c4
+        self.BodyLabel_person_tip = self.page_person.BodyLabel_person_tip
+        self.BodyLabel_5 = self.page_person.BodyLabel_5
+        self.LineEdit_c3 = self.page_person.LineEdit_c3
+        self.CheckBox_is_use_chip = self.page_person.CheckBox_is_use_chip
+        self.BodyLabel_3 = self.page_person.BodyLabel_3
+        self.LineEdit_c1 = self.page_person.LineEdit_c1
+        self.StrongBodyLabel_3 = self.page_person.StrongBodyLabel_3
+        self.BodyLabel_4 = self.page_person.BodyLabel_4
+        self.LineEdit_c2 = self.page_person.LineEdit_c2
+
+        # ChasmPage & RewardPage
+        self.BodyLabel_chasm_tip = self.page_chasm.BodyLabel_chasm_tip
+        self.BodyLabel_reward_tip = self.page_reward.BodyLabel_reward_tip
+
+        # OperationPage
+        self.BodyLabel_22 = self.page_operation.BodyLabel_22
+        self.ComboBox_run = self.page_operation.ComboBox_run
+        # 注意这里解决了一个潜在的 Bug: BodyLabel_4 在 PersonPage 中也存在，直接赋值会覆盖
+        self.BodyLabel_4_op = self.page_operation.BodyLabel_4
+        self.SpinBox_action_times = self.page_operation.SpinBox_action_times
+        self.BodyLabel_tip_action = self.page_operation.BodyLabel_tip_action
 
     def _build_log_card(self):
         self.SimpleCardWidget = SimpleCardWidget(self)
@@ -979,7 +1010,7 @@ class DailyView(QWidget):
         self.CheckBox_is_use_chip.setText(self._ui_text("是否使用记忆嵌片", "Use memory chip"))
         self.TitleLabel_3.setText(self._ui_text("日程提醒", "Schedule"))
         self.BodyLabel_22.setText(self._ui_text("疾跑方式", "Sprint mode"))
-        self.BodyLabel_4.setText(self._ui_text("刷取次数", "Run count"))
+        self.BodyLabel_4_op.setText(self._ui_text("刷取次数", "Run count"))
         self.BodyLabel_tip_action.setText(
             "### Tips\n* Auto-run operation from the lobby page\n* Repeats the first training stage for specified times with no stamina cost\n* Useful for weekly pass mission count"
             if self.is_non_chinese_ui else
