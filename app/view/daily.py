@@ -579,11 +579,11 @@ class Daily(QFrame, BaseInterface):
 
         # 弹个窗给用户一个友好的反馈
         action_text_zh = "开启" if enable else "关闭"
-        action_text_en = "enabled" if enable else "disabled"
+        action_text_en = "Enabled" if enable else "Disabled"
 
         InfoBar.success(
-            title=self._ui_text('批量设置{action_text_zh}成功', 'Batch Set {action_text_en} Success').format(action_text_zh=action_text_zh, action_text_en=action_text_en),
-            content=self._ui_text('', ''),
+            title=self._ui_text('已{action_text_zh}', '{action_text_en}').format(action_text_zh=action_text_zh, action_text_en=action_text_en),
+            content=self._ui_text('全部周期', 'All Cycles'),
             orient=Qt.Orientation.Horizontal,
             isClosable=True,
             position=InfoBarPosition.TOP_RIGHT,
