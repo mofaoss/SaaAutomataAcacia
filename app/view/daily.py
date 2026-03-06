@@ -1417,7 +1417,7 @@ class Daily(QFrame, BaseInterface):
         task_name = meta.get("en_name", task_id) if getattr(self, '_is_non_chinese_ui', False) else meta.get("zh_name", task_id)
 
         if not task_config.get("use_periodic", False):
-            skip_msg = f"Skipped [{task_name}]: Schedule disabled. Use Play button to force run." if getattr(self, '_is_non_chinese_ui', False) else f"【跳过】 {task_name}：未启用排期周期，不参与全局自动执行（若需单次执行请点击右侧 Play 按钮）"
+            skip_msg = f"Skipped [{task_name}]: Schedule disabled. Use Play button to force run." if getattr(self, '_is_non_chinese_ui', False) else f"【跳过】 {task_name}：未启用排期周期，若需单次执行请点击右侧 Play 按钮"
             self.logger.info(skip_msg)
             return False
         # ==============================================================

@@ -115,7 +115,7 @@ class TaskItemWidget(QWidget):
         # 初始化“单独执行”按钮并固定尺寸
         self.btn = ToolButton(self)
         self.btn.setIcon(FIF.PLAY)
-        self.btn.setToolTip("单独任务" if not is_non_chinese_ui else "Run only this task")
+        self.btn.setToolTip("单独执行" if not is_non_chinese_ui else "Run only this task")
         self.btn.setFixedSize(28, 28)
         self.btn.setFont(btn_font)
         self.btn.clicked.connect(lambda: self.play_clicked.emit(self.task_id))
