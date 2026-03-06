@@ -173,7 +173,7 @@ class Config(QConfig):
         {"id": "task_shards", "enabled": True, "use_periodic": False,
             "activation_config": [{"type": "daily", "day": 0, "time": "00:00", "max_runs": 1}],
          "execution_config": [{"type": "daily", "day": 0, "time": "00:00", "max_runs": 1}], "last_run": 0},
-        {"id": "task_chasm", "enabled": False, "use_periodic": True,
+        {"id": "task_chasm", "enabled": False, "use_periodic": False,
             "activation_config": [{"type": "weekly", "day": 1, "time": "10:00", "max_runs": 1}],
          "execution_config": [{"type": "daily", "day": 0, "time": "00:00", "max_runs": 1}], "last_run": 0},
         {"id": "task_operation", "enabled": False, "use_periodic": False,
