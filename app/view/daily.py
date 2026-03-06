@@ -270,7 +270,6 @@ class StartThread(QThread):
                 content = f'体力将在 {full_time} 完全恢复' if full_time else "体力计算出错"
                 toast('已完成勾选任务', content, on_dismissed=empty_func, icon=os.path.abspath("app/resource/images/logo.ico"))
         except Exception as e:
-            ocr.stop_ocr()
             if str(e) != '已停止':
                 self.logger.warning(e)
         finally:
@@ -1173,6 +1172,14 @@ class Daily(QFrame, BaseInterface):
             self._set_launch_pending_state(False)
 
     def on_start_button_click(self):
+        # 1. 最高优先级拦截：如果在运行中，点击必然是触发“中止”逻辑
+        if self.is_running:
+            self.logger.info(self._ui_text("已手动中止当前任务", "Task manually stopped"))
+            if self.start_thread is not None and self.start_thread.isRunning():
+                self.start_thread.stop(reason=self._ui_text('用户点击了全局停止按钮', 'User clicked global stop button'))
+            return
+
+        # 2. 状态拦截：处于循环挂机等待状态
         if getattr(self, 'is_loop_waiting', False):
             self.loop_timer.stop()
             self.is_loop_waiting = False
@@ -1181,12 +1188,14 @@ class Daily(QFrame, BaseInterface):
             self.logger.info(self._ui_text("已手动取消循环等待状态", "Manually cancelled loop waiting state"))
             return
 
+        # 3. 状态拦截：处于等待游戏启动状态
         if self.is_launch_pending:
             self._clear_launch_watch_state()
             self._set_launch_pending_state(False)
             self.logger.info(self._ui_text("已取消等待游戏启动", "Cancelled waiting for game launch"))
             return
 
+        # 4. 常规启动逻辑：组装任务队列
         tasks_to_run = []
 
         sequence = self._normalize_task_sequence(config.daily_task_sequence.value)
@@ -1199,21 +1208,19 @@ class Daily(QFrame, BaseInterface):
             if is_checked and self.should_run_task(task_cfg):
                 tasks_to_run.append(task_id)
 
-        # ====== 核心联动逻辑：判断是否需要强行拉起游戏 ======
         if tasks_to_run:
-            # 如果勾选了“自动打开游戏”，且系统检测到游戏根本没运行
+            # 判断是否需要强行拉起游戏
             if config.CheckBox_open_game_directly.value and not is_exist_snowbreak():
-                # 无论[自动登录]有没有被排期，都必须强行把它塞到队列第一位去跑过场动画！
+                # 无论[自动登录]有没有被排期，都必须强行把它塞到队列第一位去跑过场动画
                 if "task_login" not in tasks_to_run:
                     tasks_to_run.insert(0, "task_login")
-                    self.logger.info(self._ui_text("💡检测到游戏未运行，已强行前置【自动登录】任务以完成进游戏流程",
+                    self.logger.info(self._ui_text("检测到游戏未运行，已强行前置【自动登录】任务以完成进游戏流程",
                                                    "Game is closed. Forcefully prepended [Auto Login] to handle startup."))
 
                 self.tasks_to_run = tasks_to_run
                 self.open_game_directly()
             else:
-                # 游戏已经开了，或者没勾选自动启动，按部就班执行
-                # 确保 task_login 如果在队列里，一定排在第一个，防止乱序
+                # 游戏已经开启，确保 task_login 若存在则必须处于首位
                 if "task_login" in tasks_to_run and tasks_to_run[0] != "task_login":
                     tasks_to_run.remove("task_login")
                     tasks_to_run.insert(0, "task_login")
