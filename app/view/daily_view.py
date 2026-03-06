@@ -67,6 +67,7 @@ class TaskListView(ListWidget):
 class TaskItemWidget(QWidget):
     checkbox_state_changed = Signal(str, bool)
     settings_clicked = Signal(str)
+    play_clicked = Signal(str)  # 新增：独立执行信号
 
     def __init__(self, task_id, zh_name, en_name, is_enabled, is_non_chinese_ui, parent=None):
         super().__init__(parent)
@@ -83,20 +84,21 @@ class TaskItemWidget(QWidget):
         )
 
         self.label = BodyLabel(en_name if is_non_chinese_ui else zh_name, self)
-
         self.label.setAlignment(Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter)
 
+        # ====== 更改为 Play 按钮 ======
         self.btn = ToolButton(self)
-        self.btn.setIcon(FIF.SETTING)
+        self.btn.setIcon(FIF.PLAY) # 默认 Play 图标
+        self.btn.setToolTip("立刻执行" if not is_non_chinese_ui else "Run Immediately")
         btn_font = self.btn.font()
         btn_font.setPointSize(10)
         self.btn.setFont(btn_font)
-        self.btn.clicked.connect(lambda: self.settings_clicked.emit(self.task_id))
+        # 点击按钮现在触发 play_clicked 信号
+        self.btn.clicked.connect(lambda: self.play_clicked.emit(self.task_id))
+        # ==============================
 
         layout.addWidget(self.checkbox, 0)
-
         layout.addWidget(self.label, 0)
-
         layout.addStretch(1)
         layout.addWidget(self.btn, 0)
 
@@ -104,9 +106,23 @@ class TaskItemWidget(QWidget):
 
     def mouseReleaseEvent(self, event):
         super().mouseReleaseEvent(event)
-        # 只要用户用鼠标左键点击了这一行的区域，就发射切换面板的信号
         if event.button() == Qt.MouseButton.LeftButton:
             self.settings_clicked.emit(self.task_id)
+
+    def set_running(self, running: bool):
+        """切换执行/停止的图标与提示状态"""
+        try:
+            # 安全获取图标，防止某些版本的 qfluentwidgets 没有 PAUSE
+            icon = getattr(FIF, "PAUSE", getattr(FIF, "CLOSE", FIF.PLAY)) if running else FIF.PLAY
+            self.btn.setIcon(icon)
+            tooltip = ("手动终止" if running else "立刻执行")
+            self.btn.setToolTip(tooltip)
+
+            # 强制 UI 立刻重绘，防止被主线程阻塞
+            self.btn.repaint()
+        except Exception:
+            pass
+
 
 class ExecutionRuleWidget(QWidget):
     deleted = Signal(QWidget)
@@ -139,7 +155,7 @@ class ExecutionRuleWidget(QWidget):
         self.month_combo.setFixedWidth(72)
 
         self.time_edit = LineEdit(self)
-        self.time_edit.setText("05:00")
+        self.time_edit.setText("00:00")
         # 文字居中，并固定在刚好能完整显示的最小宽度
         self.time_edit.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.time_edit.setFixedWidth(64)
@@ -207,7 +223,7 @@ class ExecutionRuleWidget(QWidget):
                 month_day = int(data.get("day", 1))
                 month_day = max(1, min(31, month_day))
                 self.month_combo.setCurrentIndex(month_day - 1)
-            self.time_edit.setText(data.get("time", "05:00"))
+            self.time_edit.setText(data.get("time", "00:00"))
             # 转换为字符串填入 LineEdit
             self.runs_edit.setText(str(data.get("max_runs", 1)))
         except Exception:
@@ -399,7 +415,7 @@ class SharedSchedulingPanel(QWidget):
         if isinstance(activation_rules, dict):
             activation_rules = [activation_rules]
         if not activation_rules:
-            activation_rules = [{"type": "daily", "time": "05:00", "max_runs": 1}]
+            activation_rules = [{"type": "daily", "time": "00:00", "max_runs": 1}]
 
         self._add_activation_rule(activation_rules[0])
         self._update_activation_delete_btns()
@@ -410,11 +426,11 @@ class SharedSchedulingPanel(QWidget):
             if widget:
                 widget.deleteLater()
 
-        rules = config_dict.get("execution_config", [{"type": "daily", "time": "05:00", "max_runs": 1}])
+        rules = config_dict.get("execution_config", [{"type": "daily", "time": "00:00", "max_runs": 1}])
         if isinstance(rules, dict):
             rules = [rules]
         if not rules:
-            rules = [{"type": "daily", "time": "05:00", "max_runs": 1}]
+            rules = [{"type": "daily", "time": "00:00", "max_runs": 1}]
 
         for rule in rules:
             self._add_rule(rule)
