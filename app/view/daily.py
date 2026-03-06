@@ -1610,11 +1610,11 @@ class Daily(QFrame, BaseInterface):
                     sort_weight = 99999
                     ProgressBar_tip.setValue(0)
                 elif status == 1: # 未开始
-                    BodyLabel_tip.setText(self._ui_text(f"{key} 还有 {days} 天开始", f"{key} starts in {days} day(s)"))
+                    BodyLabel_tip.setText(self._ui_text(f"{key} 还有 {days} 天开始", f"{key} in {days}d(s)"))
                     sort_weight = 10000 + days
                     ProgressBar_tip.setValue(0)
                 else: # 正在进行
-                    BodyLabel_tip.setText(self._ui_text(f"{key}剩余：{days}天", f"{key} remaining: {days} day(s)"))
+                    BodyLabel_tip.setText(self._ui_text(f"{key}剩：{days}天", f"{key}: {days}d(s) left"))
                     sort_weight = days
 
                     normalized_percent = int((days / max_total_days) * 100)
