@@ -582,8 +582,8 @@ class Daily(QFrame, BaseInterface):
         action_text_en = "enabled" if enable else "disabled"
 
         InfoBar.success(
-            title=self._ui_text('批量设置成功', 'Batch Set Success'),
-            content=self._ui_text(f'已将所有任务的周期计划{action_text_zh}！', f'All task cycles have been {action_text_en}.'),
+            title=self._ui_text('批量设置{action_text_zh}成功', 'Batch Set {action_text_en} Success').format(action_text_zh=action_text_zh, action_text_en=action_text_en),
+            content=self._ui_text('', ''),
             orient=Qt.Orientation.Horizontal,
             isClosable=True,
             position=InfoBarPosition.TOP_RIGHT,
@@ -983,9 +983,14 @@ class Daily(QFrame, BaseInterface):
                 self.set_checkbox_enable(False)
                 self.ui.PushButton_start.setText(self._ui_text("停止", "Stop"))
 
-                for task_item in self.task_widget_map.values():
-                    if hasattr(task_item, 'set_running'):
-                        task_item.set_running('hidden')
+                # ====== 深度视觉优化：全局锁死，区分待执行与被跳过 ======
+                for tid, task_item in self.task_widget_map.items():
+                    if hasattr(task_item, 'set_task_state'):
+                        if tid in getattr(self, 'tasks_to_run', []):
+                            task_item.set_task_state('queued') # 将要执行的，正常色+锁定
+                        else:
+                            task_item.set_task_state('skipped') # 不执行的，变灰+锁定
+                # =========================================================
 
                 if not self.running_game_guard_timer.isActive():
                     self.running_game_guard_timer.start(1000)
@@ -996,17 +1001,19 @@ class Daily(QFrame, BaseInterface):
                 self.running_game_guard_timer.stop()
                 self.set_checkbox_enable(True)
                 self.ui.PushButton_start.setText(self._ui_text("开始", "Start"))
+                self._is_running_solo_flag = False
 
+                # 任务结束或被打断，全员解除锁定，回归初始态
                 for task_item in self.task_widget_map.values():
-                    if hasattr(task_item, 'set_running'):
-                        task_item.set_running('idle')
+                    if hasattr(task_item, 'set_task_state'):
+                        task_item.set_task_state('idle')
 
                 if str_flag == 'end':
                     self.after_finish()
                 elif str_flag == 'interrupted':
                     InfoBar.warning(
-                        title=self._ui_text('任务已停止', 'Task stopped'),
-                        content=self._ui_text('检测到游戏窗口关闭或用户手动中止，任务终止。', 'Current task stopped gracefully.'),
+                        title=self._ui_text('任务终止', 'Task stopped'),
+                        content=self._ui_text('', ''),
                         orient=Qt.Orientation.Horizontal,
                         isClosable=True,
                         position=InfoBarPosition.TOP_RIGHT,
@@ -1015,14 +1022,14 @@ class Daily(QFrame, BaseInterface):
                     )
         except Exception as e:
             self.logger.error(f'处理任务状态变更时出现异常：{e}')
+            # 异常时也要确保 UI 解锁
             self.is_running = False
-            self._set_launch_pending_state(False)
-            self.running_game_guard_timer.stop()
             self.set_checkbox_enable(True)
             self.ui.PushButton_start.setText(self._ui_text("开始", "Start"))
+            self._is_running_solo_flag = False
             for task_item in self.task_widget_map.values():
-                if hasattr(task_item, 'set_running'):
-                    task_item.set_running('idle')
+                if hasattr(task_item, 'set_task_state'):
+                    task_item.set_task_state('idle')
 
     def _set_launch_pending_state(self, pending: bool):
         self.is_launch_pending = bool(pending)
@@ -1030,22 +1037,27 @@ class Daily(QFrame, BaseInterface):
             self.set_checkbox_enable(False)
             self.ui.PushButton_start.setText(self._ui_text("停止", "Stop"))
 
-            for task_item in self.task_widget_map.values():
-                if hasattr(task_item, 'set_running'):
-                    task_item.set_running('hidden')
+            # 游戏启动读条时，提前将任务区分排队和跳过
+            for tid, task_item in self.task_widget_map.items():
+                if hasattr(task_item, 'set_task_state'):
+                    if tid in getattr(self, 'tasks_to_run', []):
+                        task_item.set_task_state('queued')
+                    else:
+                        task_item.set_task_state('skipped')
 
-            if hasattr(self, 'tasks_to_run') and len(self.tasks_to_run) == 1:
+            if hasattr(self, 'tasks_to_run') and len(self.tasks_to_run) > 0:
                 item = self.task_widget_map.get(self.tasks_to_run[0])
-                if item and hasattr(item, 'set_running'):
-                    item.set_running('running')
+                if item and hasattr(item, 'set_task_state'):
+                    is_solo_run = getattr(self, '_is_running_solo_flag', False)
+                    item.set_task_state('running_solo' if is_solo_run else 'running_queue')
             return
 
         if not self.is_running:
             self.set_checkbox_enable(True)
             self.ui.PushButton_start.setText(self._ui_text("开始", "Start"))
             for task_item in self.task_widget_map.values():
-                if hasattr(task_item, 'set_running'):
-                    task_item.set_running('idle')
+                if hasattr(task_item, 'set_task_state'):
+                    task_item.set_task_state('idle')
 
     def _on_task_play_clicked(self, task_id: str):
         if self.is_running or self.is_launch_pending:
@@ -1068,13 +1080,15 @@ class Daily(QFrame, BaseInterface):
                 self.ui.PushButton_start.setText(self._ui_text("开始", "Start"))
 
             tasks_to_run = [task_id]
+            self._is_running_solo_flag = True
 
+            # ====== 深度视觉优化：将单独执行的任务排队，其余全场置灰锁定 ======
             for tid, item in self.task_widget_map.items():
-                if hasattr(item, 'set_running'):
+                if hasattr(item, 'set_task_state'):
                     if tid == task_id:
-                        item.set_running('running')
+                        item.set_task_state('queued')
                     else:
-                        item.set_running('hidden')
+                        item.set_task_state('skipped')
 
             if config.CheckBox_open_game_directly.value and not is_exist_snowbreak() and task_id == "task_login":
                 self.tasks_to_run = tasks_to_run
@@ -1143,8 +1157,8 @@ class Daily(QFrame, BaseInterface):
                 self._set_launch_pending_state(False)
                 self.logger.warning('启动流程已中断：检测到游戏进程退出，已取消本次自动任务')
                 InfoBar.warning(
-                    title=self._ui_text('启动已中断', 'Launch interrupted'),
-                    content=self._ui_text('检测到游戏被关闭或启动失败，已停止后续任务。', 'Game was closed or failed to launch. Pending tasks were cancelled.'),
+                    title=self._ui_text('游戏启动已中断', 'Game launch interrupted'),
+                    content=self._ui_text('已停止后续任务', 'Pending tasks cancelled.'),
                     orient=Qt.Orientation.Horizontal,
                     isClosable=True,
                     position=InfoBarPosition.TOP_RIGHT,
@@ -1159,7 +1173,7 @@ class Daily(QFrame, BaseInterface):
                 self.logger.warning('等待游戏窗口超时，已取消本次自动任务')
                 InfoBar.warning(
                     title=self._ui_text('等待超时', 'Launch timeout'),
-                    content=self._ui_text('长时间未检测到游戏窗口，已停止后续任务。', 'Game window not detected in time. Pending tasks were cancelled.'),
+                    content=self._ui_text('已停止后续任务', 'Pending tasks cancelled.'),
                     orient=Qt.Orientation.Horizontal,
                     isClosable=True,
                     position=InfoBarPosition.TOP_RIGHT,
@@ -1173,39 +1187,44 @@ class Daily(QFrame, BaseInterface):
 
 
     def _on_task_actually_started(self, task_id: str):
-        """当某个任务真正开始跑的时候，把它切成暂停图标，其他的全部隐藏"""
+        """当某个任务真正开始跑的时候，把它切成对应的运行状态"""
+        is_solo_run = getattr(self, '_is_running_solo_flag', False)
+
         for tid, item in self.task_widget_map.items():
-            if hasattr(item, 'set_running'):
+            if hasattr(item, 'set_task_state'):
                 if tid == task_id:
-                    item.set_running('running')
+                    state = 'running_solo' if is_solo_run else 'running_queue'
+                    item.set_task_state(state)
                 else:
-                    item.set_running('hidden')
+                    # 保持非当前任务的UI状态不变（队列中的保持 queued，没选的保持 idle）
+                    pass
 
     def after_start_button_click(self, tasks_to_run):
+        # 如果不是由单独点击 Play 触发的，则确保标志位为 False
+        if len(tasks_to_run) > 1 or (tasks_to_run and not hasattr(self, '_is_running_solo_flag')):
+            self._is_running_solo_flag = False
+
         if tasks_to_run:
             if not self.is_running:
+                # （已删除 ocr_release_timer 的干预逻辑）
                 self.start_thread = StartThread(tasks_to_run, self)
                 self.start_thread.is_running_signal.connect(self.handle_start)
                 self.start_thread.task_completed_signal.connect(self.record_task_completed)
-
-                # === 核心修复 2：绑定任务开始执行的信号 ===
                 self.start_thread.task_started_signal.connect(self._on_task_actually_started)
-                # ==========================================
 
                 self.start_thread.start()
             else:
                 self.start_thread.stop()
         else:
             InfoBar.error(
-                title=self._ui_text('无执行任务', 'No task selected'),
-                content=self._ui_text("没有勾选任务，或当前不在任务的生效周期内", "No task is selected or within valid schedule"),
+                title=self._ui_text('无任务', 'No task'),
+                content=self._ui_text("未选择任务或不在生效周期", "No task selected or not in active period"),
                 orient=Qt.Orientation.Horizontal,
                 isClosable=False,
                 position=InfoBarPosition.TOP_RIGHT,
                 duration=2000,
                 parent=self
             )
-
 
     def _guard_running_game_window(self):
         try:
@@ -1304,14 +1323,14 @@ class Daily(QFrame, BaseInterface):
                             # 使用 &nbsp; 进行缩进对齐
                             schedule_logs.append(f"&nbsp;&nbsp;&nbsp;&nbsp;{colored_task} ➔ {', '.join(rule_strs)}")
 
-            # 校验挂机模式与排期配置匹配状态
+            # 校验挂机模式与周期配置匹配状态
             if after_use_idx == 4:
                 if not has_scheduled_task:
-                    self.logger.warning(self._ui_text("检测到循环模式，但缺乏有效的排期任务配置。",
+                    self.logger.warning(self._ui_text("检测到循环模式，但缺乏有效的周期任务配置",
                                                       "Loop mode selected but no scheduled tasks found."))
                     InfoBar.warning(
-                        title=self._ui_text('排期配置缺失', 'Schedule Configuration Missing'),
-                        content=self._ui_text('当前勾选任务均未启用排期。本轮结束后，程序将进入无任务触发的空转状态。',
+                        title=self._ui_text('周期配置缺失', 'Schedule Configuration Missing'),
+                        content=self._ui_text('当前任务均未启用周期。本轮结束后，程序将空转',
                                               'No schedules enabled for checked tasks. Program will idle after this run.'),
                         orient=Qt.Orientation.Horizontal,
                         isClosable=True,
@@ -1320,15 +1339,15 @@ class Daily(QFrame, BaseInterface):
                         parent=self
                     )
                 else:
-                    self.logger.info(self._ui_text("循环挂机模式配置校验通过。", "Loop mode configuration validated."))
+                    self.logger.info(self._ui_text("循环挂机模式配置校验通过", "Loop mode configuration validated"))
 
                     if schedule_logs:
                         log_header = "<b>📅 Scheduled Tasks Plan:</b>" if getattr(self, '_is_non_chinese_ui', False) else "<b>📅 后续挂机执行日程表：</b>"
                         self.logger.info(f"{log_header}<br/>" + "<br/>".join(schedule_logs))
 
                     InfoBar.success(
-                        title=self._ui_text('循环模式已就绪', 'Loop Mode Ready'),
-                        content=self._ui_text('检测到有效的排期配置。本轮结束后将自动进入后台挂机等待状态。',
+                        title=self._ui_text('循环模式', 'Loop Mode Ready'),
+                        content=self._ui_text('本轮结束后将等待下一周期',
                                               'Valid schedules detected. Program will enter background loop mode after this run.'),
                         orient=Qt.Orientation.Horizontal,
                         isClosable=True,
@@ -1338,17 +1357,17 @@ class Daily(QFrame, BaseInterface):
                     )
             else:
                 if has_scheduled_task:
-                    self.logger.warning(self._ui_text("检测到已启用周期的排期任务，但结束后动作未配置为【循环】模式。",
+                    self.logger.warning(self._ui_text("检测到已启用周期任务，但结束后动作未配置为【循环】模式",
                                                       "Scheduled tasks detected, but 'After Finish' action is not set to 'Loop'."))
 
                     if schedule_logs:
-                        log_header = '<span style="color: #FF6347;"><b>⚠️ Following schedules will NOT run automatically:</b></span>' if getattr(self, '_is_non_chinese_ui', False) else '<span style="color: #FF6347;"><b>⚠️ 以下排期将【不会】自动执行：</b></span>'
+                        log_header = '<span style="color: #FF6347;"><b>⚠️ After Finish, the following schedules will NOT run automatically:</b></span>' if getattr(self, '_is_non_chinese_ui', False) else '<span style="color: #FF6347;"><b>⚠️ 本执行结束后，以下周期将【不会】自动执行：</b></span>'
                         self.logger.warning(f"{log_header}<br/>" + "<br/>".join(schedule_logs))
 
                     InfoBar.warning(
-                        title=self._ui_text('排期将不会自动执行', 'Schedules Will Not Auto-Run'),
-                        content=self._ui_text('当前有任务启用了排期，但结束后动作未设为“循环”。本轮执行完毕后，以上排期将不会自动触发，请留意日志。',
-                                              'Schedules enabled, but After Finish is not Loop. Schedules will not trigger automatically after this run.'),
+                        title=self._ui_text('结束后未配置为【循环】', 'Not Set to Loop After Finish'),
+                        content=self._ui_text('周期将不会自动执行',
+                                              'Schedules will not trigger automatically after this run'),
                         orient=Qt.Orientation.Horizontal,
                         isClosable=True,
                         position=InfoBarPosition.TOP_RIGHT,
@@ -1359,7 +1378,7 @@ class Daily(QFrame, BaseInterface):
             if config.CheckBox_open_game_directly.value and not is_exist_snowbreak():
                 if "task_login" not in tasks_to_run:
                     tasks_to_run.insert(0, "task_login")
-                    self.logger.info(self._ui_text("检测到游戏未运行，已自动前置登录任务以完成初始化流程。",
+                    self.logger.info(self._ui_text("检测到游戏未运行，已自动前置登录任务以完成初始化流程",
                                                    "Game is closed. Automatically prepended login task for initialization."))
 
                 self.tasks_to_run = tasks_to_run
@@ -1373,7 +1392,7 @@ class Daily(QFrame, BaseInterface):
         else:
             InfoBar.error(
                 title=self._ui_text('执行队列为空', 'Execution Queue Empty'),
-                content=self._ui_text("请至少勾选一项需要执行的任务。", "Please select at least one task to execute."),
+                content=self._ui_text("请至少勾选一项任务", "Please select at least one task"),
                 orient=Qt.Orientation.Horizontal,
                 isClosable=False,
                 position=InfoBarPosition.TOP_RIGHT,
@@ -1400,10 +1419,21 @@ class Daily(QFrame, BaseInterface):
             self.is_loop_waiting = True
             self.set_checkbox_enable(False)
             self.ui.PushButton_start.setText(self._ui_text("停止等待", "Stop Loop"))
-            self.logger.info(self._ui_text("当前队列执行完毕。进入循环模式，挂机等待下一个计划任务的到来...",
+            self.logger.info(self._ui_text("当前队列执行完毕。进入循环，挂机等待...",
                                            "Queue finished. Entering loop mode, waiting for the next scheduled task..."))
 
-            # 启动 60 秒轮询定时器
+            # 遍历任务：有周期的标绿(scheduled)，没周期的标灰(completed)
+            sequence = self._normalize_task_sequence(config.daily_task_sequence.value)
+            for task_cfg in sequence:
+                task_id = task_cfg.get("id")
+                task_item = self.task_widget_map.get(task_id)
+                if task_item and task_item.checkbox.isChecked():
+                    if hasattr(task_item, 'set_task_state'):
+                        if task_cfg.get("use_periodic", False):
+                            task_item.set_task_state('scheduled')
+                        else:
+                            task_item.set_task_state('completed')
+
             self.loop_timer.start(60000)
 
         # === 关机模式 ===
@@ -1508,7 +1538,7 @@ class Daily(QFrame, BaseInterface):
         task_name = meta.get("en_name", task_id) if getattr(self, '_is_non_chinese_ui', False) else meta.get("zh_name", task_id)
 
         if not task_config.get("use_periodic", False):
-            skip_msg = f"Skipped [{task_name}]: Schedule disabled. Use Play button to force run." if getattr(self, '_is_non_chinese_ui', False) else f"【跳过】 {task_name}：未启用排期周期，若需单次执行请点击右侧 Play 按钮"
+            skip_msg = f"Skipped [{task_name}]: Schedule disabled. Use Play button to force run." if getattr(self, '_is_non_chinese_ui', False) else f"【跳过】 {task_name}：未启用周期周期，若需单次执行请点击右侧 Play 按钮"
             self.logger.info(skip_msg)
             return False
         # ==============================================================
@@ -1618,10 +1648,13 @@ class Daily(QFrame, BaseInterface):
                 # 将更新后的字典存回配置
                 task_cfg["rule_progress"] = rule_progress
 
-                success_msg = f"✨ Task [{task_name}] completed! Progress saved." if getattr(self, '_is_non_chinese_ui', False) else f"✨ {task_name} 执行完毕！已为您单独更新对应排期的进度。"
+                success_msg = f"✨ Task [{task_name}] completed! Progress saved." if getattr(self, '_is_non_chinese_ui', False) else f"✨ {task_name} 执行完毕！已为您单独更新对应周期的进度"
                 self.logger.info(success_msg)
                 break
 
+        task_item = self.task_widget_map.get(task_id)
+        if task_item and hasattr(task_item, 'set_task_state'):
+            task_item.set_task_state('completed')
         self._save_task_sequence(sequence)
 
     def save_changed(self, widget, *args):

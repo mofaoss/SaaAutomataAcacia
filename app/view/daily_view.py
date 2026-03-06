@@ -68,43 +68,41 @@ class TaskItemWidget(QWidget):
     checkbox_state_changed = Signal(str, bool)
     settings_clicked = Signal(str)
     play_clicked = Signal(str)  # 单独执行信号
-    play_from_here_clicked = Signal(str) # 新增：从此处向下执行的信号
+    play_from_here_clicked = Signal(str) # 从此处向下执行的信号
 
     def __init__(self, task_id, zh_name, en_name, is_enabled, is_non_chinese_ui, parent=None):
         super().__init__(parent)
         self.task_id = task_id
+        self._is_non_chinese_ui = is_non_chinese_ui
+
+        self._original_text = en_name if is_non_chinese_ui else zh_name
 
         layout = QHBoxLayout(self)
         layout.setContentsMargins(4, 4, 4, 4)
         layout.setSpacing(6)
 
-        # 构造左侧复选框与文本的紧凑布局
         left_layout = QHBoxLayout()
         left_layout.setContentsMargins(0, 0, 0, 0)
         left_layout.setSpacing(4)
 
         self.checkbox = CheckBox(parent=self)
         self.checkbox.setChecked(is_enabled)
-
-        # 限制复选框最大宽度，消除默认文本预留空间
         self.checkbox.setFixedWidth(28)
         self.checkbox.stateChanged.connect(
             lambda: self.checkbox_state_changed.emit(self.task_id, self.checkbox.isChecked())
         )
 
-        self.label = BodyLabel(en_name if is_non_chinese_ui else zh_name, self)
+        # 初始时使用原始名称
+        self.label = BodyLabel(self._original_text, self)
         self.label.setAlignment(Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter)
-
-        # 设置文本标签穿透鼠标事件，实现整行点击聚焦
         self.label.setAttribute(Qt.WidgetAttribute.WA_TransparentForMouseEvents)
 
         left_layout.addWidget(self.checkbox, 0, Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter)
         left_layout.addWidget(self.label, 0, Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter)
 
-        # 初始化“向下执行”按钮并固定尺寸
         self.btn_play_from_here = ToolButton(self)
         self.btn_play_from_here.setIcon(FIF.DOWN)
-        self.btn_play_from_here.setToolTip("此处开始" if not is_non_chinese_ui else "Run checked tasks from here")
+        self.btn_play_from_here.setToolTip("此处开始" if not is_non_chinese_ui else "Run from here")
         self.btn_play_from_here.setFixedSize(28, 28)
 
         btn_font = self.btn_play_from_here.font()
@@ -112,10 +110,9 @@ class TaskItemWidget(QWidget):
         self.btn_play_from_here.setFont(btn_font)
         self.btn_play_from_here.clicked.connect(lambda: self.play_from_here_clicked.emit(self.task_id))
 
-        # 初始化“单独执行”按钮并固定尺寸
         self.btn = ToolButton(self)
         self.btn.setIcon(FIF.PLAY)
-        self.btn.setToolTip("单独执行" if not is_non_chinese_ui else "Run only this task")
+        self.btn.setToolTip("单独执行" if not is_non_chinese_ui else "Run only")
         self.btn.setFixedSize(28, 28)
         self.btn.setFont(btn_font)
         self.btn.clicked.connect(lambda: self.play_clicked.emit(self.task_id))
@@ -127,38 +124,125 @@ class TaskItemWidget(QWidget):
 
         self.setCursor(Qt.CursorShape.PointingHandCursor)
 
+    def set_task_state(self, state: str):
+        """
+        深度 UI 状态机管理（支持颜色+动态文字标签）
+        """
+        try:
+            font = self.label.font()
+            font.setBold(False)
+            text_color = ""
+            # 默认每次切换状态时，先恢复原始纯净的文本
+            display_text = self._original_text
+
+            # 1. 空闲状态
+            if state == 'idle':
+                self.btn.setVisible(True)
+                self.btn_play_from_here.setVisible(True)
+                self.btn.setIcon(FIF.PLAY)
+                self.btn.setToolTip("单独执行" if not self._is_non_chinese_ui else "Run only this task")
+                self.checkbox.setEnabled(True)
+
+            # 2. 排队等待中
+            elif state == 'queued':
+                self.btn.setVisible(False)
+                self.btn_play_from_here.setVisible(False)
+                self.checkbox.setEnabled(False)
+
+            # 3. 屏蔽/跳过状态
+            elif state == 'skipped':
+                self.btn.setVisible(False)
+                self.btn_play_from_here.setVisible(False)
+                self.checkbox.setEnabled(False)
+                text_color = "color: #888888;"
+
+            # 4. 队列执行中 (加蓝 + 文字前缀)
+            elif state == 'running_queue':
+                self.btn.setVisible(True)
+                self.btn_play_from_here.setVisible(False)
+                self.btn.setIcon(getattr(FIF, "PAUSE", getattr(FIF, "CLOSE", FIF.PLAY)))
+                self.btn.setToolTip("强制终止当前任务" if not self._is_non_chinese_ui else "Stop current task")
+                self.checkbox.setEnabled(False)
+                text_color = "color: #0078D4;"
+                font.setBold(True)
+                prefix = "▼ " if getattr(self, '_is_non_chinese_ui', False) else "▼ [执行中] "
+                display_text = f"{prefix}{self._original_text}"
+
+            # 5. 单独越权执行中 (加橙 + 极其醒目的文字前缀)
+            elif state == 'running_solo':
+                self.btn.setVisible(True)
+                self.btn_play_from_here.setVisible(False)
+                self.btn.setIcon(getattr(FIF, "PAUSE", getattr(FIF, "CLOSE", FIF.PLAY)))
+                self.btn.setToolTip("强制终止单独执行" if not self._is_non_chinese_ui else "Stop solo run")
+                self.checkbox.setEnabled(False)
+                text_color = "color: #FF8C00;"
+                font.setBold(True)
+                prefix = "▶ [Solo] " if getattr(self, '_is_non_chinese_ui', False) else "▶ [单独执行] "
+                display_text = f"{prefix}{self._original_text}"
+
+            # 6. 单次执行完毕 (变绿 + 文字前缀)
+            elif state == 'completed':
+                self.btn.setVisible(False)
+                self.btn_play_from_here.setVisible(False)
+                self.checkbox.setEnabled(False)
+                text_color = "color: #107C10;"
+                prefix = "✓ " if getattr(self, '_is_non_chinese_ui', False) else "✓ [已完成] "
+                display_text = f"{prefix}{self._original_text}"
+
+            # 7. 循环挂机等待唤醒 (变青 + 文字前缀)
+            elif state == 'scheduled':
+                self.btn.setVisible(True)
+                self.btn_play_from_here.setVisible(True)
+                self.btn.setIcon(FIF.PLAY)
+                self.checkbox.setEnabled(False)
+                text_color = "color: #00BFFF;"
+                prefix = "⌛ [Wait] " if getattr(self, '_is_non_chinese_ui', False) else "⌛ [挂机等待] "
+                display_text = f"{prefix}{self._original_text}"
+
+            # 应用所有视觉变更
+            self.label.setText(display_text)
+            self.label.setStyleSheet(text_color)
+            self.label.setFont(font)
+
+            self.btn.repaint()
+            self.btn_play_from_here.repaint()
+            self.label.repaint()
+
+        except Exception:
+            pass
+
     def mouseReleaseEvent(self, event):
         super().mouseReleaseEvent(event)
         # 只要点击了这一行（非复选框和按钮的区域），就发射聚焦信号
         if event.button() == Qt.MouseButton.LeftButton:
             self.settings_clicked.emit(self.task_id)
 
-    def set_running(self, state: str):
-        """
-        切换执行/停止的图标与状态：
-        - 'idle': 系统空闲，显示“单独执行”和“向下执行”按钮
-        - 'running': 当前任务执行中，只显示“手动终止(Pause)”按钮
-        - 'hidden': 其他任务正在执行中，隐藏当前任务的所有按钮
-        """
-        try:
-            if state == 'running':
-                self.btn.setVisible(True)
-                self.btn.setIcon(getattr(FIF, "PAUSE", getattr(FIF, "CLOSE", FIF.PLAY)))
-                self.btn.setToolTip("手动终止")
-                self.btn_play_from_here.setVisible(False)
-            elif state == 'idle':
-                self.btn.setVisible(True)
-                self.btn.setIcon(FIF.PLAY)
-                self.btn.setToolTip("单独执行")
-                self.btn_play_from_here.setVisible(True)
-            elif state == 'hidden':
-                self.btn.setVisible(False)
-                self.btn_play_from_here.setVisible(False)
+    # def set_running(self, state: str):
+    #     """
+    #     切换执行/停止的图标与状态：
+    #     - 'idle': 系统空闲，显示“单独执行”和“向下执行”按钮
+    #     - 'running': 当前任务执行中，只显示“手动终止(Pause)”按钮
+    #     - 'hidden': 其他任务正在执行中，隐藏当前任务的所有按钮
+    #     """
+    #     try:
+    #         if state == 'running':
+    #             self.btn.setVisible(True)
+    #             self.btn.setIcon(getattr(FIF, "PAUSE", getattr(FIF, "CLOSE", FIF.PLAY)))
+    #             self.btn.setToolTip("手动终止")
+    #             self.btn_play_from_here.setVisible(False)
+    #         elif state == 'idle':
+    #             self.btn.setVisible(True)
+    #             self.btn.setIcon(FIF.PLAY)
+    #             self.btn.setToolTip("单独执行")
+    #             self.btn_play_from_here.setVisible(True)
+    #         elif state == 'hidden':
+    #             self.btn.setVisible(False)
+    #             self.btn_play_from_here.setVisible(False)
 
-            self.btn.repaint()
-            self.btn_play_from_here.repaint()
-        except Exception:
-            pass
+    #         self.btn.repaint()
+    #         self.btn_play_from_here.repaint()
+    #     except Exception:
+    #         pass
 
 class ExecutionRuleWidget(QWidget):
     deleted = Signal(QWidget)
@@ -310,7 +394,6 @@ class SharedSchedulingPanel(QWidget):
 
         checkbox_row.addWidget(self.enable_checkbox)
 
-        # ====== 新增：开启全部 / 关闭全部 按钮 ======
         self.btn_enable_all = PushButton("Enable All" if is_non_chinese_ui else "开启全部", self)
         self.btn_disable_all = PushButton("Disable All" if is_non_chinese_ui else "关闭全部", self)
 
@@ -378,7 +461,7 @@ class SharedSchedulingPanel(QWidget):
         self.rules_layout.addStretch(1)
 
         self.rules_scroll.setWidget(self.rules_widget)
-        # 修改：滚动区域将自动填满剩余的底部空间
+
         main_layout.addWidget(self.rules_scroll, 1)
 
         self.enable_checkbox.stateChanged.connect(self._emit_change)
