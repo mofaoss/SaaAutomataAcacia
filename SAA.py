@@ -201,7 +201,6 @@ class RuntimeImportWorker(QThread):
 def qt_message_handler(mode, context, message):
     if mode == QtMsgType.QtWarningMsg and "Point size <= 0" in message:
         return  # 遇到这句警告，直接丢弃，不打印到控制台
-    print(message)
 
 
 def main():
