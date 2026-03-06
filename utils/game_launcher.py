@@ -25,24 +25,41 @@ def has_folder_in_path(path, dir_name):
 
 def resolve_game_exe(start_path: str) -> str:
     start_path = os.path.normpath(start_path)
+    if not os.path.exists(start_path):
+        return ""
 
-    candidates = [
-        os.path.join(start_path, r"game\Game\Binaries\Win64\Game.exe"),
-        os.path.join(start_path, r"Game\Binaries\Win64\Game.exe"),
-        os.path.join(start_path, r"..\game\Game\Binaries\Win64\Game.exe"),
-        os.path.join(start_path, r"..\Game\Binaries\Win64\Game.exe"),
-    ]
+    # 1. 寻找“锚点”：在路径中定位最顶层的 snowbreak 文件夹
+    # 比如从 D:/Games/Snowbreak_Official/Launcher 回溯到 D:/Games/Snowbreak_Official
+    parts = start_path.split(os.sep)
+    anchor_path = None
 
-    for p in candidates:
-        p = os.path.normpath(p)
-        if os.path.exists(p):
-            return p
+    for i, part in enumerate(parts):
+        if "snowbreak" in part.lower():
+            # 拼接出包含 snowbreak 的那一层路径作为搜索起点
+            anchor_path = os.sep.join(parts[:i+1])
+            break
 
-    for root, _, files in os.walk(start_path):
+    # 如果路径里压根没 snowbreak，就用用户选的原始路径作为起点
+    search_root = anchor_path if anchor_path else start_path
+
+    # 2. 递归/深度遍历寻找真正的 Game.exe
+    # 限制深度为 6 层，足够覆盖 game/Game/Binaries/Win64 这种深度
+    max_depth = 6
+    start_level = search_root.count(os.sep)
+
+    for root, _, files in os.walk(search_root):
+        current_level = root.count(os.sep)
+        if current_level - start_level > max_depth:
+            # 既然已经锁定了 snowbreak 锚点，通常不需要搜太深，防止扫到无关备份
+            continue
+
         if "Game.exe" in files:
-            p = os.path.normpath(os.path.join(root, "Game.exe"))
-            if re.search(r"binaries\\win64", p.lower()):
-                return p
+            full_path = os.path.normpath(os.path.join(root, "Game.exe"))
+
+            # 3. 终极验证：确认路径特征符合官方标准
+            # 无论前面怎么递归，最后这一关必须过，防止搜到安装包或其他同名程序
+            if re.search(r"binaries\\win64", full_path.lower()):
+                return full_path
 
     return ""
 

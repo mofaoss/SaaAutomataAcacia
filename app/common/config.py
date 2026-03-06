@@ -246,10 +246,6 @@ class Config(QConfig):
     item_weapon_2 = ConfigItem("home_interface_shopping_weapon", "item_weapon_2", False, BoolValidator())
     item_weapon_3 = ConfigItem("home_interface_shopping_weapon", "item_weapon_3", False, BoolValidator())
 
-
-    # --- 武器培养 ---
-    enable_weapon_upgrade = ConfigItem("Daily", "enable_weapon_upgrade", False)
-
     # 信源碎片相关设置
     enable_receive_shards = ConfigItem("ShardExchange", "enable_receive_shards", True, BoolValidator())
     enable_gift_shards    = ConfigItem("ShardExchange", "enable_gift_shards", True, BoolValidator())
@@ -262,27 +258,27 @@ class Config(QConfig):
         "DailyTasks", "TaskSequence",
         [
             {
-                "id": "task_login", "enabled": True, "use_periodic": False, "last_run": 0,
+                "id": "task_login", "enabled": False, "use_periodic": False, "last_run": 0,
                 "activation_config": [{"type": "daily", "day": 0, "time": "00:00", "max_runs": 1}],
                 "execution_config":  [{"type": "daily", "day": 0, "time": "05:00", "max_runs": 1}]
             },
             {
-                "id": "task_supplies", "enabled": True, "use_periodic": False, "last_run": 0,
+                "id": "task_supplies", "enabled": False, "use_periodic": False, "last_run": 0,
                 "activation_config": [{"type": "daily", "day": 0, "time": "00:00", "max_runs": 1}],
                 "execution_config":  [{"type": "daily", "day": 0, "time": "00:00", "max_runs": 1}]
             },
             {
-                "id": "task_shop", "enabled": True, "use_periodic": False, "last_run": 0,
+                "id": "task_shop", "enabled": False, "use_periodic": False, "last_run": 0,
                 "activation_config": [{"type": "daily", "day": 0, "time": "00:00", "max_runs": 1}],
                 "execution_config":  [{"type": "daily", "day": 0, "time": "00:00", "max_runs": 1}]
             },
             {
-                "id": "task_stamina", "enabled": True, "use_periodic": False, "last_run": 0,
+                "id": "task_stamina", "enabled": False, "use_periodic": False, "last_run": 0,
                 "activation_config": [{"type": "daily", "day": 0, "time": "00:00", "max_runs": 1}],
                 "execution_config":  [{"type": "daily", "day": 0, "time": "00:00", "max_runs": 1}]
             },
             {
-                "id": "task_shards", "enabled": True, "use_periodic": False, "last_run": 0,
+                "id": "task_shards", "enabled": False, "use_periodic": False, "last_run": 0,
                 "activation_config": [{"type": "daily", "day": 0, "time": "00:00", "max_runs": 1}],
                 "execution_config":  [{"type": "daily", "day": 0, "time": "00:00", "max_runs": 1}]
             },
@@ -297,7 +293,7 @@ class Config(QConfig):
                 "execution_config":  [{"type": "daily", "day": 0, "time": "00:00", "max_runs": 1}]
             },
             {
-                "id": "task_reward", "enabled": True, "use_periodic": False, "last_run": 0,
+                "id": "task_reward", "enabled": False, "use_periodic": False, "last_run": 0,
                 "activation_config": [{"type": "daily", "day": 0, "time": "00:00", "max_runs": 1}],
                 "execution_config":  [{"type": "daily", "day": 0, "time": "00:00", "max_runs": 1}]
             },

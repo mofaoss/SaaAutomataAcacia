@@ -755,7 +755,6 @@ class WeaponUpgradePage(BaseDailyPage):
         self.BodyLabel_weapon_tip.setObjectName("BodyLabel_weapon_tip")
         self.BodyLabel_weapon_tip.setTextFormat(Qt.TextFormat.MarkdownText)
         self.BodyLabel_weapon_tip.setWordWrap(True)
-
         self.main_layout.addWidget(self.BodyLabel_weapon_tip)
         self.finalize()
 
@@ -1102,11 +1101,10 @@ class DailyView(ScrollArea):
         self.BodyLabel_reward_tip.setText(
             "### Tips\n* Claim monthly card and daily rewards" if self.is_non_chinese_ui else "### 提示\n* 领取大月卡和日常奖励"
         )
-
         self.BodyLabel_weapon_tip.setText(
-            "### Tips\n* Auto-run weapon upgrade from the lobby\n* Consumes materials automatically"
+            "### Tips\n* Automatically identifies and consumes upgrade materials\n* Stops when weapon reaches max level"
             if self.is_non_chinese_ui else
-            "### 提示\n* 自动执行武器升级流程\n* 将会自动选中并消耗背包内的经验材料"
+            "### 提示\n* 自动从背包选择第一把武器进行强化\n* 自动识别并消耗升级材料，直到武器等级提升或满级"
         )
         self.BodyLabel_shard_tip.setText(
             "### Tips\n* Auto receive, gift, and recycle puzzle shards\n* Retains at least 15 of each shard when recycling"
