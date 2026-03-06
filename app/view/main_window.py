@@ -283,7 +283,7 @@ class MainWindow(FluentWindow, BaseInterface):
         if not best:
             InfoBar.success(
                 title=self._ui_text("更新提示", "Update"),
-                content=self._ui_text("已是最新版", "Already up to date"),
+                content=self._ui_text("已是最新", "Already up to date"),
                 orient=Qt.Orientation.Horizontal,
                 isClosable=True,
                 position=InfoBarPosition.TOP,
@@ -622,13 +622,20 @@ class MainWindow(FluentWindow, BaseInterface):
     def showMessageBox(self, title, content):
         massage = MessageBox(title, content, self)
         if massage.exec():
+            # 1. 切换到设置页面
             if self.settingInterface is None:
                 self._create_setting_and_add_nav()
             w = self.settingInterface
             self.stackedWidget.setCurrentWidget(w, False)
             w.scrollToAboutCard()
-            if self.updater:
-                self.settingInterface.start_download(self.updater)
+
+            local_version = get_local_version() or "N/A"
+            best = get_best_update_candidate(REPO_URL, local_version)
+
+            if best and best.get("download_url"):
+                w.start_unified_download(best["download_url"])
+            else:
+                logger.warning("未能获取到有效的更新下载链接")
 
     def showScreenshot(self, screenshot):
         """

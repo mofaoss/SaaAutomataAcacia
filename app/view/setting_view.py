@@ -15,6 +15,7 @@ from qfluentwidgets import SettingCardGroup as CardGroup
 from qfluentwidgets import (SwitchSettingCard, ScrollArea,
                             ComboBoxSettingCard, ExpandLayout, setTheme, setFont, MessageBox, ProgressBar,
                             LargeTitleLabel, SubtitleLabel, BodyLabel, PushButton, HyperlinkButton,
+                            PushButton, FluentIcon as FIF
                             )
 
 from ..common.config import config, isWin11, is_non_chinese_ui_language
@@ -112,6 +113,7 @@ class AboutHeaderWidget(QWidget, BaseInterface):
         self.githubPrefix = BodyLabel("GitHub:", self)
         self.downloadLink = HyperlinkButton("", self._ui_text("现在更新", "Update now"), self)
 
+        self.downloadLink.setMinimumHeight(24)
         self.row2Layout.addWidget(self.qqPrefix)
         self.row2Layout.addWidget(self.qqLink)
         self.row2Layout.addSpacing(24)
@@ -122,12 +124,22 @@ class AboutHeaderWidget(QWidget, BaseInterface):
         self.row3Layout = QHBoxLayout()
         self.row3Layout.setAlignment(Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter)
 
-        self.localVersionLabel = BodyLabel(self._ui_text("当前版本：获取中...", "Current version: loading..."), self)
+        local_version = get_local_version() or "-"
+        self.localVersionLabel = BodyLabel(self._ui_text(f"当前版本：{local_version}", f"Current version: {local_version}"), self)
+
+        # 2. 远端版本依然保持“正在检查...”，因为它需要联网
         self.remoteVersionLabel = BodyLabel(self._ui_text("最新版本：正在检查...", "Latest version: checking..."), self)
+
+        self.checkUpdateBtn = PushButton(FIF.UPDATE, self._ui_text("检查更新", "Check for updates"), self)
+        self.checkUpdateBtn.setFixedHeight(32)
+        self.checkUpdateBtn.setToolTip(self._ui_text("检查更新", "Check for updates"))
+        self.checkUpdateBtn.setCursor(Qt.CursorShape.PointingHandCursor)
 
         self.row3Layout.addWidget(self.localVersionLabel)
         self.row3Layout.addSpacing(24)
         self.row3Layout.addWidget(self.remoteVersionLabel)
+        self.row3Layout.addSpacing(16)
+        self.row3Layout.addWidget(self.checkUpdateBtn)
         self.rightLayout.addLayout(self.row3Layout)
 
         self.mainLayout.addStretch(1)
@@ -426,6 +438,46 @@ class SettingInterface(ScrollArea, BaseInterface):
             self.aboutHeaderWidget.githubBtn.clicked.connect(lambda: QDesktopServices.openUrl(QUrl(REPO_URL)))
         if hasattr(self.aboutHeaderWidget, "qqLink"):
             self.aboutHeaderWidget.qqLink.clicked.connect(self._copy_qq_group_number)
+        if hasattr(self.aboutHeaderWidget, "checkUpdateBtn"):
+            self.aboutHeaderWidget.checkUpdateBtn.clicked.connect(self._on_manual_update_clicked)
+
+    def _on_manual_update_clicked(self):
+        if not hasattr(self, 'aboutHeaderWidget') or not hasattr(self.aboutHeaderWidget, 'checkUpdateBtn'):
+            return
+
+        # 1. 禁用按钮变灰，文字提示检查中
+        self.aboutHeaderWidget.checkUpdateBtn.setEnabled(False)
+
+        # 2. 启动检测线程
+        self.manualCheckThread = VersionCheckThread(self)
+        self.manualCheckThread.finishedSignal.connect(self._on_manual_check_finished)
+        self.manualCheckThread.start()
+
+    def _on_manual_check_finished(self, payload: dict):
+        # 1. 恢复按钮状态和原本的“更新”文字
+        if hasattr(self, 'aboutHeaderWidget') and hasattr(self.aboutHeaderWidget, 'checkUpdateBtn'):
+            self.aboutHeaderWidget.checkUpdateBtn.setEnabled(True)
+            self.aboutHeaderWidget.checkUpdateBtn.setText(self._ui_text("检查更新", "Check for updates"))
+
+        # 2. 同步更新头部的 Label 和 超链接状态
+        self._on_about_header_version_checked(payload)
+
+        # 3. 弹窗反馈
+        download_url = str(payload.get("download_url") or "").strip()
+        if download_url:
+            InfoBar.success(
+                self._ui_text("发现新版本", "New version available"),
+                self._ui_text("请点击上方【现在更新】", "Please click 'Update now' above"),
+                duration=3000,
+                parent=self
+            )
+        else:
+            InfoBar.success(
+                self._ui_text("已是最新本", "Up to date"),
+                self._ui_text("", ""),
+                duration=3000,
+                parent=self
+            )
 
     def _copy_qq_group_number(self):
         QApplication.clipboard().setText("996710620")
@@ -556,33 +608,51 @@ class SettingInterface(ScrollArea, BaseInterface):
         latest_version = str(payload.get("latest_version") or "").strip()
         download_url = str(payload.get("download_url") or "").strip()
 
-        if download_url and hasattr(self.aboutHeaderWidget, "downloadLink"):
-            try:
-                # 清除原生超链接行为，阻断默认浏览器直接拉起
+        # 如果没有 download_url，说明当前已经是最新版（或者获取失败）
+        if not download_url:
+            # 去掉超链接，显示“已是最新”
+            if hasattr(self.aboutHeaderWidget, "downloadLink"):
+                try:
+                    self.aboutHeaderWidget.downloadLink.clicked.disconnect()
+                except Exception:
+                    pass
+                self.aboutHeaderWidget.downloadLink.setText(self._ui_text("已是最新", "Up to date"))
                 self.aboutHeaderWidget.downloadLink.setUrl("")
-                self.aboutHeaderWidget.downloadLink.clicked.disconnect()
-            except Exception:
-                pass
-            # 绑定内置 aria2c 下载引擎
-            self.aboutHeaderWidget.downloadLink.clicked.connect(lambda: self.start_unified_download(download_url))
+                # 如果你想让他点的时候弹窗提示：
+                self.aboutHeaderWidget.downloadLink.clicked.connect(
+                    lambda: InfoBar.success(
+                        self._ui_text("更新提示", "Update"),
+                        self._ui_text("已是最新", "You are using the latest version"),
+                        duration=2000,
+                        parent=self
+                    )
+                )
+        else:
+            # 如果有 download_url，说明有新版本，绑定下载事件
+            if hasattr(self.aboutHeaderWidget, "downloadLink"):
+                try:
+                    self.aboutHeaderWidget.downloadLink.setUrl("")
+                    self.aboutHeaderWidget.downloadLink.clicked.disconnect()
+                except Exception:
+                    pass
+                self.aboutHeaderWidget.downloadLink.setText(self._ui_text("现在更新", "Update now"))
+                self.aboutHeaderWidget.downloadLink.clicked.connect(lambda: self.start_unified_download(download_url))
+
+        # 更新版本号 Label 显示
+        if hasattr(self.aboutHeaderWidget, "localVersionLabel"):
+            self.aboutHeaderWidget.localVersionLabel.setText(
+                self._ui_text(f"当前版本：{local_version}", f"Current version: {local_version}")
+            )
 
         if latest_version:
-            if hasattr(self.aboutHeaderWidget, "localVersionLabel"):
-                self.aboutHeaderWidget.localVersionLabel.setText(
-                    self._ui_text(f"当前版本：{local_version}", f"Current version: {local_version}")
-                )
             if hasattr(self.aboutHeaderWidget, "remoteVersionLabel"):
                 self.aboutHeaderWidget.remoteVersionLabel.setText(
                     self._ui_text(f"最新版本：{latest_version}", f"Latest version: {latest_version}")
                 )
         else:
-            if hasattr(self.aboutHeaderWidget, "localVersionLabel"):
-                self.aboutHeaderWidget.localVersionLabel.setText(
-                    self._ui_text(f"当前版本：{local_version}", f"Current version: {local_version}")
-                )
             if hasattr(self.aboutHeaderWidget, "remoteVersionLabel"):
                 self.aboutHeaderWidget.remoteVersionLabel.setText(
-                    self._ui_text("最新版本：获取失败", "Latest version: Failed to fetch")
+                    self._ui_text(f"最新版本：{local_version}", f"Latest version: {local_version}")
                 )
 
     def handle_download_fallback(self, title: str, content: str, download_url: str):

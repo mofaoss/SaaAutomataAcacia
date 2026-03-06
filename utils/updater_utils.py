@@ -253,8 +253,9 @@ def get_local_version(file_path="update_data.txt"):
 
 def get_best_update_candidate(repo_url: str, local_version: str, check_prerelease: bool = False) -> Optional[Dict[str, Any]]:
     """
-    Makes a SINGLE call to get release channels and determines the absolute best candidate
-    based on the user's prerelease preferences.
+    获取远程版本。
+    如果远程最佳版本确实比 local_version 新，则返回该字典。
+    否则（已是最新，或远端更老），返回 None。
     """
     channels = get_github_release_channels(repo_url)
     stable = channels.get("latest")
@@ -288,8 +289,12 @@ def get_best_update_candidate(repo_url: str, local_version: str, check_prereleas
         if is_remote_version_newer(best["version"], candidate["version"]):
             best = candidate
 
-    return best
+    # 2. 判断远端最好版本是否真的比本地版本新
+    if is_remote_version_newer(local_version, best["version"]):
+        return best
+    else:
 
+        return None
 
 def resolve_batch_dir(downloaded_path: str) -> str:
     """
