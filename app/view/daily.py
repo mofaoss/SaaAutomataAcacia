@@ -436,7 +436,7 @@ class Daily(QFrame, BaseInterface):
     def _on_init_sync(self):
         # 1. 同步视觉与模式联动
         self._auto_adjust_after_use_action()
-        # 2. 如果存在激活的周期，输出日程日志
+        # 2. 如果存在激活的计划，输出日程日志
         self._output_schedule_log()
 
     def __getattr__(self, item):
@@ -456,7 +456,7 @@ class Daily(QFrame, BaseInterface):
         for task_cfg in sequence:
             task_id = task_cfg.get("id")
 
-            # 【核心修改】即使任务列表没有勾选，只要启用了周期，到点一样执行！
+            # 【核心修改】即使任务列表没有勾选，只要启用了计划，到点一样执行！
             if not task_cfg.get("use_periodic"):
                 continue
 
@@ -474,7 +474,7 @@ class Daily(QFrame, BaseInterface):
                             break
 
         if tasks_to_run:
-            self.logger.info(f"⏰ 到点触发周期计划: {current_time_str}，执行列表: {tasks_to_run}")
+            self.logger.info(f"⏰ 到点触发计划: {current_time_str}，执行列表: {tasks_to_run}")
             if config.CheckBox_open_game_directly.value and not is_exist_snowbreak():
                 if "task_login" not in tasks_to_run:
                     tasks_to_run.insert(0, "task_login")
@@ -517,7 +517,7 @@ class Daily(QFrame, BaseInterface):
 
         for task_cfg in sequence:
             task_id = task_cfg.get("id")
-            # 【核心修改】只看周期是否启用，彻底与 checkbox 解耦
+            # 只看计划是否启用，彻底与 checkbox 解耦
             if task_cfg.get("use_periodic", False):
                 meta = TASK_REGISTRY.get(task_id, {})
                 task_name = meta.get("en_name", task_id) if self._is_non_chinese_ui else meta.get("zh_name", task_id)
