@@ -635,7 +635,7 @@ class MainWindow(FluentWindow, BaseInterface):
         except Exception as e:
             logger.error(e)
 
-        # 【核心修复】：彻底销毁释放托盘图标系统资源，防止进程阻塞
+        # 彻底销毁释放托盘图标系统资源，防止进程阻塞
         if hasattr(self, "tray_icon"):
             self.tray_icon.hide()
             self.tray_icon.deleteLater()

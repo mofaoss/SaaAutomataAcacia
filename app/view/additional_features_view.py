@@ -684,7 +684,7 @@ class Additional(QFrame, BaseInterface):
         self.f_thread = None
         self.nita_e_thread = None
 
-        # 【新增】：全局互斥任务调度中心状态
+        # 全局互斥任务调度中心状态
         self.current_running_task_id: str | None = None
         self.current_task_thread: SubTask | None = None
 
