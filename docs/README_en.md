@@ -2,7 +2,7 @@
     <h1>
         <img src="../asset/logo_head.png" width="200"/>
         <br/>
-        SaaAutomataAcacia
+        SaaAssistantAca
     </h1>
     <br/>
 
@@ -98,7 +98,7 @@
 
 > [!Important]
 >
-> SaaAutomataAcacia Documentation: https://saadocs.netlify.app/ (Partly outdated)
+> SaaAssistantAca Documentation: https://saadocs.netlify.app/ (Partly outdated)
 
 
 ### ✨ Running
@@ -115,7 +115,7 @@
 
 ### 📌Download
 
-- [Github Release](https://github.com/mofaoss/SaaAutomataAcacia/releases)
+- [Github Release](https://github.com/mofaoss/SaaAssistantAca/releases)
 
 ## ❤️ Related Projects
 
@@ -126,4 +126,4 @@
 > [!Note]
 >
 > GPLv3 License
-[LICENSE](https://github.com/mofaoss/SaaAutomataAcacia/blob/main/LICENSE)
+[LICENSE](https://github.com/mofaoss/SaaAssistantAca/blob/main/LICENSE)

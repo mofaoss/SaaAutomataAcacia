@@ -45,9 +45,9 @@ def get_app_version() -> str:
 
 class Config:
     app_ver = get_app_version()
-    app_name = "SaaAutomataAcacia"
+    app_name = "SaaAssistantAca"
     app_exec = "SAA"
     app_publisher = "mofaoss"
-    app_url = "https://github.com/mofaoss/SaaAutomataAcacia"
+    app_url = "https://github.com/mofaoss/SaaAssistantAca"
     app_icon = "app/resource/images/logo.ico"
     app_dir = os.getenv("SAA_APP_DIR", str(app_dir()))

@@ -162,7 +162,7 @@ class SettingInterface(ScrollArea, BaseInterface):
         self.progressBar.setVisible(False)
         self._is_dialog_open = False
 
-        self.app_name = "SaaAutomataAcacia"
+        self.app_name = "SaaAssistantAca"
         self.startup_task_name = f"{self.app_name} {self._ui_text('开机自启', 'Startup')}"
         if getattr(sys, 'frozen', False):
             self.app_path = sys.executable
@@ -341,8 +341,8 @@ class SettingInterface(ScrollArea, BaseInterface):
         self.showScreenshotCard = SwitchSettingCard(
             FIF.PHOTO,
             self._ui_text('展示运行时的窗口截图', 'Show runtime screenshots'),
-            self._ui_text('用于在查错时查看是否正确截取了游戏对应位置的画面，截取的所有画面会保存在SaaAutomataAcacia/temp下，需要手动删除',
-                          'Used for troubleshooting capture regions. Screenshots are saved in SaaAutomataAcacia/temp and should be deleted manually'),
+            self._ui_text('用于在查错时查看是否正确截取了游戏对应位置的画面，截取的所有画面会保存在SaaAssistantAca/temp下，需要手动删除',
+                          'Used for troubleshooting capture regions. Screenshots are saved in SaaAssistantAca/temp and should be deleted manually'),
             configItem=config.showScreenshot,
             parent=self.developerOptionsGroup
         )

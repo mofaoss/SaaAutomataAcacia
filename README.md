@@ -2,9 +2,9 @@
     <h1>
         <img src="./asset/logo_head.png" width="200"/>
         <br/>
-        安卡希雅·自律姬
+        安卡小助手
     </h1>
-    <h2>SaaAutomataAcacia</h2>
+    <h2>SaaAssistantAca</h2>
 <br/>
 
 简体中文 | <a href="docs/README_en.md">English</a>
@@ -111,7 +111,7 @@
 
 ### 📌下载
 
-- [Github Release](https://github.com/mofaoss/SaaAutomataAcacia/releases)
+- [Github Release](https://github.com/mofaoss/SaaAssistantAca/releases)
 
 ## ❤️相关项目
 
@@ -122,4 +122,4 @@
 > [!Note]
 >
 > GPLv3 License
-[LICENSE](https://github.com/mofaoss/SaaAutomataAcacia/blob/main/LICENSE)
+[LICENSE](https://github.com/mofaoss/SaaAssistantAca/blob/main/LICENSE)

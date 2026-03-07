@@ -170,7 +170,7 @@ def get_github_release_channels(
         api_url = f"https://api.github.com/repos/{owner}/{repo}/releases?per_page={max(1, int(per_page))}"
         headers = {
             "Accept": "application/vnd.github+json",
-            "User-Agent": "SaaAutomataAcacia-Updater",
+            "User-Agent": "SaaAssistantAca-Updater",
         }
         proxies = _resolve_proxies(proxies)
 
@@ -315,7 +315,7 @@ def resolve_batch_dir(downloaded_path: str) -> str:
     is_protected = any(download_dir.startswith(p) for p in protected_prefixes)
 
     if is_protected:
-        app_name = "SaaAutomataAcacia"
+        app_name = "SaaAssistantAca"
         return os.path.join(
             os.environ.get("LOCALAPPDATA", os.path.expanduser("~")),
             app_name

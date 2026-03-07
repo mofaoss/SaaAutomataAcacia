@@ -419,7 +419,7 @@ class MainWindow(FluentWindow, BaseInterface):
         # 4. 基础 UI 设置
         base_dir = Path(getattr(sys, '_MEIPASS', Path(__file__).resolve().parents[2]))
         self.setWindowIcon(QIcon(str(base_dir / 'app/resource/images/logo.png')))
-        self.setWindowTitle(self._ui_text('安卡希雅·自律姬', 'SaaAutomataAcacia'))
+        self.setWindowTitle(self._ui_text('安卡小助手', 'SaaAssistantAca'))
         setThemeColor("#009FAA")
         self.setMicaEffectEnabled(False)
         self.navigationInterface.setReturnButtonVisible(False)
