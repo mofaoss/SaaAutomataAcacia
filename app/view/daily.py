@@ -1562,19 +1562,43 @@ class Daily(QFrame, BaseInterface):
         run_mode_idx = self.ui.ComboBox_run_mode.currentIndex()
         end_action_idx = self.ui.ComboBox_end_action.currentIndex()
 
+        # 1. 处理游戏窗口关闭
+        # 索引 1: 退出游戏, 3: 退出游戏和代理
         if end_action_idx in [1, 3] and self.game_hwnd:
+            self.logger.info("正在关闭游戏窗口...")
             win32gui.SendMessage(self.game_hwnd, win32con.WM_CLOSE, 0, 0)
 
-        # 【核心修改】调整新下拉菜单对应的索引处理
-        if run_mode_idx == 0:  # 0变成了“挂机等待” (原先是无动作)
+        # 2. 处理“安卡小助手”自身的后续动作
+        if run_mode_idx == 0:  # 挂机等待
             self._auto_adjust_after_use_action()
-            self.logger.info("轮次执行完毕，后台持续监控计划时间点中...")
+            self.logger.info("所有任务执行完毕，助手已进入挂机监控模式...")
+
         elif run_mode_idx == 1:  # 关闭程序
-            if end_action_idx in [2, 3]: self.parent.close()
-            return
+            self.logger.info("执行完毕，正在退出安卡小助手...")
+            self.loop_timer.stop()
+            self.hotkey_timer.stop()
+
+            # 【核心复用】：获取顶层主窗口 (MainWindow)，直接调用它的完美退出机制
+            main_window = self.window()
+            if hasattr(main_window, 'quit_app'):
+                main_window.quit_app()
+            else:
+                # 备用方案（防万一找不到 MainWindow）
+                from PySide6.QtWidgets import QApplication
+                import os
+                QApplication.quit()
+                os._exit(0)
+
         elif run_mode_idx == 2:  # 关闭电脑
+            self.logger.info("执行完毕，系统将于60秒后关机...")
             os.system('shutdown -s -t 60')
-            self.parent.close()
+
+            self.loop_timer.stop()
+            self.hotkey_timer.stop()
+
+            main_window = self.window()
+            if hasattr(main_window, 'quit_app'):
+                main_window.quit_app()
 
     def set_checkbox_enable(self, enable: bool):
         for checkbox in self.ui.findChildren(CheckBox):
