@@ -1442,7 +1442,7 @@ class Daily(QFrame, BaseInterface):
             if hwnd:
                 self._clear_launch_watch_state()
                 self._set_launch_pending_state(False)
-                self.logger.info(_ui_text(f'已检测到游戏窗口：{hwnd}', f'Game window detected: {hwnd}'))
+                self.logger.info(self._ui_text(f'已检测到游戏窗口：{hwnd}', f'Game window detected: {hwnd}'))
                 self.after_start_button_click(getattr(self, 'tasks_to_run',
                                                       []))
                 return
