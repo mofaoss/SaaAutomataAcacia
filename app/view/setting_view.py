@@ -7,7 +7,7 @@ import html
 from functools import partial
 
 from PySide6.QtCore import Qt, QUrl, QThread, Signal
-from PySide6.QtGui import QDesktopServices, QFont, QPixmap, QMovie
+from PySide6.QtGui import QDesktopServices, QFont, QPixmap
 from PySide6.QtWidgets import QWidget, QLabel, QHBoxLayout, QVBoxLayout, QApplication, QSizePolicy
 from qfluentwidgets import FluentIcon as FIF
 from qfluentwidgets import InfoBar
@@ -181,6 +181,14 @@ class SettingInterface(ScrollArea, BaseInterface):
         # personalization
         self.personalGroup = SettingCardGroup(
             self.tr('Personalization'), self.scrollWidget)
+        self.minimizeToTrayCard = SwitchSettingCard(
+            FIF.MINIMIZE,
+            self._ui_text('关闭时缩小到托盘', 'Minimize to tray on close'),
+            self._ui_text('开启后，点击关闭按钮会将程序隐藏到系统托盘，而不是退出程序',
+                          'When enabled, closing the window minimizes the app to the system tray instead of exiting'),
+            configItem=config.minimizeToTray,
+            parent=self.personalGroup
+        )
         self.micaCard = SwitchSettingCard(
             FIF.TRANSPARENT,
             self.tr('Mica effect'),
@@ -381,6 +389,7 @@ class SettingInterface(ScrollArea, BaseInterface):
     def __initLayout(self):
         self.settingLabel.move(36, 50)
 
+        self.personalGroup.addSettingCard(self.minimizeToTrayCard)
         self.personalGroup.addSettingCard(self.micaCard)
         self.personalGroup.addSettingCard(self.themeCard)
         self.personalGroup.addSettingCard(self.enterCard)

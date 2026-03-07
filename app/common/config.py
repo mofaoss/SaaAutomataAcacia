@@ -150,6 +150,7 @@ class Config(QConfig):
     # =========================================================
     # 2. 系统与个性化设置 (Settings - Personal & Update)
     # =========================================================
+    minimizeToTray        = ConfigItem("setting_personal", "minimizeToTray", False, BoolValidator())
     enter_interface       = OptionsConfigItem("setting_personal", "enter_interface", 0, OptionsValidator([0, 1, 2]))
     server_interface      = OptionsConfigItem("setting_personal", "server_interface", 0, OptionsValidator([0, 1, 2, 3]))
     isLog                 = ConfigItem("setting_personal", "isLog", False, BoolValidator())
