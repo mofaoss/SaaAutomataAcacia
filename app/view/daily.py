@@ -22,7 +22,7 @@ from app.common.signal_bus import signalBus
 from app.common.style_sheet import StyleSheet
 from utils.game_launcher import launch_game_with_guard
 from utils.net_utils import get_cloudflare_data, get_date_from_api
-from utils.ui_utils import get_all_children
+from utils.ui_utils import get_all_children, ui_text
 from utils.win_utils import is_exist_snowbreak
 
 # 导入业务模块
@@ -40,6 +40,7 @@ from app.repackage.tree import TreeFrame_person, TreeFrame_weapon
 from app.modules.operation_action.operation_action import OperationModule
 from app.modules.upgrade.weapon import WeaponUpgradeModule
 from app.modules.jigsaw.shards import ShardExchangeModule
+from app.common.gui_logger import setup_ui_logger
 
 # 导入视图与基类
 from app.view.daily_view import DailyView, TaskItemWidget
@@ -169,6 +170,9 @@ class AutomationSession:
         self._task_context = BaseTask()
         self._task_context.logger = self.logger
 
+        from app.modules.ocr import ocr
+        ocr.logger = self.logger
+
     @property
     def auto(self):
         return self._task_context.auto
@@ -194,10 +198,11 @@ class StartThread(QThread):
     task_started_signal = Signal(str)
     task_failed_signal = Signal(str)  # 【新增】任务失败/跳过信号
 
-    def __init__(self, tasks_to_run: list, parent=None):
+    def __init__(self, tasks_to_run: list, logger_instance, parent=None):
         super().__init__(parent)
         self.tasks_to_run = tasks_to_run
-        self.logger = logger
+        # 接管传入的专属 logger
+        self.logger = logger_instance
         self.session = AutomationSession(self.logger)
         self._is_running = True
         self._interrupted_reason = None
@@ -206,12 +211,12 @@ class StartThread(QThread):
         self._is_running = False
         if reason:
             self._interrupted_reason = reason
-            self.logger.warning(f"检测到中断，停止自动任务：{reason}")
+            self.logger.warning(ui_text(f"检测到中断，停止自动任务：{reason}", f"Interrupt detected, stopping automatic task: {reason}"))
         if self.session.auto is not None:
             try:
                 self.session.stop()
             except Exception as e:
-                self.logger.warning(f"停止自动任务时发生异常，已忽略：{e}")
+                self.logger.warning(ui_text(f"停止自动任务时发生异常，已忽略：{e}", f"Exception occurred while stopping automatic task, ignored: {e}"))
 
     def run(self):
         self.is_running_signal.emit('start')
@@ -234,18 +239,17 @@ class StartThread(QThread):
                     continue
 
                 task_name = meta["en_name"] if is_non_chinese_ui_language() else meta["zh_name"]
-                self.logger.info(f"当前任务：{task_name}")
+                self.logger.info(ui_text(f"当前任务：{task_name}", f"Current task: {task_name}"))
                 self.task_started_signal.emit(task_id)
 
                 # =================【核心新增：前置校验】=================
                 task_success = True
                 if task_id != "task_login":
-                    msg = f"Preparing {task_name}, returning to home..." if is_non_chinese_ui_language() else f"正在准备 {task_name}，尝试返回主界面..."
-                    self.logger.info(msg)
+                    self.logger.info(ui_text(f"正在准备 {task_name}，尝试返回主界面...", f"Preparing {task_name}, returning to home..."))
 
                     if not auto.back_to_home():
-                        err_msg = f"[{task_name}] Failed to return to home before start, skipping." if is_non_chinese_ui_language() else f"[{task_name}] 开始前返回主界面失败，跳过该任务"
-                        self.logger.error(err_msg)
+                        # err_msg = f"[{task_name}] Failed to return to home before start, skipping." if is_non_chinese_ui_language() else f"[{task_name}] 开始前返回主界面失败，跳过该任务"
+                        self.logger.error(ui_text(f"[{task_name}] 开始前返回主界面失败，跳过该任务", f"[{task_name}] Failed to return to home before start, skipping."))
                         task_success = False
                 # ========================================================
 
@@ -257,7 +261,7 @@ class StartThread(QThread):
 
                     # =================【核心新增：后置复位】=================
                     if task_id != "task_login" and self._is_running:
-                        msg = f"{task_name} finished, returning to home..." if is_non_chinese_ui_language() else f"{task_name} 执行完毕，正在返回主界面..."
+                        msg = ui_text(f"{task_name} 执行完毕，正在返回主界面...", f"{task_name} finished, returning to home...")
                         self.logger.info(msg)
                         auto.back_to_home()
                     # ========================================================
@@ -275,14 +279,15 @@ class StartThread(QThread):
 
                 if config.inform_message.value or '--toast-only' in sys.argv:
                     full_time = auto.calculate_power_time() if auto is not None else None
-                    content = f'体力将在 {full_time} 完全恢复' if full_time else "体力计算出错"
+                    content = ui_text(f'体力将在 {full_time} 完全恢复', f'Power will be fully restored in {full_time}')
 
                     app = QApplication.instance()
                     if app:
                         tray_icon = QSystemTrayIcon(QIcon(os.path.abspath("app/resource/images/logo.ico")), app)
                         tray_icon.show()
                         tray_icon.showMessage(
-                            '已完成勾选任务', content,
+                            ui_text('已完成勾选任务', 'Completed Selected Tasks'),
+                            content,
                             QIcon(os.path.abspath("app/resource/images/logo.ico")), 1000
                         )
 
@@ -418,7 +423,7 @@ class Daily(QFrame, BaseInterface):
         self._initWidget()
         self._connect_to_slot()
 
-        self.redirectOutput(self.ui.textBrowser_log)
+        self.logger = setup_ui_logger("logger_daily", self.ui.textBrowser_log)
 
         self.check_game_window_timer = QTimer()
         self.check_game_window_timer.timeout.connect(self.check_game_open)
@@ -515,7 +520,7 @@ class Daily(QFrame, BaseInterface):
             self._save_task_sequence(sequence)
 
         if getattr(self, 'is_running', False) or getattr(self, 'is_launch_pending', False):
-            self.logger.info(f"⏰ 到点触发计划: {current_time_str}，正在执行其他任务，已加入队列排队: {new_tasks_found}")
+            self.logger.info(ui_text(f"⏰ 到点触发计划: {current_time_str}，正在执行其他任务，已加入队列排队: {new_tasks_found}", f"⏰ Scheduled task triggered at {current_time_str}, other tasks are running, added to queue: {new_tasks_found}"))
             for tid in new_tasks_found:
                 if tid not in self.tasks_to_run:
                     self.tasks_to_run.append(tid)
@@ -524,7 +529,7 @@ class Daily(QFrame, BaseInterface):
                         task_item.set_task_state('queued')
             return
 
-        self.logger.info(f"⏰ 到点触发计划: {current_time_str}，执行列表: {new_tasks_found}")
+        self.logger.info(ui_text(f"⏰ 到点触发计划: {current_time_str}，执行列表: {new_tasks_found}", f"⏰ Scheduled task triggered at {current_time_str}, executing tasks: {new_tasks_found}"))
         self._is_scheduled_run_flag = True
         tasks_to_run = new_tasks_found
 
@@ -781,7 +786,7 @@ class Daily(QFrame, BaseInterface):
         final_ordered = self._normalize_task_sequence(ordered)
         self._save_task_sequence(final_ordered)
 
-        # 【防御机制】：如果用户硬是把别的任务拖到了第一个，直接刷新列表 UI 让它弹回原位
+        # 如果用户硬是把别的任务拖到了第一个，直接刷新列表 UI 让它弹回原位
         if task_id_order and task_id_order[0] != "task_login":
             self._init_task_list_widgets()
 
@@ -914,7 +919,7 @@ class Daily(QFrame, BaseInterface):
     def _handle_cloudflare_success(self, data):
         try:
             if 'data' not in data:
-                self.logger.error('通过cloudflare在线更新出错: 返回数据格式不正确')
+                self.logger.error(ui_text('通过cloudflare在线更新出错: 返回数据格式不正确', 'Error occurred while updating through Cloudflare: Incorrect data format returned'))
                 self.get_tips()
                 return
 
@@ -924,7 +929,7 @@ class Daily(QFrame, BaseInterface):
 
             for field in required_fields:
                 if field not in online_data:
-                    self.logger.error(f'通过cloudflare在线更新出错: 缺少必要字段 {field}')
+                    self.logger.error(ui_text(f'通过cloudflare在线更新出错: 缺少必要字段 {field}', f'Error occurred while updating through Cloudflare: Missing required field {field} in updateData'))
                     self.get_tips()
                     return
 
@@ -932,7 +937,7 @@ class Daily(QFrame, BaseInterface):
                 for field in update_data_fields:
                     if field not in online_data['updateData']:
                         self.logger.error(
-                            f'通过cloudflare在线更新出错: updateData缺少必要字段 {field}')
+                            ui_text(f'通过cloudflare在线更新出错: updateData缺少必要字段 {field}', f'Error occurred while updating through Cloudflare: Missing required field {field} in updateData'))
                         self.get_tips()
                         return
 
@@ -940,11 +945,11 @@ class Daily(QFrame, BaseInterface):
                 response = ApiResponse.from_dict(data)
                 self._handle_update_logic(data, online_data, response)
             except Exception as e:
-                self.logger.error(f'解析API响应数据时出错: {str(e)}')
+                self.logger.error(ui_text(f'解析API响应数据时出错: {str(e)}', f'Error occurred while parsing API response data: {str(e)}'))
                 traceback.print_exc()
                 self._handle_update_logic_fallback(data, online_data)
         except Exception as e:
-            self.logger.error(f'处理Cloudflare数据时出错: {str(e)}')
+            self.logger.error(ui_text(f'处理Cloudflare数据时出错: {str(e)}', f'Error occurred while processing Cloudflare data: {str(e)}'))
             self.get_tips()
 
     def _handle_update_logic(self, raw_data: Dict[str, Any],
@@ -954,13 +959,13 @@ class Daily(QFrame, BaseInterface):
         if not local_config_data:
             config.set(config.update_data, raw_data)
             if config.isLog.value:
-                self.logger.info(f'获取到更新信息：{online_data}')
+                self.logger.info(ui_text(f'获取到更新信息：{online_data}', f'Obtained update information: {online_data}'))
 
             # 现在 response.data 已经是真正的 ApiData 对象，可以用点号安全调用了
             url = f"https://www.cbjq.com/api.php?op=search_api&action=get_article_detail&catid={response.data.updateData.linkCatId}&id={response.data.updateData.linkId}"
             self.get_tips(url=url)
-            InfoBar.success(title='获取更新成功',
-                            content="检测到新的 兑换码 活动信息",
+            InfoBar.success(title=ui_text('获取更新成功', 'Update Successful'),
+                            content=ui_text("检测到新的 兑换码 活动信息", "New redeem code event information detected"),
                             orient=Qt.Orientation.Horizontal,
                             isClosable=True,
                             position=InfoBarPosition.TOP_RIGHT,
@@ -989,14 +994,14 @@ class Daily(QFrame, BaseInterface):
 
                 if content:
                     if config.isLog.value:
-                        self.logger.info(f'获取到更新信息：{online_data}')
+                        self.logger.info(ui_text(f'获取到更新信息：{online_data}', f'Obtained update information: {online_data}'))
                     config.set(config.update_data, raw_data)
                     config.set(config.task_name,
                                response.data.updateData.questName)
                     url = f"https://www.cbjq.com/api.php?op=search_api&action=get_article_detail&catid={response.data.updateData.linkCatId}&id={response.data.updateData.linkId}"
                     self.get_tips(url=url)
-                    InfoBar.success(title='获取更新成功',
-                                    content=f"检测到新的{content}",
+                    InfoBar.success(title=ui_text('获取更新成功', 'Update Successful'),
+                                    content=ui_text(f"检测到新的{content}", f"New {content} detected"),
                                     orient=Qt.Orientation.Horizontal,
                                     isClosable=True,
                                     position=InfoBarPosition.TOP_RIGHT,
@@ -1017,8 +1022,8 @@ class Daily(QFrame, BaseInterface):
             linkId = online_data["updateData"]["linkId"]
             url = f"https://www.cbjq.com/api.php?op=search_api&action=get_article_detail&catid={catId}&id={linkId}"
             self.get_tips(url=url)
-            InfoBar.success(title='获取更新成功',
-                            content="检测到新的 兑换码 活动信息",
+            InfoBar.success(title=ui_text('获取更新成功', 'Update Successful'),
+                            content=ui_text("检测到新的 兑换码 活动信息", "New redeem code event information detected"),
                             orient=Qt.Orientation.Horizontal,
                             isClosable=True,
                             position=InfoBarPosition.TOP_RIGHT,
@@ -1026,7 +1031,7 @@ class Daily(QFrame, BaseInterface):
                             parent=self)
         else:
             if not isinstance(config.update_data.value, dict) or 'data' not in config.update_data.value:
-                self.logger.error('本地配置数据格式不正确，使用在线数据')
+                self.logger.error(ui_text('本地配置数据格式不正确，使用在线数据', 'Local configuration data format is incorrect, using online data'))
                 config.set(config.update_data, data)
                 config.set(config.task_name, online_data["updateData"]["questName"])
                 catId = online_data["updateData"]["linkCatId"]
@@ -1051,15 +1056,15 @@ class Daily(QFrame, BaseInterface):
 
                 if content:
                     if config.isLog.value:
-                        self.logger.info(f'获取到更新信息：{online_data}')
+                        self.logger.info(ui_text(f'获取到更新信息：{online_data}', f'Obtained update information: {online_data}'))
                     config.set(config.update_data, data)
                     config.set(config.task_name, online_data["updateData"]["questName"])
                     catId = online_data["updateData"]["linkCatId"]
                     linkId = online_data["updateData"]["linkId"]
                     url = f"https://www.cbjq.com/api.php?op=search_api&action=get_article_detail&catid={catId}&id={linkId}"
                     self.get_tips(url=url)
-                    InfoBar.success(title='获取更新成功',
-                                    content=f"检测到新的{content}",
+                    InfoBar.success(title=ui_text('获取更新成功', 'Update Successful'),
+                                    content=ui_text(f"检测到新的{content}", f"New {content} detected"),
                                     orient=Qt.Orientation.Horizontal,
                                     isClosable=True,
                                     position=InfoBarPosition.TOP_RIGHT,
@@ -1093,8 +1098,8 @@ class Daily(QFrame, BaseInterface):
             config.set(config.used_codes, [])
             content += ' 已使用 '
 
-        InfoBar.success(title='重置成功',
-                        content=f"已重置 导入展示 {content}",
+        InfoBar.success(title=ui_text('重置成功', 'Reset Successful'),
+                        content=ui_text(f"已重置 导入展示 {content}", f"Successfully reset import and display {content}"),
                         orient=Qt.Orientation.Horizontal,
                         isClosable=True,
                         position=InfoBarPosition.TOP_RIGHT,
@@ -1124,7 +1129,7 @@ class Daily(QFrame, BaseInterface):
         try:
             w = CustomMessageBox(self, "导入兑换码", "text_edit")
             w.content.setEnabled(True)
-            w.content.setPlaceholderText("一行一个兑换码")
+            w.content.setPlaceholderText(ui_text("一行一个兑换码", "One code per line"))
             if w.exec():
                 raw_codes = w.content.toPlainText()
                 codes = filter_codes(raw_codes)
@@ -1136,7 +1141,7 @@ class Daily(QFrame, BaseInterface):
         status = '已开启' if state == 2 else '已关闭'
         action = '将' if state == 2 else '不会'
         InfoBar.success(title=status,
-                        content=f"点击“开始”按钮时{action}自动启动游戏",
+                        content=ui_text(f"点击“开始”按钮时{action}自动启动游戏", f"Clicking the 'Start' button will {action}automatically launch the game"),
                         orient=Qt.Orientation.Horizontal,
                         isClosable=True,
                         position=InfoBarPosition.TOP_RIGHT,
@@ -1156,7 +1161,7 @@ class Daily(QFrame, BaseInterface):
             self.check_game_window_timer.start(500)
             self._set_launch_pending_state(True)
         except Exception as e:
-            self.logger.error(f'出现报错: {e}')
+            self.logger.error(ui_text(f'出现报错: {e}', f'Error occurred: {e}'))
             self._set_launch_pending_state(False)
 
     def _is_game_window_open(self):
@@ -1330,7 +1335,7 @@ class Daily(QFrame, BaseInterface):
                 if str_flag == 'end':
                     self.after_finish()
         except Exception as e:
-            self.logger.error(f'处理任务状态变更时出现异常：{e}')
+            self.logger.error(ui_text(f'处理任务状态变更时出现异常：{e}', f'Error occurred while handling task state change: {e}'))
             self.is_running = False
             self.set_checkbox_enable(True)
             self._auto_adjust_after_use_action()
@@ -1444,7 +1449,7 @@ class Daily(QFrame, BaseInterface):
             if hwnd:
                 self._clear_launch_watch_state()
                 self._set_launch_pending_state(False)
-                self.logger.info(f'已检测到游戏窗口：{hwnd}')
+                self.logger.info(_ui_text(f'已检测到游戏窗口：{hwnd}', f'Game window detected: {hwnd}'))
                 self.after_start_button_click(getattr(self, 'tasks_to_run',
                                                       []))
                 return
@@ -1453,7 +1458,8 @@ class Daily(QFrame, BaseInterface):
             ) is not None:
                 self._clear_launch_watch_state()
                 self._set_launch_pending_state(False)
-                self.logger.warning('启动流程已中断：检测到游戏进程退出，已取消本次自动任务')
+                self.logger.warning(self._ui_text('启动流程已中断：检测到游戏进程退出，已取消本次自动任务',
+                                                  'Launch process interrupted: Game process exited, pending tasks cancelled.'))
                 InfoBar.warning(title=self._ui_text('游戏启动已中断',
                                                     'Game launch interrupted'),
                                 content=self._ui_text(
@@ -1468,7 +1474,8 @@ class Daily(QFrame, BaseInterface):
             if self.launch_deadline and time.time() > self.launch_deadline:
                 self._clear_launch_watch_state()
                 self._set_launch_pending_state(False)
-                self.logger.warning('等待游戏窗口超时，已取消本次自动任务')
+                self.logger.warning(self._ui_text('等待游戏窗口超时，已取消本次自动任务',
+                                                  'Waiting for game window timed out, pending tasks cancelled.'))
                 InfoBar.warning(title=self._ui_text('等待超时', 'Launch timeout'),
                                 content=self._ui_text(
                                     '已停止后续任务', 'Pending tasks cancelled.'),
@@ -1478,7 +1485,7 @@ class Daily(QFrame, BaseInterface):
                                 duration=4000,
                                 parent=self)
         except Exception as e:
-            self.logger.error(f'检测游戏启动状态时出现异常：{e}')
+            self.logger.error(self._ui_text(f'检测游戏启动状态时出现异常：{e}', f'Error occurred while checking game launch status: {e}'))
             self._clear_launch_watch_state()
             self._set_launch_pending_state(False)
 
@@ -1506,12 +1513,11 @@ class Daily(QFrame, BaseInterface):
 
         if tasks_to_run:
             if not self.is_running:
-                self.start_thread = StartThread(tasks_to_run, self)
+                # 【修改这里】把 self.logger 传给 StartThread
+                self.start_thread = StartThread(tasks_to_run, self.logger, self)
                 self.start_thread.is_running_signal.connect(self.handle_start)
-                self.start_thread.task_completed_signal.connect(
-                    self.record_task_completed)
-                self.start_thread.task_started_signal.connect(
-                    self._on_task_actually_started)
+                self.start_thread.task_completed_signal.connect(self.record_task_completed)
+                self.start_thread.task_started_signal.connect(self._on_task_actually_started)
                 self.start_thread.task_failed_signal.connect(self.record_task_failed)
 
                 self.start_thread.start()
@@ -1538,18 +1544,18 @@ class Daily(QFrame, BaseInterface):
                 return
 
             self._stop_running_guard()
-            self.logger.warning('检测到游戏窗口已关闭，正在停止当前自动任务')
+            self.logger.warning(self._ui_text('检测到游戏窗口已关闭，正在停止当前自动任务', 'Game window closed, stopping current automatic task'))
             if self.start_thread is not None and self.start_thread.isRunning():
                 self.start_thread.stop(reason=self._ui_text(
                     '用户中断：游戏窗口已关闭', 'Interrupted by user: game window closed'))
         except Exception as e:
-            self.logger.error(f'运行中窗口守护检测异常：{e}')
+            self.logger.error(self._ui_text(f'运行中窗口守护检测异常：{e}', f'Error occurred while monitoring running game window: {e}'))
             self._stop_running_guard()
 
     def start_from_homepage(self):
         """专供首页快捷卡片调用：如果已经在运行，则什么都不做，绝不终止任务"""
         if self.is_running or self.is_launch_pending:
-            self.logger.info("任务已在运行，忽略首页启动请求。")
+            self.logger.info(self._ui_text("任务已在运行，忽略首页启动请求。", "Task is already running, ignoring homepage launch request."))
             return
 
         # 如果空闲，则复用普通的立即执行逻辑
@@ -1592,11 +1598,11 @@ class Daily(QFrame, BaseInterface):
                 self.tasks_to_run = tasks_to_run
                 self.after_start_button_click(tasks_to_run)
         else:
-            InfoBar.error(title="队列为空", content="请至少勾选一个任务进行立即执行", parent=self)
+            InfoBar.error(title="队列为空", content=self._ui_text("请至少勾选一个任务进行立即执行", "Please select at least one task to run immediately"), parent=self)
 
     def after_finish(self):
         if getattr(self, '_is_running_solo_flag', False):
-            self.logger.info("单独执行完毕，已返回空闲状态...")
+            self.logger.info(self._ui_text("单独执行完毕，已返回空闲状态...", "Solo execution completed, returned to idle state..."))
             return
 
         run_mode_idx = self.ui.ComboBox_run_mode.currentIndex()
@@ -1605,16 +1611,16 @@ class Daily(QFrame, BaseInterface):
         # 1. 处理游戏窗口关闭
         # 索引 1: 退出游戏, 3: 退出游戏和代理
         if end_action_idx in [1, 3] and self.game_hwnd:
-            self.logger.info("正在关闭游戏窗口...")
+            self.logger.info(self._ui_text("正在关闭游戏窗口...", "Closing game window..."))
             win32gui.SendMessage(self.game_hwnd, win32con.WM_CLOSE, 0, 0)
 
         # 2. 处理“安卡小助手”自身的后续动作
         if run_mode_idx == 0:  # 挂机等待
             self._auto_adjust_after_use_action()
-            self.logger.info("所有任务执行完毕，助手已进入挂机监控模式...")
+            self.logger.info(self._ui_text("所有任务执行完毕，助手已进入挂机监控模式...", "All tasks completed, assistant entered monitoring mode..."))
 
         elif run_mode_idx == 1:  # 关闭程序
-            self.logger.info("执行完毕，正在退出安卡小助手...")
+            self.logger.info(self._ui_text("执行完毕，正在退出安卡小助手...", "Execution completed, exiting Anka Assistant..."))
             self.loop_timer.stop()
 
             main_window = self.window()
@@ -1625,7 +1631,7 @@ class Daily(QFrame, BaseInterface):
                 os._exit(0)
 
         elif run_mode_idx == 2:  # 关闭电脑
-            self.logger.info("执行完毕，系统将于60秒后关机...")
+            self.logger.info(self._ui_text("执行完毕，系统将于60秒后关机...", "Execution completed, system will shut down in 60 seconds..."))
             os.system('shutdown -s -t 60')
 
             self.loop_timer.stop()
@@ -1734,8 +1740,8 @@ class Daily(QFrame, BaseInterface):
             config.set(config.date_tip, tips_dic)
         else:
             if not config.date_tip.value:
-                InfoBar.error(title='活动日程更新失败',
-                              content=f"本地没有存储信息且未获取到url",
+                InfoBar.error(title=ui_text('活动日程更新失败', 'Failed to update event schedule'),
+                              content=ui_text(f"本地没有存储信息且未获取到url", f"No local information stored and no URL fetched"),
                               orient=Qt.Orientation.Horizontal,
                               isClosable=True,
                               position=InfoBarPosition.TOP_RIGHT,
@@ -1745,7 +1751,7 @@ class Daily(QFrame, BaseInterface):
             tips_dic = copy.deepcopy(config.date_tip.value)
 
         if config.isLog.value:
-            self.logger.info("获取活动日程成功")
+            self.logger.info(ui_text("获取活动日程成功", "Successfully fetched event schedule"))
 
         for key, value in tips_dic.items():
             tips_dic[key] = DailyModel.calculate_time_difference(value)
@@ -1814,7 +1820,7 @@ class Daily(QFrame, BaseInterface):
                                                   1, 1)
 
         except Exception as e:
-            self.logger.error(f"更新控件出错：{e}")
+            self.logger.error(ui_text(f"更新控件出错：{e}", f"Error occurred while updating controls: {e}"))
 
     def closeEvent(self, event):
         super().closeEvent(event)
@@ -1822,6 +1828,3 @@ class Daily(QFrame, BaseInterface):
     def showEvent(self, event):
         super().showEvent(event)
         self._load_config()
-
-        if hasattr(self, 'redirectOutput'):
-            self.redirectOutput(self.ui.textBrowser_log)

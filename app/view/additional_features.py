@@ -23,6 +23,7 @@ from app.modules.trigger.nita_auto_e import NitaAutoEModule
 from app.view.additional_features_view import AdditionalFeaturesView
 from .base_interface import BaseInterface
 from app.view.subtask import AdjustColor, SubTask
+from app.common.gui_logger import setup_ui_logger
 
 
 class Additional(QFrame, BaseInterface):
@@ -54,6 +55,16 @@ class Additional(QFrame, BaseInterface):
         self._initWidget()
         self._load_config()
         self._connect_to_slot()
+        self.task_loggers = {
+            'fishing': setup_ui_logger("logger_fishing", self.textBrowser_log_fishing),
+            'action': setup_ui_logger("logger_action", self.textBrowser_log_action),
+            'water_bomb': setup_ui_logger("logger_water_bomb", self.textBrowser_log_water_bomb),
+            'alien_guardian': setup_ui_logger("logger_alien_guardian", self.textBrowser_log_alien_guardian),
+            'maze': setup_ui_logger("logger_maze", self.textBrowser_log_maze),
+            'drink': setup_ui_logger("logger_drink", self.textBrowser_log_drink),
+            'capture_pals': setup_ui_logger("logger_capture_pals", self.textBrowser_log_capture_pals),
+            'trigger': setup_ui_logger("logger_trigger", self.textBrowser_log_trigger)
+        }
 
     def __getattr__(self, item):
         ui = self.__dict__.get('ui')
@@ -210,28 +221,26 @@ class Additional(QFrame, BaseInterface):
         }
 
     def _handle_universal_start_stop(self, clicked_task_id: str):
-        # 【新增的核心拦截】：如果全局有外部任务在跑，按钮的作用只有发出停止请求！
         if getattr(self, 'is_global_running', False):
             signalBus.globalStopRequest.emit()
             return
 
-        # 停止逻辑：如果是内部任务在跑，直接停止
         if self.current_running_task_id is not None:
             if self.current_task_thread and self.current_task_thread.isRunning():
                 self.current_task_thread.stop()
             return
 
-        # ---------------- 下面是原有的启动逻辑 ----------------
         meta = self._get_task_metadata().get(clicked_task_id)
         if not meta: return
 
         module_class, card_widget, log_browser, zh_name, en_name = meta
 
-        if hasattr(self, 'redirectOutput'):
-            self.redirectOutput(log_browser)
-
         self.current_running_task_id = clicked_task_id
-        self.current_task_thread = SubTask(module_class)
+
+        # 【核心修改】提取该任务专属的 logger 传入子线程
+        specific_logger = self.task_loggers.get(clicked_task_id, self.logger)
+        self.current_task_thread = SubTask(module_class, logger_instance=specific_logger)
+
         self.current_task_thread.is_running.connect(self._sync_all_ui_state)
         self.current_task_thread.start()
 
@@ -578,9 +587,8 @@ class Additional(QFrame, BaseInterface):
     def on_f_toggled(self, isChecked: bool):
         """自动采集 F"""
         if isChecked:
-            if hasattr(self, 'redirectOutput'):
-                self.redirectOutput(self.textBrowser_log_trigger)  # 重定向日志
-            self.f_thread = SubTask(AutoFModule)
+            trigger_logger = self.task_loggers.get('trigger', self.logger)
+            self.f_thread = SubTask(AutoFModule, logger_instance=trigger_logger)
             self.f_thread.is_running.connect(self.turn_off_f_switch)
             self.f_thread.start()
         else:
@@ -605,9 +613,8 @@ class Additional(QFrame, BaseInterface):
     def on_e_toggled(self, isChecked: bool):
         """妮塔自动 E"""
         if isChecked:
-            if hasattr(self, 'redirectOutput'):
-                self.redirectOutput(self.textBrowser_log_trigger)  # 重定向日志
-            self.nita_e_thread = SubTask(NitaAutoEModule)
+            trigger_logger = self.task_loggers.get('trigger', self.logger)
+            self.nita_e_thread = SubTask(NitaAutoEModule, logger_instance=trigger_logger)
             self.nita_e_thread.is_running.connect(self.turn_off_e_switch)
             self.nita_e_thread.start()
         else:
@@ -633,9 +640,3 @@ class Additional(QFrame, BaseInterface):
         super().showEvent(event)
         # 只要切回这个页面，就强制从 config 重新读取一次最新数据覆盖 UI
         self._load_config()
-
-        # 切回工具页时，如果当前刚好有任务在运行，把日志焦点抢回它对应的黑框
-        if self.current_running_task_id is not None:
-            meta = self._get_task_metadata().get(self.current_running_task_id)
-            if meta and hasattr(self, 'redirectOutput'):
-                self.redirectOutput(meta[2])

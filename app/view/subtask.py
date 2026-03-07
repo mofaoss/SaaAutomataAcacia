@@ -15,12 +15,18 @@ logger = logging.getLogger(__name__)
 class SubTask(QThread, BaseTask):
     is_running = Signal(bool)
 
-    def __init__(self, module):
+    def __init__(self, module, logger_instance=None):
         super().__init__()
         self._is_running_flag = False  # 用于判断是否正常结束
+
+        # 【新增】：如果有专属 logger 就用专属的，否则回退到全局 logger
+        self.logger = logger_instance or logger
+        ocr.logger = self.logger
+
         if not self.init_auto('game'):
             return
-        self.logger = logger
+
+        # 把专属 logger 喂给业务模块
         self.module = module(self.auto, self.logger)
 
     def run(self):

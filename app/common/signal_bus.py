@@ -17,8 +17,6 @@ class SignalBus(QObject):
     windowTrackingStealthChanged = Signal(bool, int)
 
     globalTaskStateChanged = Signal(bool, str, str, str)
-
-    # 【新增】全局停止请求总线 (当按下F8且有任务运行时触发)
     globalStopRequest = Signal()
 
 

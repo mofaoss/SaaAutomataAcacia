@@ -11,6 +11,7 @@ import win32gui  # 不能删
 
 from app.common.config import config
 from app.modules.automation.window_tracker import WindowTracker
+from utils.ui_utils import ui_text
 
 logger = logging.getLogger(__name__)
 
@@ -133,7 +134,7 @@ class Input:
         now = time.time()
         if now - self._last_shell_guard_log_time >= self._shell_guard_log_interval:
             if config.isInputLog.value:
-                self.logger.info("检测到用户正在与桌面/任务栏等交互，窗口追踪保持隐藏并等待")
+                self.logger.info(ui_text("检测到用户正在与桌面/任务栏等交互，窗口追踪保持隐藏并等待", "Detected user interacting with desktop/taskbar, keeping tracking hidden and waiting"))
             self._last_shell_guard_log_time = now
 
     def _sleep_for_shell_guard(self):
@@ -230,7 +231,7 @@ class Input:
         deferred_time = 0.0
         lock_timeout = max(0.1, min(time_out, 1.0))
         if not self._mouse_action_lock.acquire(timeout=lock_timeout):
-            self.logger.error(f"鼠标移动点击({x}, {y})出错：获取鼠标操作锁超时")
+            self.logger.error(ui_text(f"无法执行鼠标点击({x}, {y})，因为鼠标操作正在进行中", f"Failed to perform mouse click ({x}, {y}) because mouse operation is in progress"))
             return
 
         try:
@@ -316,7 +317,7 @@ class Input:
                         if click_done:
                             self.window_tracker.hide_window_offscreen()
                             if config.isInputLog.value:
-                                self.logger.info(f"窗口追踪点击完成({x}, {y})")
+                                self.logger.info(ui_text(f"窗口追踪点击完成({x}, {y})", f"Tracking click completed ({x}, {y})"))
                             return
                         time.sleep(0.003)
                         continue
@@ -340,7 +341,7 @@ class Input:
 
                     time.sleep(0.02)
                     if config.isInputLog.value:
-                        self.logger.info(f"鼠标移动后点击({x}, {y})")
+                        self.logger.info(ui_text(f"鼠标移动后点击({x}, {y})", f"Mouse move and click ({x}, {y})"))
                     return
                 finally:
                     if current_pos is not None:
@@ -351,9 +352,9 @@ class Input:
 
             active_elapsed = time.time() - start_time - (deferred_time if self._window_tracking_enabled else 0.0)
             if active_elapsed > time_out:
-                raise RuntimeError("等待点击超时")
+                raise RuntimeError(ui_text("等待点击超时", "Click timeout"))
         except Exception as e:
-            self.logger.error(f"鼠标移动点击({x}, {y})出错：{repr(e)}")
+            self.logger.error(ui_text(f"鼠标移动点击({x}, {y})出错：{repr(e)}", f"Error occurred while performing mouse move click ({x}, {y}): {repr(e)}"))
         finally:
             if self._window_tracking_enabled:
                 self.window_tracker.hide_window_offscreen()
@@ -366,9 +367,9 @@ class Input:
             time.sleep(press_time)
             self.mouse_up(x, y, mouse_key)
             if config.isInputLog.value:
-                self.logger.info(f"鼠标移动后点击({x}, {y})")
+                self.logger.info(ui_text(f"鼠标移动后点击({x}, {y})", f"Mouse move and click ({x}, {y})"))
         except Exception as e:
-            self.logger.error(f"鼠标移动点击({x}, {y})出错：{repr(e)}")
+            self.logger.error(ui_text(f"鼠标移动点击({x}, {y})出错：{repr(e)}", f"Error occurred while performing mouse move click ({x}, {y}): {repr(e)}"))
 
     def move_to(self, x: int, y: int):
         wparam = 0
@@ -401,7 +402,7 @@ class Input:
             active_elapsed = time.time() - start_time - deferred_time
             if active_elapsed >= effective_timeout:
                 self.logger.warning(
-                    f"窗口追踪滚轮超时，放弃本次滚轮输入: ({x}, {y}, {delta}), "
+                    ui_text(f"窗口追踪滚轮超时，放弃本次滚轮输入: ({x}, {y}, {delta})", f"Tracking wheel timeout, abandoning this wheel input: ({x}, {y}, {delta})"),
                     f"batches={total_batches}, finished={finished_batches}, timeout={effective_timeout:.2f}s"
                 )
                 return False
@@ -424,7 +425,7 @@ class Input:
                 time.sleep(0.001)
 
             if not aligned:
-                self.logger.warning(f"窗口追踪滚轮对齐失败，放弃本次滚轮输入: ({x}, {y}, {delta})")
+                self.logger.warning(ui_text(f"窗口追踪滚轮对齐失败，放弃本次滚轮输入: ({x}, {y}, {delta})", f"Tracking wheel alignment failed, abandoning this wheel input: ({x}, {y}, {delta})"))
                 return False
 
             self.activate()
@@ -443,7 +444,7 @@ class Input:
                 active_elapsed = time.time() - start_time - deferred_time
                 if active_elapsed >= effective_timeout:
                     self.logger.warning(
-                        f"窗口追踪滚轮超时(尾量)，放弃本次滚轮输入: ({x}, {y}, {delta}), "
+                        ui_text(f"窗口追踪滚轮超时(尾量)，放弃本次滚轮输入: ({x}, {y}, {delta})", f"Tracking wheel timeout (remainder), abandoning this wheel input: ({x}, {y}, {delta})"),
                         f"batches={total_batches}, finished={finished_batches}, timeout={effective_timeout:.2f}s"
                     )
                     return False
@@ -466,7 +467,7 @@ class Input:
                     time.sleep(0.001)
 
                 if not aligned:
-                    self.logger.warning(f"窗口追踪滚轮尾量对齐失败，放弃本次滚轮输入: ({x}, {y}, {delta})")
+                    self.logger.warning(ui_text(f"窗口追踪滚轮尾量对齐失败，放弃本次滚轮输入: ({x}, {y}, {delta})", f"Tracking wheel remainder alignment failed, abandoning this wheel input: ({x}, {y}, {delta})"))
                     return False
 
                 self.activate()
@@ -475,7 +476,7 @@ class Input:
                 break
 
         if config.isInputLog.value:
-            self.logger.info(f"窗口追踪模式滚动完成 ({x},{y}) delta={delta}")
+            self.logger.info(ui_text(f"窗口追踪模式滚动完成 ({x},{y}) delta={delta}", f"Tracking mode scrolling completed ({x},{y}) delta={delta}"))
         return True
 
     def mouse_scroll(self, x: int, y: int, delta: int = 120, time_out: float = 10.):
@@ -526,7 +527,7 @@ class Input:
                         win32gui.PostMessage(self.hwnd, message, wparam, lparam)
 
                         if config.isInputLog.value:
-                            self.logger.info(f"鼠标移动至({x},{y})滚动滚轮 {delta}")
+                            self.logger.info(ui_text(f"鼠标移动至({x},{y})滚动滚轮 {delta}", f"Mouse moved to ({x},{y}) and scrolled wheel {delta}"))
                         return True
                     finally:
                         if current_pos is not None:
@@ -537,10 +538,10 @@ class Input:
                 last_position = win32api.GetCursorPos()
                 time.sleep(0.02)
 
-            self.logger.warning(f"等待滚动滚轮超时，放弃本次滚轮输入: ({x}, {y}, {delta})")
+            self.logger.warning(ui_text(f"等待滚动滚轮超时，放弃本次滚轮输入: ({x}, {y}, {delta})", f"Waiting for wheel scrolling timeout, abandoning this wheel input: ({x}, {y}, {delta})"))
             return False
         except Exception as e:
-            self.logger.error(f"鼠标移动({x}, {y})后滚动出错：{repr(e)}")
+            self.logger.error(ui_text(f"鼠标移动({x}, {y})后滚动出错：{repr(e)}", f"Error occurred while scrolling after mouse move ({x}, {y}): {repr(e)}"))
             return False
 
     def press_key(self, key, press_time=0.2):
@@ -549,7 +550,7 @@ class Input:
             time.sleep(press_time)
             self.key_up(key)
         except Exception as e:
-            self.logger.error(f"键盘模拟{key}出错：{repr(e)}")
+            self.logger.error(ui_text(f"键盘模拟{key}出错：{repr(e)}", f"Error occurred while simulating key {key}: {repr(e)}"))
 
     def key_down(self, key):
         vk_code = self.get_virtual_keycode(key)
@@ -558,7 +559,7 @@ class Input:
         lparam = (scan_code << 16) | 1
         win32gui.PostMessage(self.hwnd, self.WmCode["key_down"], wparam, lparam)
         if config.isInputLog.value:
-            self.logger.info(f"键盘按下{key}")
+            self.logger.debug(ui_text(f"键盘按下{key}", f"Key pressed: {key}"))
 
     def key_up(self, key):
         vk_code = self.get_virtual_keycode(key)
@@ -567,7 +568,7 @@ class Input:
         lparam = (scan_code << 16) | 1
         win32gui.PostMessage(self.hwnd, self.WmCode["key_up"], wparam, lparam)
         if config.isInputLog.value:
-            self.logger.info(f"键盘松开{key}")
+            self.logger.debug(ui_text(f"键盘松开{key}", f"Key released: {key}"))
 
 if __name__ == '__main__':
     import win32gui

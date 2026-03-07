@@ -1,10 +1,10 @@
 # coding: utf-8
-import datetime
-import html
-import logging
 import os.path
 import re
 import sys
+import datetime
+import traceback
+import logging
 import threading
 import time
 from pathlib import Path
@@ -98,6 +98,7 @@ class MainWindow(FluentWindow, BaseInterface):
 
         self.initWindow()
         self.initSystemTray()  # 初始化系统托盘
+        setup_global_exception_hook()
 
         self._init_tasks = self._build_initial_init_tasks() + [
             self.connectSignalToSlot,
@@ -741,3 +742,31 @@ class MainWindow(FluentWindow, BaseInterface):
             pass
         else:
             pass
+
+
+def setup_global_exception_hook():
+    """将未捕获的严重报错弹窗显示并记录本地日志"""
+    def handle_exception(exc_type, exc_value, exc_traceback):
+        if issubclass(exc_type, KeyboardInterrupt):
+            sys.__excepthook__(exc_type, exc_value, exc_traceback)
+            return
+
+        error_msg = "".join(traceback.format_exception(exc_type, exc_value, exc_traceback))
+
+        # 1. 打印在控制台 / 写入 crash.log
+        print(f"发生致命错误:\n{error_msg}")
+        try:
+            with open("crash.log", "a", encoding="utf-8") as f:
+                f.write(f"\n[{datetime.datetime.now()}] \n{error_msg}\n")
+        except: pass
+
+        # 2. 调用主窗口弹窗警报
+        try:
+            # 拿到 Qt 正在运行的主窗口实例
+            main_win = QApplication.activeWindow()
+            if main_win:
+                MessageBox("系统崩溃保护", f"程序发生了未捕获的严重异常，已将报错存入 crash.log，请截图反馈群管：\n\n{exc_value}", main_win).exec()
+        except:
+            pass
+
+    sys.excepthook = handle_exception

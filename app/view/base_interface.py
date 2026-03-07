@@ -1,5 +1,4 @@
 import logging
-from app.common.gui_logger import bind_log_widget
 
 
 class BaseInterface:
@@ -8,9 +7,6 @@ class BaseInterface:
     def __init__(self, *args, **kwargs):
         self.logger = logging.getLogger(__name__)
         self.auto = None
-
-    def redirectOutput(self, log_widget):
-        bind_log_widget(log_widget)
 
     def toggle_button(self, running):
         pass
