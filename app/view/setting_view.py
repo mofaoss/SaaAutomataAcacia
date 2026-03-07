@@ -94,8 +94,11 @@ class AboutHeaderWidget(QWidget, BaseInterface):
         self.row1Layout = QHBoxLayout()
         self.row1Layout.setAlignment(Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter)
         self.titleLabel = SubtitleLabel(self._ui_text("作者：Dr. Sun", "Author: mofaoss"), self)
-        self.githubBtn = PushButton(self._ui_text("前往 GitHub", "Open GitHub"), self)
-        self.githubBtn.setFixedSize(110, 30)
+        # 在按钮文本后加上星星符号，吸引用户点击
+        star_text = self._ui_text("前往 GitHub \u2B50", "Visit GitHub \u2B50")
+        self.githubBtn = PushButton(star_text, self)
+        self.githubBtn.setFixedSize(125, 28)
+        self.githubBtn.setCursor(Qt.CursorShape.PointingHandCursor)
 
         self.row1Layout.addWidget(self.titleLabel)
         self.row1Layout.addSpacing(16)
@@ -128,7 +131,7 @@ class AboutHeaderWidget(QWidget, BaseInterface):
         self.remoteVersionLabel = BodyLabel(self._ui_text("最新版本：正在检查...", "Latest version: checking..."), self)
 
         self.checkUpdateBtn = PushButton(FIF.UPDATE, self._ui_text("检查更新", "Check for updates"), self)
-        self.checkUpdateBtn.setFixedHeight(32)
+        self.checkUpdateBtn.setFixedHeight(28)
         self.checkUpdateBtn.setToolTip(self._ui_text("检查更新", "Check for updates"))
         self.checkUpdateBtn.setCursor(Qt.CursorShape.PointingHandCursor)
 
