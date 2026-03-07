@@ -7,6 +7,7 @@ import win32gui
 from app.common.config import config
 from app.common.signal_bus import signalBus
 from app.modules.automation.automation import Automation
+from utils.ui_utils import ui_text
 
 
 logger = logging.getLogger(__name__)
@@ -32,7 +33,7 @@ class BaseTask:
 
         # 避免除零错误
         if client_height == 0:
-            self.logger.warning("窗口高度为0，无法计算比例")
+            self.logger.warning(ui_text("窗口高度为0，无法计算比例", "Window height is 0, cannot calculate ratio"))
             return False
 
         # 计算实际宽高比
@@ -45,16 +46,18 @@ class BaseTask:
         is_16_9 = abs(actual_ratio - target_ratio) <= (target_ratio * tolerance)
 
         # 记录结果
-        status = "符合" if is_16_9 else "不符合"
+        status = ui_text("符合", "Meets") if is_16_9 else ui_text("不符合", "Does not meet")
         self.logger.warning(
-            f"窗口客户区尺寸: {client_width}x{client_height} "
-            f"({actual_ratio:.3f}:1), {status}16:9标准比例"
+            ui_text(f"窗口客户区尺寸: {client_width}x{client_height} "
+                    f"({actual_ratio:.3f}:1), {status}16:9标准比例",
+                    f"Client area size: {client_width}x{client_height} "
+                    f"({actual_ratio:.3f}:1), {status}16:9 standard ratio")
         )
         if is_16_9:
             self.auto.scale_x = 1920 / client_width
             self.auto.scale_y = 1080 / client_height
         else:
-            self.logger.warning("游戏窗口不符合16:9比例，请手动调整。")
+            self.logger.warning(ui_text("游戏窗口不符合16:9比例，请手动调整", "Game window does not meet 16:9 ratio, please adjust manually."))
 
         return is_16_9
 
@@ -76,11 +79,11 @@ class BaseTask:
                     signalBus.sendHwnd.emit(self.auto.hwnd)
                     return True
                 else:
-                    self.logger.error(f'游戏窗口比例不是16:9')
+                    self.logger.error(ui_text('游戏窗口比例不是16:9', 'Game window ratio is not 16:9'))
                     return False
             except Exception as e:
-                self.logger.error(f'初始化auto失败：{e}')
+                self.logger.error(ui_text(f'初始化auto失败：{e}', f'Failed to initialize auto: {e}'))
                 return False
         else:
-            self.logger.debug(f'延用auto：{self.auto.hwnd}')
+            self.logger.debug(ui_text(f'延用auto：{self.auto.hwnd}', f'Using existing auto: {self.auto.hwnd}'))
             return True
