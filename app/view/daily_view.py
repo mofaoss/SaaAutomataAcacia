@@ -64,186 +64,6 @@ class TaskListView(ListWidget):
         ]
 
 
-class TaskItemWidget(QWidget):
-    checkbox_state_changed = Signal(str, bool)
-    settings_clicked = Signal(str)
-    play_clicked = Signal(str)  # 单独执行信号
-    play_from_here_clicked = Signal(str) # 从此处向下执行的信号
-
-    def __init__(self, task_id, zh_name, en_name, is_enabled, is_non_chinese_ui, parent=None):
-        super().__init__(parent)
-        self.task_id = task_id
-        self._is_non_chinese_ui = is_non_chinese_ui
-
-        self._original_text = en_name if is_non_chinese_ui else zh_name
-
-        layout = QHBoxLayout(self)
-        layout.setContentsMargins(4, 4, 4, 4)
-        layout.setSpacing(6)
-
-        left_layout = QHBoxLayout()
-        left_layout.setContentsMargins(0, 0, 0, 0)
-        left_layout.setSpacing(4)
-
-        self.checkbox = CheckBox(parent=self)
-        self.checkbox.setChecked(is_enabled)
-        self.checkbox.setFixedWidth(28)
-        self.checkbox.stateChanged.connect(
-            lambda: self.checkbox_state_changed.emit(self.task_id, self.checkbox.isChecked())
-        )
-
-        # 初始时使用原始名称
-        self.label = BodyLabel(self._original_text, self)
-        self.label.setAlignment(Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter)
-        self.label.setAttribute(Qt.WidgetAttribute.WA_TransparentForMouseEvents)
-
-        left_layout.addWidget(self.checkbox, 0, Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter)
-        left_layout.addWidget(self.label, 0, Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter)
-
-        self.btn_play_from_here = ToolButton(self)
-        self.btn_play_from_here.setIcon(FIF.DOWN)
-        self.btn_play_from_here.setToolTip("此处开始" if not is_non_chinese_ui else "Run from here")
-        self.btn_play_from_here.setFixedSize(28, 28)
-
-        btn_font = self.btn_play_from_here.font()
-        btn_font.setPointSize(10)
-        self.btn_play_from_here.setFont(btn_font)
-        self.btn_play_from_here.clicked.connect(lambda: self.play_from_here_clicked.emit(self.task_id))
-
-        self.btn = ToolButton(self)
-        self.btn.setIcon(FIF.PLAY)
-        self.btn.setToolTip("单独执行" if not is_non_chinese_ui else "Run only")
-        self.btn.setFixedSize(28, 28)
-        self.btn.setFont(btn_font)
-        self.btn.clicked.connect(lambda: self.play_clicked.emit(self.task_id))
-
-        layout.addLayout(left_layout, 0)
-        layout.addStretch(1)
-        layout.addWidget(self.btn_play_from_here, 0)
-        layout.addWidget(self.btn, 0)
-
-        self.setCursor(Qt.CursorShape.PointingHandCursor)
-
-    def set_task_state(self, state: str):
-        """
-        深度 UI 状态机管理（支持颜色+动态文字标签）
-        """
-        try:
-            font = self.label.font()
-            font.setBold(False)
-            text_color = ""
-            # 默认每次切换状态时，先恢复原始纯净的文本
-            display_text = self._original_text
-
-            # 1. 空闲状态
-            if state == 'idle':
-                self.btn.setVisible(True)
-                self.btn_play_from_here.setVisible(True)
-                self.btn.setIcon(FIF.PLAY)
-                self.btn.setToolTip("单独执行" if not self._is_non_chinese_ui else "Run only this task")
-                self.checkbox.setEnabled(True)
-
-            # 2. 排队等待中
-            elif state == 'queued':
-                self.btn.setVisible(False)
-                self.btn_play_from_here.setVisible(False)
-                self.checkbox.setEnabled(False)
-
-            # 3. 屏蔽/跳过状态
-            elif state == 'skipped':
-                self.btn.setVisible(False)
-                self.btn_play_from_here.setVisible(False)
-                self.checkbox.setEnabled(False)
-                text_color = "color: #888888;"
-
-            # 4. 队列执行中 (加蓝 + 文字前缀)
-            elif state == 'running_queue':
-                self.btn.setVisible(True)
-                self.btn_play_from_here.setVisible(False)
-                self.btn.setIcon(getattr(FIF, "PAUSE", getattr(FIF, "CLOSE", FIF.PLAY)))
-                self.btn.setToolTip("强制终止当前任务" if not self._is_non_chinese_ui else "Stop current task")
-                self.checkbox.setEnabled(False)
-                text_color = "color: #0078D4;"
-                font.setBold(True)
-                prefix = "▼ " if getattr(self, '_is_non_chinese_ui', False) else "▼ [执行中] "
-                display_text = f"{prefix}{self._original_text}"
-
-            # 5. 单独越权执行中 (加橙 + 极其醒目的文字前缀)
-            elif state == 'running_solo':
-                self.btn.setVisible(True)
-                self.btn_play_from_here.setVisible(False)
-                self.btn.setIcon(getattr(FIF, "PAUSE", getattr(FIF, "CLOSE", FIF.PLAY)))
-                self.btn.setToolTip("强制终止单独执行" if not self._is_non_chinese_ui else "Stop solo run")
-                self.checkbox.setEnabled(False)
-                text_color = "color: #FF8C00;"
-                font.setBold(True)
-                prefix = "▶ [Solo] " if getattr(self, '_is_non_chinese_ui', False) else "▶ [单独执行] "
-                display_text = f"{prefix}{self._original_text}"
-
-            # 6. 单次执行完毕 (变绿 + 文字前缀)
-            elif state == 'completed':
-                self.btn.setVisible(False)
-                self.btn_play_from_here.setVisible(False)
-                self.checkbox.setEnabled(False)
-                text_color = "color: #107C10;"
-                prefix = "✓ " if getattr(self, '_is_non_chinese_ui', False) else "✓ [已完成] "
-                display_text = f"{prefix}{self._original_text}"
-
-            # 7. 循环挂机等待唤醒 (变青 + 文字前缀)
-            elif state == 'scheduled':
-                self.btn.setVisible(True)
-                self.btn_play_from_here.setVisible(True)
-                self.btn.setIcon(FIF.PLAY)
-                self.checkbox.setEnabled(False)
-                text_color = "color: #00BFFF;"
-                prefix = "⌛ [Wait] " if getattr(self, '_is_non_chinese_ui', False) else "⌛ [挂机等待] "
-                display_text = f"{prefix}{self._original_text}"
-
-            # 应用所有视觉变更
-            self.label.setText(display_text)
-            self.label.setStyleSheet(text_color)
-            self.label.setFont(font)
-
-            self.btn.repaint()
-            self.btn_play_from_here.repaint()
-            self.label.repaint()
-
-        except Exception:
-            pass
-
-    def mouseReleaseEvent(self, event):
-        super().mouseReleaseEvent(event)
-        # 只要点击了这一行（非复选框和按钮的区域），就发射聚焦信号
-        if event.button() == Qt.MouseButton.LeftButton:
-            self.settings_clicked.emit(self.task_id)
-
-    # def set_running(self, state: str):
-    #     """
-    #     切换执行/停止的图标与状态：
-    #     - 'idle': 系统空闲，显示“单独执行”和“向下执行”按钮
-    #     - 'running': 当前任务执行中，只显示“手动终止(Pause)”按钮
-    #     - 'hidden': 其他任务正在执行中，隐藏当前任务的所有按钮
-    #     """
-    #     try:
-    #         if state == 'running':
-    #             self.btn.setVisible(True)
-    #             self.btn.setIcon(getattr(FIF, "PAUSE", getattr(FIF, "CLOSE", FIF.PLAY)))
-    #             self.btn.setToolTip("手动终止")
-    #             self.btn_play_from_here.setVisible(False)
-    #         elif state == 'idle':
-    #             self.btn.setVisible(True)
-    #             self.btn.setIcon(FIF.PLAY)
-    #             self.btn.setToolTip("单独执行")
-    #             self.btn_play_from_here.setVisible(True)
-    #         elif state == 'hidden':
-    #             self.btn.setVisible(False)
-    #             self.btn_play_from_here.setVisible(False)
-
-    #         self.btn.repaint()
-    #         self.btn_play_from_here.repaint()
-    #     except Exception:
-    #         pass
-
 class ExecutionRuleWidget(QWidget):
     deleted = Signal(QWidget)
     changed = Signal()
@@ -295,7 +115,7 @@ class ExecutionRuleWidget(QWidget):
             font.setPointSize(10)
             w.setFont(font)
 
-        self.label_after_time = BodyLabel("after, run" if is_non_chinese_ui else "后执行", self)
+        self.label_after_time = BodyLabel("run" if is_non_chinese_ui else "执行", self)
         self.label_times = BodyLabel("times" if is_non_chinese_ui else "次", self)
 
         layout.addWidget(self.freq_combo)
@@ -366,9 +186,168 @@ class ExecutionRuleWidget(QWidget):
             "max_runs": runs_val,
         }
 
+
+class TaskItemWidget(QWidget):
+    checkbox_state_changed = Signal(str, bool)
+    settings_clicked = Signal(str)
+    play_clicked = Signal(str)
+    play_from_here_clicked = Signal(str)
+
+    def __init__(self,
+                 task_id,
+                 zh_name,
+                 en_name,
+                 is_enabled,
+                 is_non_chinese_ui,
+                 parent=None):
+        super().__init__(parent)
+        self.task_id = task_id
+        self._is_non_chinese_ui = is_non_chinese_ui
+        self._original_text = en_name if is_non_chinese_ui else zh_name
+        self.current_state = 'idle'  # 记录内部状态
+
+        layout = QHBoxLayout(self)
+        layout.setContentsMargins(4, 4, 4, 4)
+        layout.setSpacing(6)
+
+        left_layout = QHBoxLayout()
+        left_layout.setContentsMargins(0, 0, 0, 0)
+        left_layout.setSpacing(4)
+
+        self.checkbox = CheckBox(parent=self)
+        self.checkbox.setChecked(is_enabled)
+        self.checkbox.setFixedWidth(28)
+        self.checkbox.stateChanged.connect(
+            lambda: self.checkbox_state_changed.emit(
+                self.task_id, self.checkbox.isChecked()))
+
+        self.label = BodyLabel(self._original_text, self)
+        self.label.setAlignment(Qt.AlignmentFlag.AlignLeft
+                                | Qt.AlignmentFlag.AlignVCenter)
+        self.label.setAttribute(
+            Qt.WidgetAttribute.WA_TransparentForMouseEvents)
+
+        left_layout.addWidget(
+            self.checkbox, 0,
+            Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter)
+        left_layout.addWidget(
+            self.label, 0,
+            Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter)
+
+        self.btn_play_from_here = ToolButton(self)
+        self.btn_play_from_here.setIcon(FIF.DOWN)
+        self.btn_play_from_here.setToolTip(
+            "此处开始" if not is_non_chinese_ui else "Run from here")
+        self.btn_play_from_here.setFixedSize(28, 28)
+
+        btn_font = self.btn_play_from_here.font()
+        btn_font.setPointSize(10)
+        self.btn_play_from_here.setFont(btn_font)
+        self.btn_play_from_here.clicked.connect(
+            lambda: self.play_from_here_clicked.emit(self.task_id))
+
+        self.btn = ToolButton(self)
+        self.btn.setIcon(FIF.PLAY)
+        self.btn.setToolTip("单独执行" if not is_non_chinese_ui else "Run only")
+        self.btn.setFixedSize(28, 28)
+        self.btn.setFont(btn_font)
+        self.btn.clicked.connect(lambda: self.play_clicked.emit(self.task_id))
+
+        layout.addLayout(left_layout, 0)
+        layout.addStretch(1)
+        layout.addWidget(self.btn_play_from_here, 0)
+        layout.addWidget(self.btn, 0)
+
+        self.setCursor(Qt.CursorShape.PointingHandCursor)
+
+    def set_task_state(self, state: str, is_enabled: bool = True):
+        try:
+            self.current_state = state
+            font = self.label.font()
+            font.setBold(False)
+            display_text = self._original_text
+
+            # 默认常态：按钮全显，可勾选
+            self.btn.setVisible(True)
+            self.btn_play_from_here.setVisible(True)
+            self.checkbox.setEnabled(True)
+            self.btn.setIcon(FIF.PLAY)
+
+            # 颜色体系：执行中一律橙黄，队列中一律紫灰
+            colors = {
+                'idle': "",
+                'running_queue': "#FF8C00",
+                'running_solo': "#FF8C00",
+                'completed': "#107C10",
+                'scheduled': "#00BFFF",
+                'queued': "#9370DB"
+            }
+
+            color = colors.get(state, "")
+
+            if state == 'running_queue':
+                self.btn.setIcon(
+                    getattr(FIF, "PAUSE", getattr(FIF, "CLOSE", FIF.PLAY)))
+                self.btn_play_from_here.setVisible(False)  # 只要执行，立刻隐藏“从此开始”
+                self.checkbox.setEnabled(False)
+                font.setBold(True)
+                prefix = "▼ " if self._is_non_chinese_ui else "▼ [执行中] "
+                display_text = f"{prefix}{self._original_text}"
+
+            elif state == 'running_solo':
+                self.btn.setIcon(
+                    getattr(FIF, "PAUSE", getattr(FIF, "CLOSE", FIF.PLAY)))
+                self.btn_play_from_here.setVisible(False)  # 只要执行，立刻隐藏“从此开始”
+                self.checkbox.setEnabled(False)
+                font.setBold(True)
+                prefix = "▶ " if self._is_non_chinese_ui else "▶ [执行中] "
+                display_text = f"{prefix}{self._original_text}"
+
+            elif state == 'completed':
+                prefix = "✓ " if self._is_non_chinese_ui else "✓ [已完成] "
+                display_text = f"{prefix}{self._original_text}"
+
+            elif state == 'scheduled':
+                prefix = "⌛ " if self._is_non_chinese_ui else "⌛ [计划内] "
+                display_text = f"{prefix}{self._original_text}"
+
+            elif state == 'queued':
+                self.btn.setVisible(False)
+                self.btn_play_from_here.setVisible(False)
+                self.checkbox.setEnabled(False)
+                prefix = "⏳ " if self._is_non_chinese_ui else "⏳ [队列中] "
+                display_text = f"{prefix}{self._original_text}"
+
+            # 彻底解耦：如果是闲置状态且未勾选，才变灰。计划内(scheduled)无视勾选强制蓝！
+            if state == 'idle' and not is_enabled:
+                color = "#888888"
+
+            self.label.setText(display_text)
+            self.label.setStyleSheet(f"color: {color};" if color else "")
+            self.label.setFont(font)
+            self.label.repaint()
+        except Exception:
+            pass
+
+    def lock_ui_for_execution(self):
+        """UI 软锁定：用于他人正在执行时。禁止勾选，隐藏所有按钮，保留文字色彩。"""
+        self.checkbox.setEnabled(False)
+        self.btn.setVisible(False)
+        self.btn_play_from_here.setVisible(False)
+        # 仅将原本是 idle 且没勾选的任务变灰，其他诸如“计划内”、“已完成”必须保留原色
+        if self.current_state == 'idle' and not self.checkbox.isChecked():
+            self.label.setStyleSheet("color: #888888;")
+
+    def mouseReleaseEvent(self, event):
+        super().mouseReleaseEvent(event)
+        if event.button() == Qt.MouseButton.LeftButton:
+            self.settings_clicked.emit(self.task_id)
+
+
 class SharedSchedulingPanel(QWidget):
     config_changed = Signal(str, dict)
     toggle_all_cycles = Signal(bool)
+    view_schedule_clicked = Signal()
 
     def __init__(self, is_non_chinese_ui=False, parent=None):
         super().__init__(parent)
@@ -386,7 +365,7 @@ class SharedSchedulingPanel(QWidget):
         main_layout.setSpacing(6)
 
         checkbox_row = QHBoxLayout()
-        enable_text = "Enable Cycle" if is_non_chinese_ui else "启用周期"
+        enable_text = "Enable Cycle" if is_non_chinese_ui else "启用计划"
         self.enable_checkbox = CheckBox(enable_text, self)
         font = self.enable_checkbox.font()
         font.setPointSize(10)
@@ -396,16 +375,20 @@ class SharedSchedulingPanel(QWidget):
 
         self.btn_enable_all = PushButton("Enable All" if is_non_chinese_ui else "开启全部", self)
         self.btn_disable_all = PushButton("Disable All" if is_non_chinese_ui else "关闭全部", self)
+        self.btn_view_schedule = PushButton("View Schedule" if is_non_chinese_ui else "查看日程", self)
 
         self.btn_enable_all.setFixedHeight(28)
         self.btn_disable_all.setFixedHeight(28)
+        self.btn_view_schedule.setFixedHeight(28)
 
         self.btn_enable_all.clicked.connect(lambda: self.toggle_all_cycles.emit(True))
         self.btn_disable_all.clicked.connect(lambda: self.toggle_all_cycles.emit(False))
+        self.btn_view_schedule.clicked.connect(lambda: self.view_schedule_clicked.emit())
 
         checkbox_row.addSpacing(15)
         checkbox_row.addWidget(self.btn_enable_all)
         checkbox_row.addWidget(self.btn_disable_all)
+        checkbox_row.addWidget(self.btn_view_schedule)
         checkbox_row.addStretch(1)
 
         main_layout.addLayout(checkbox_row)
@@ -902,14 +885,17 @@ class ShardExchangePage(BaseDailyPage):
         self.main_layout.addWidget(self.BodyLabel_shard_tip)
         self.finalize()
 
+
 class DailyView(ScrollArea):
+
     def __init__(self, parent=None, is_non_chinese_ui=False):
         super().__init__(parent)
         self.setObjectName("daily")
         self.is_non_chinese_ui = is_non_chinese_ui
 
         self.setWidgetResizable(True)
-        self.setStyleSheet("QScrollArea#daily { border: none; background: transparent; }")
+        self.setStyleSheet(
+            "QScrollArea#daily { border: none; background: transparent; }")
 
         self.content_widget = QWidget()
         self.content_widget.setObjectName("daily_content_widget")
@@ -942,7 +928,8 @@ class DailyView(ScrollArea):
         self.SimpleCardWidget_option.setObjectName("SimpleCardWidget_option")
         self.SimpleCardWidget_option.setMinimumWidth(200)
         self.SimpleCardWidget_option.setMaximumWidth(350)
-        self.SimpleCardWidget_option.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Expanding)
+        self.SimpleCardWidget_option.setSizePolicy(
+            QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Expanding)
 
         layout = QVBoxLayout(self.SimpleCardWidget_option)
         layout.setContentsMargins(9, 9, 9, 9)
@@ -973,25 +960,29 @@ class DailyView(ScrollArea):
     def _build_action_card(self):
         self.SimpleCardWidget_3 = SimpleCardWidget(self.content_widget)
         self.SimpleCardWidget_3.setObjectName("SimpleCardWidget_3")
-        self.SimpleCardWidget_3.setMinimumWidth(237)
-        self.SimpleCardWidget_3.setMaximumWidth(350)
-        self.SimpleCardWidget_3.setMinimumHeight(150)
-        self.SimpleCardWidget_3.setMaximumHeight(250)
-        self.SimpleCardWidget_3.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Preferred)
+        self.SimpleCardWidget_3.setMinimumHeight(190)
+        self.SimpleCardWidget_3.setMaximumHeight(280)
 
         layout = QVBoxLayout(self.SimpleCardWidget_3)
-        self.BodyLabel = BodyLabel(self.SimpleCardWidget_3)
-        self.BodyLabel.setObjectName("BodyLabel")
-        self.ComboBox_after_use = ComboBox(self.SimpleCardWidget_3)
-        self.ComboBox_after_use.setObjectName("ComboBox_after_use")
+
+        self.BodyLabel_run_mode = BodyLabel(self.SimpleCardWidget_3)
+        self.ComboBox_run_mode = ComboBox(self.SimpleCardWidget_3)
+        self.ComboBox_run_mode.setObjectName("ComboBox_run_mode")
+
+        self.BodyLabel_end_action = BodyLabel(self.SimpleCardWidget_3)
+        self.ComboBox_end_action = ComboBox(self.SimpleCardWidget_3)
+        self.ComboBox_end_action.setObjectName("ComboBox_end_action")
+
         self.PushButton_start = PushButton(self.SimpleCardWidget_3)
         self.PushButton_start.setObjectName("PushButton_start")
         self.PushButton_start.setMinimumSize(QSize(0, 60))
-        self.PushButton_start.setSizePolicy(QSizePolicy(QSizePolicy.Policy.Minimum, QSizePolicy.Policy.Maximum))
 
         layout.addStretch(1)
-        layout.addWidget(self.BodyLabel)
-        layout.addWidget(self.ComboBox_after_use)
+        layout.addWidget(self.BodyLabel_run_mode)
+        layout.addWidget(self.ComboBox_run_mode)
+        layout.addSpacing(6)
+        layout.addWidget(self.BodyLabel_end_action)
+        layout.addWidget(self.ComboBox_end_action)
         layout.addStretch(1)
         layout.addWidget(self.PushButton_start)
         layout.addStretch(1)
@@ -1003,7 +994,8 @@ class DailyView(ScrollArea):
         self.SimpleCardWidget_2.setObjectName("SimpleCardWidget_2")
         self.SimpleCardWidget_2.setMinimumWidth(300)
         self.SimpleCardWidget_2.setMaximumWidth(700)
-        self.SimpleCardWidget_2.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Expanding)
+        self.SimpleCardWidget_2.setSizePolicy(QSizePolicy.Policy.Expanding,
+                                              QSizePolicy.Policy.Expanding)
 
         layout = QVBoxLayout(self.SimpleCardWidget_2)
         layout.setContentsMargins(9, 9, 9, 9)
@@ -1012,7 +1004,8 @@ class DailyView(ScrollArea):
         self.TitleLabel_setting = TitleLabel(self.SimpleCardWidget_2)
         self.TitleLabel_setting.setObjectName("TitleLabel_setting")
 
-        self.PopUpAniStackedWidget = PopUpAniStackedWidget(self.SimpleCardWidget_2)
+        self.PopUpAniStackedWidget = PopUpAniStackedWidget(
+            self.SimpleCardWidget_2)
         self.PopUpAniStackedWidget.setObjectName("PopUpAniStackedWidget")
 
         self.page_enter = EnterGamePage(self.PopUpAniStackedWidget)
@@ -1024,7 +1017,8 @@ class DailyView(ScrollArea):
         self.page_reward = RewardPage(self.PopUpAniStackedWidget)
         self.page_operation = OperationPage(self.PopUpAniStackedWidget)
         self.page_weapon = WeaponUpgradePage(self.PopUpAniStackedWidget)
-        self.page_shard_exchange = ShardExchangePage(self.PopUpAniStackedWidget)
+        self.page_shard_exchange = ShardExchangePage(
+            self.PopUpAniStackedWidget)
 
         self.PopUpAniStackedWidget.addWidget(self.page_enter)
         self.PopUpAniStackedWidget.addWidget(self.page_collect)
@@ -1040,7 +1034,8 @@ class DailyView(ScrollArea):
         layout.addWidget(self.TitleLabel_setting)
         layout.addWidget(self.PopUpAniStackedWidget, 1)
 
-        self.shared_scheduling_panel = SharedSchedulingPanel(self.is_non_chinese_ui, self.SimpleCardWidget_2)
+        self.shared_scheduling_panel = SharedSchedulingPanel(
+            self.is_non_chinese_ui, self.SimpleCardWidget_2)
         self.shared_scheduling_panel.setObjectName("shared_scheduling_panel")
         layout.addWidget(self.shared_scheduling_panel, 0)
 
@@ -1122,7 +1117,8 @@ class DailyView(ScrollArea):
         self.SimpleCardWidget.setObjectName("SimpleCardWidget")
         self.SimpleCardWidget.setMinimumWidth(246)
         self.SimpleCardWidget.setMaximumWidth(450)
-        self.SimpleCardWidget.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Expanding)
+        self.SimpleCardWidget.setSizePolicy(QSizePolicy.Policy.Expanding,
+                                            QSizePolicy.Policy.Expanding)
 
         layout = QVBoxLayout(self.SimpleCardWidget)
         layout.setSpacing(4)
@@ -1131,7 +1127,8 @@ class DailyView(ScrollArea):
         self.TitleLabel.setObjectName("TitleLabel")
         self.textBrowser_log = QTextBrowser(self.SimpleCardWidget)
         self.textBrowser_log.setObjectName("textBrowser_log")
-        self.textBrowser_log.setVerticalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
+        self.textBrowser_log.setVerticalScrollBarPolicy(
+            Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
 
         layout.addWidget(self.TitleLabel)
         layout.addWidget(self.textBrowser_log)
@@ -1145,7 +1142,8 @@ class DailyView(ScrollArea):
         self.SimpleCardWidget_tips.setMaximumWidth(450)
         self.SimpleCardWidget_tips.setMinimumHeight(150)
         self.SimpleCardWidget_tips.setMaximumHeight(250)
-        self.SimpleCardWidget_tips.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Preferred)
+        self.SimpleCardWidget_tips.setSizePolicy(QSizePolicy.Policy.Expanding,
+                                                 QSizePolicy.Policy.Preferred)
 
         layout = QVBoxLayout(self.SimpleCardWidget_tips)
         layout.setSpacing(3)
@@ -1157,7 +1155,8 @@ class DailyView(ScrollArea):
         self.ScrollArea_tips.setWidgetResizable(True)
 
         self.scrollAreaWidgetContents_tips = QWidget()
-        self.scrollAreaWidgetContents_tips.setObjectName("scrollAreaWidgetContents_tips")
+        self.scrollAreaWidgetContents_tips.setObjectName(
+            "scrollAreaWidgetContents_tips")
         self.gridLayout_tips = QGridLayout(self.scrollAreaWidgetContents_tips)
         self.gridLayout_tips.setObjectName("gridLayout_tips")
         self.gridLayout_tips.setContentsMargins(0, 0, 0, 0)
@@ -1173,31 +1172,43 @@ class DailyView(ScrollArea):
         return en_text if self.is_non_chinese_ui else zh_text
 
     def _apply_ui_settings(self):
-        for tool_button in self.SimpleCardWidget_option.findChildren(ToolButton):
-            tool_button.setIcon(FIF.SETTING)
-
-        self.ComboBox_after_use.addItems([
-            self._ui_text('无动作', 'Do Nothing'),
-            self._ui_text('退出游戏和代理', 'Exit Game and Assistant'),
-            self._ui_text('退出代理', 'Exit Assistant'),
-            self._ui_text('退出游戏', 'Exit Game'),
-            self._ui_text("循环 (记忆周期计划)", "Loop (Memory Schedule)"),
-            self._ui_text("关机", "Shutdown"),
+        # 程序模式
+        self.ComboBox_run_mode.addItems([
+            self._ui_text('无动作', 'No Action'),
+            self._ui_text('终止程序', 'Exit Program'),
+            self._ui_text('挂机等待', 'Loop & Wait'),
+            self._ui_text('结束后关机', 'Shutdown'),
         ])
+
+        # 游戏动作
+        self.ComboBox_end_action.addItems([
+            self._ui_text('无动作', 'Do Nothing'),
+            self._ui_text('退出游戏', 'Exit Game'),
+            self._ui_text('退出代理', 'Exit Assistant'),
+            self._ui_text('退出游戏和代理', 'Exit Game and Assistant'),
+        ])
+
+        self.BodyLabel_run_mode.setText(self._ui_text("执行结束后，程序模式:", "After Execution, Program Action:"))
+        self.BodyLabel_end_action.setText(self._ui_text("执行结束后，游戏动作:", "After Execution, Game Action:"))
+        self.PushButton_start.setText(self._ui_text("立即执行", "Execute Now"))
+
         self.ComboBox_power_day.addItems(['1', '2', '3', '4', '5', '6'])
         self.ComboBox_power_usage.addItems([
             self._ui_text('活动材料本', 'Event Stages'),
             self._ui_text('刷常规后勤', 'Operation Logistics')
         ])
-        self.ComboBox_run.addItems(
-            ["Toggle Sprint", "Hold Sprint"] if self.is_non_chinese_ui else ["切换疾跑", "按住疾跑"]
-        )
+        self.ComboBox_run.addItems(["Toggle Sprint", "Hold Sprint"] if self.
+                                   is_non_chinese_ui else ["切换疾跑", "按住疾跑"])
 
-        for line_edit in [self.LineEdit_c1, self.LineEdit_c2, self.LineEdit_c3, self.LineEdit_c4]:
+        for line_edit in [
+                self.LineEdit_c1, self.LineEdit_c2, self.LineEdit_c3,
+                self.LineEdit_c4
+        ]:
             line_edit.setPlaceholderText(self._ui_text("未输入", "Not set"))
 
         self.PushButton_start.setShortcut("F1")
-        self.PushButton_start.setToolTip(self._ui_text("快捷键：F1", "Shortcut: F1"))
+        self.PushButton_start.setToolTip(
+            self._ui_text("快捷键：F1", "Shortcut: F1"))
 
         self.BodyLabel_enter_tip.setText(
             "### Tips\n* Select your server in Settings\n* Enable \"Auto open game\" and select the correct game path by the tutorial above\n* Click \"Start\" to launch and run automatically"
@@ -1206,68 +1217,74 @@ class DailyView(ScrollArea):
         )
         self.BodyLabel_person_tip.setText(
             "### Tips\n* Enter codename instead of full name, e.g. use \"朝翼\" (Dawnwing) for \"凯茜娅-朝翼\" (Katya-Dawnwing)"
-            if self.is_non_chinese_ui else
-            "### 提示\n* 输入代号而非全名，比如想要刷“凯茜娅-朝翼”，就输入“朝翼”"
-        )
+            if self.
+            is_non_chinese_ui else "### 提示\n* 输入代号而非全名，比如想要刷“凯茜娅-朝翼”，就输入“朝翼”")
         self.BodyLabel_collect_supplies.setText(
             "### Tips\n* Default: Always claim Supply Station stamina and friend stamina \n* Enable \"Redeem Code\" to fetch and redeem online codes automatically\n* Online codes are maintained by developers and may not always be updated in time\n* You can import a txt file for batch redeem (one code per line)"
             if self.is_non_chinese_ui else
             "### 提示 \n* 默认必领供应站体力和好友体力\n* 勾选“领取兑换码”会自动拉取在线兑换码进行兑换\n* 在线兑换码由开发者维护，更新不一定及时\n* 导入txt文本文件可以批量使用用户兑换码，txt需要一行一个兑换码"
         )
         self.BodyLabel_chasm_tip.setText(
-            "### Tips\n* Mental Simulation Realm opens every Tuesday at 10:00" if self.is_non_chinese_ui else "### 提示\n* 拟境每周2的10:00开启"
-        )
+            "### Tips\n* Mental Simulation Realm opens every Tuesday at 10:00"
+            if self.is_non_chinese_ui else "### 提示\n* 拟境每周2的10:00开启")
         self.BodyLabel_reward_tip.setText(
-            "### Tips\n* Claim monthly card and daily rewards" if self.is_non_chinese_ui else "### 提示\n* 领取大月卡和日常奖励"
-        )
+            "### Tips\n* Claim monthly card and daily rewards" if self.
+            is_non_chinese_ui else "### 提示\n* 领取大月卡和日常奖励")
         self.BodyLabel_weapon_tip.setText(
             "### Tips\n* Automatically identifies and consumes upgrade materials\n* Stops when weapon reaches max level"
             if self.is_non_chinese_ui else
-            "### 提示\n* 自动从背包选择第一把武器进行强化\n* 自动识别并消耗升级材料，直到武器等级提升或满级"
-        )
+            "### 提示\n* 自动从背包选择第一把武器进行强化\n* 自动识别并消耗升级材料，直到武器等级提升或满级")
         self.BodyLabel_shard_tip.setText(
             "### Tips\n* Auto receive, gift, and recycle puzzle shards\n* Retains at least 15 of each shard when recycling"
             if self.is_non_chinese_ui else
-            "### 提示\n* 自动进行基地信源碎片的接收、赠送和回收\n* 回收时每种碎片默认至少保留15个"
-        )
+            "### 提示\n* 自动进行基地信源碎片的接收、赠送和回收\n* 回收时每种碎片默认至少保留15个")
 
         self.TitleLabel.setText(self._ui_text("日志", "Log"))
         self.PushButton_select_all.setText(self._ui_text("全选", "All"))
         self.PushButton_no_select.setText(self._ui_text("清空", "Clear"))
         self.hint_label.setText(self._ui_text("拖动调整顺序", "Drag to sort"))
-        self.BodyLabel.setText(self._ui_text("结束后进行", "After Finish"))
-        self.PushButton_start.setText(self._ui_text("开始", "Start"))
-        self.PrimaryPushButton_path_tutorial.setText(self._ui_text("查看教程", "Tutorial"))
-        self.StrongBodyLabel_4.setText(self._ui_text("启动器中查看游戏路径", "Find game path in launcher"))
-        self.CheckBox_open_game_directly.setText(self._ui_text("自动打开游戏", "Auto open game"))
+        self.PrimaryPushButton_path_tutorial.setText(
+            self._ui_text("查看教程", "Tutorial"))
+        self.StrongBodyLabel_4.setText(
+            self._ui_text("启动器中查看游戏路径", "Find game path in launcher"))
+        self.CheckBox_open_game_directly.setText(
+            self._ui_text("自动打开游戏", "Auto open game"))
         self.PushButton_select_directory.setText(self._ui_text("选择", "Browse"))
         self.CheckBox_mail.setText(self._ui_text("领取邮件", "Claim Mail"))
         self.CheckBox_fish_bait.setText(self._ui_text("领取鱼饵", "Claim Bait"))
         self.CheckBox_dormitory.setText(self._ui_text("宿舍碎片", "Dorm Shards"))
-        self.CheckBox_redeem_code.setText(self._ui_text("领取兑换码", "Redeem Codes"))
-        self.CheckBox_receive_shards.setText(self._ui_text("一键接收", "Auto Receive"))
+        self.CheckBox_redeem_code.setText(
+            self._ui_text("领取兑换码", "Redeem Codes"))
+        self.CheckBox_receive_shards.setText(
+            self._ui_text("一键接收", "Auto Receive"))
         self.CheckBox_gift_shards.setText(self._ui_text("一键赠送", "Auto Gift"))
-        self.CheckBox_recycle_shards.setText(self._ui_text("智能回收", "Smart Recycle"))
-        self.PrimaryPushButton_import_codes.setText(self._ui_text("导入", "Import"))
+        self.CheckBox_recycle_shards.setText(
+            self._ui_text("智能回收", "Smart Recycle"))
+        self.PrimaryPushButton_import_codes.setText(
+            self._ui_text("导入", "Import"))
         self.PushButton_reset_codes.setText(self._ui_text("重置", "Reset"))
-        self.StrongBodyLabel.setText(self._ui_text("选择要购买的商品", "Select items to buy"))
-        self.StrongBodyLabel_2.setText(self._ui_text("选择体力使用方式", "Stamina usage mode"))
-        self.CheckBox_is_use_power.setText(self._ui_text("自动使用期限", "Auto use expiring"))
+        self.StrongBodyLabel.setText(
+            self._ui_text("选择要购买的商品", "Select items to buy"))
+        self.StrongBodyLabel_2.setText(
+            self._ui_text("选择体力使用方式", "Stamina usage mode"))
+        self.CheckBox_is_use_power.setText(
+            self._ui_text("自动使用期限", "Auto use expiring"))
         self.BodyLabel_6.setText(self._ui_text("天内的体力药", "day potion"))
-        self.StrongBodyLabel_3.setText(self._ui_text("选择需要刷碎片的角色", "Select characters for shards"))
+        self.StrongBodyLabel_3.setText(
+            self._ui_text("选择需要刷碎片的角色", "Select characters for shards"))
         self.BodyLabel_3.setText(self._ui_text("角色1：", "Character 1:"))
         self.BodyLabel_4.setText(self._ui_text("角色2：", "Character 2:"))
         self.BodyLabel_5.setText(self._ui_text("角色3：", "Character 3:"))
         self.BodyLabel_8.setText(self._ui_text("角色4：", "Character 4:"))
-        self.CheckBox_is_use_chip.setText(self._ui_text("记忆嵌片不足时自动使用2片", "Auto use 2 chips when not enough"))
+        self.CheckBox_is_use_chip.setText(
+            self._ui_text("记忆嵌片不足时自动使用2片", "Auto use 2 chips when not enough"))
         self.TitleLabel_3.setText(self._ui_text("日程提醒", "Schedule"))
         self.BodyLabel_22.setText(self._ui_text("疾跑方式", "Sprint mode"))
         self.BodyLabel_7.setText(self._ui_text("刷取次数", "Run count"))
         self.BodyLabel_tip_action.setText(
             "### Tips\n* Auto-run operation \n* Repeats the first training stage for specified times with no stamina cost\n* Useful for weekly pass mission count"
             if self.is_non_chinese_ui else
-            "### 提示\n* 重复刷指定次数无需体力的实战训练第一关\n* 用于完成凭证20次常规行动周常任务"
-        )
+            "### 提示\n* 重复刷指定次数无需体力的实战训练第一关\n* 用于完成凭证20次常规行动周常任务")
 
         shop_items = [
             ("CheckBox_buy_3", "通用强化套件", "Universal Enhancement Kit"),
