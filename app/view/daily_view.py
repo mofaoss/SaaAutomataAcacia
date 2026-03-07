@@ -288,7 +288,7 @@ class TaskItemWidget(QWidget):
                 self.btn_play_from_here.setVisible(False)
                 self.checkbox.setEnabled(False)
                 font.setBold(True)
-                prefix = "📅 " if self._is_non_chinese_ui else "📅 [执行中] "
+                prefix = "⏰ " if self._is_non_chinese_ui else "⏰ [执行中] "
                 display_text = f"{prefix}{self._original_text}"
 
             elif state == 'completed':
@@ -296,7 +296,7 @@ class TaskItemWidget(QWidget):
                 display_text = f"{prefix}{self._original_text}"
 
             elif state == 'scheduled':
-                prefix = "⌛ " if self._is_non_chinese_ui else "⌛ [计划内] "
+                prefix = "📅 " if self._is_non_chinese_ui else "📅 [计划内] "
                 display_text = f"{prefix}{self._original_text}"
 
             elif state == 'queued':
