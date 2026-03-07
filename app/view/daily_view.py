@@ -30,11 +30,25 @@ from qfluentwidgets import (
     TitleLabel,
     ToolButton,
     TextEdit,
+    isDarkTheme,
 )
 
 
 class TaskListView(ListWidget):
     orderChanged = Signal(list)
+
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self.setDragDropMode(QAbstractItemView.DragDropMode.InternalMove)
+        self.setDefaultDropAction(Qt.DropAction.MoveAction)
+        # 【修复】：追加 hover 和 selected 的透明属性
+        self.setStyleSheet(
+            "TaskListView { background: transparent; border: none; outline: none; }"
+            "TaskListView::item { background: transparent; }"
+            "TaskListView::item:hover { background: transparent; }"
+            "TaskListView::item:selected { background: transparent; }"
+        )
+        self.model().rowsMoved.connect(self._emit_order_changed)
 
     def __init__(self, parent=None):
         super().__init__(parent)
@@ -280,12 +294,11 @@ class TaskItemWidget(QWidget):
 
             # 颜色体系：执行中一律橙黄，队列中一律紫灰
             colors = {
-                'idle': "",
                 'running_queue': "#FF8C00",
                 'running_solo': "#FF8C00",
                 'running_scheduled': "#FF8C00",
                 'completed': "#107C10",
-                'scheduled': "#00BFFF",
+                'scheduled': "#0078D4",  # 【修复】：调深了蓝色，大幅增强在 Light 模式下的对比度
                 'queued': "#9370DB"
             }
 
@@ -330,9 +343,13 @@ class TaskItemWidget(QWidget):
                 prefix = "⏳ " if self._is_non_chinese_ui else "⏳ [队列中] "
                 display_text = f"{prefix}{self._original_text}"
 
-            # 只有未勾选且非强制任务时，才将文字变灰。登录任务的字永不变灰（只灰勾选框）！
-            if state == 'idle' and not is_enabled and not self.is_mandatory:
-                color = "#888888"
+            # 【核心修复】：闲置状态的颜色显式设定
+            if state == 'idle':
+                if not is_enabled and not self.is_mandatory:
+                    color = "#888888" # 未勾选一律变灰
+                else:
+                    # 已勾选正常状态下显式指定黑白，强行拦截 QListWidget 在 Light 模式下把字染白的隐形 Bug
+                    color = "white" if isDarkTheme() else "black"
 
             self.label.setText(display_text)
             self.label.setStyleSheet(f"color: {color};" if color else "")
