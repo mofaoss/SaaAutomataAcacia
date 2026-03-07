@@ -40,15 +40,14 @@ class Additional(QFrame, BaseInterface):
         self.setObjectName(text.replace(' ', '-'))
         self.parent = parent
 
+        # 触发器（自动辅助）独立管理，不受互斥限制
         self.f_thread = None
         self.nita_e_thread = None
-        self.is_running_fish = False
-        self.is_running_action = False
-        self.is_running_water_bomb = False
-        self.is_running_alien_guardian = False
-        self.is_running_maze = False
-        self.is_running_drink = False
-        self.is_running_capture_pals = False
+
+        # 【核心新增】：全局互斥任务调度中心状态
+        self.current_running_task_id: str | None = None
+        self.current_task_thread: SubTask | None = None
+
         self.color_pixmap = None
         self.hsv_value = None
 
@@ -99,6 +98,7 @@ class Additional(QFrame, BaseInterface):
                                      setCurrentWidget(self.page_capture_pals))
         self.SegmentedWidget.setCurrentItem(self.page_trigger.objectName())
         self.stackedWidget.setCurrentIndex(0)
+
         self.ComboBox_fishing_mode.addItems(
             [
                 self._ui_text("高性能（消耗性能高速判断，准确率高）", "High Performance (faster and more accurate, higher CPU usage)"),
@@ -154,7 +154,6 @@ class Additional(QFrame, BaseInterface):
             "* 同步抓帕鲁：双岛同时勾选，按“各自周期”在两岛间切换；一岛结束会只刷另一岛\n"
         )
 
-
         # 设置combobox选项
         lure_type_items = [
             '万能鱼饵', '普通鱼饵', '豪华鱼饵', '至尊鱼饵', '重量级鱼类虫饵', '巨型鱼类虫饵', '重量级鱼类夜钓虫饵',
@@ -194,29 +193,93 @@ class Additional(QFrame, BaseInterface):
         self._apply_static_i18n()
 
         self.update_label_color()
-        # self.color_pixmap = self.generate_pixmap_from_hsv(hsv_value)
-        # self.PixmapLabel.setStyleSheet()
-        # self.PixmapLabel.setPixmap(self.color_pixmap)
         StyleSheet.ADDITIONAL_FEATURES_INTERFACE.apply(self)
+
+    # ---------------- 统一任务调度中心 ----------------
+
+    def _get_task_metadata(self):
+        """配置每种任务对应的 模块类、参数卡片、日志框 和 文本翻译"""
+        return {
+            'fishing': (FishingModule, self.SimpleCardWidget_fish, self.textBrowser_log_fishing, "钓鱼", "Fishing"),
+            'action': (OperationModule, self.SimpleCardWidget_action, self.textBrowser_log_action, "行动", "Operation"),
+            'water_bomb': (WaterBombModule, self.SimpleCardWidget_water_bomb, self.textBrowser_log_water_bomb, "心动水弹", "Water Bomb"),
+            'alien_guardian': (AlienGuardianModule, self.SimpleCardWidget_alien_guardian, self.textBrowser_log_alien_guardian, "异星守护", "Alien Guardian"),
+            'maze': (MazeModule, self.SimpleCardWidget_maze, self.textBrowser_log_maze, "迷宫", "Maze"),
+            'drink': (DrinkModule, self.SimpleCardWidget_card, self.textBrowser_log_drink, "喝酒", "Drink"),
+            'capture_pals': (CapturePalsModule, self.SimpleCardWidget_capture_pals, self.textBrowser_log_capture_pals, "抓帕鲁", "Capture Pals"),
+        }
+
+    def _handle_universal_start_stop(self, clicked_task_id: str):
+        """
+        中枢控制逻辑：
+        1. 如果当前没有任务运行，则启动请求的任务。
+        2. 如果当前已有任务运行，无论点哪个页面的按钮，都执行【停止当前任务】操作。
+        """
+        # 停止逻辑：如果有任务在跑，一律停止
+        if self.current_running_task_id is not None:
+            if self.current_task_thread and self.current_task_thread.isRunning():
+                self.current_task_thread.stop()
+            return # 等待线程发回 is_running(False) 的信号来收尾
+
+        # 启动逻辑：启动指定的任务
+        meta = self._get_task_metadata().get(clicked_task_id)
+        if not meta: return
+
+        module_class, card_widget, log_browser, zh_name, en_name = meta
+
+        # 动态绑定日志输出权到当前启动任务的页面
+        if hasattr(self, 'redirectOutput'):
+            self.redirectOutput(log_browser)
+
+        self.current_running_task_id = clicked_task_id
+        self.current_task_thread = SubTask(module_class)
+        self.current_task_thread.is_running.connect(self._sync_all_ui_state)
+        self.current_task_thread.start()
+
+    def _sync_all_ui_state(self, is_running: bool):
+        """统一同步所有页面的 UI 状态（锁控件 + 改按钮字）"""
+        if not is_running:
+            # 任务结束，清空记录
+            self.current_running_task_id = None
+            self.current_task_thread = None
+
+        meta_dict = self._get_task_metadata()
+
+        # 遍历所有任务，刷新它们各自页面的按钮和控件禁用状态
+        for task_id, (mod, card, log, zh, en) in meta_dict.items():
+            btn = getattr(self, f"PushButton_start_{task_id}", None)
+            if not btn: continue
+
+            if self.current_running_task_id is not None:
+                # 有任务在运行！
+                running_zh = meta_dict[self.current_running_task_id][3]
+                running_en = meta_dict[self.current_running_task_id][4]
+
+                # 所有按钮都变成 "停止 [正在运行的任务名]"
+                btn.setText(self._ui_text(f'停止{running_zh}', f'Stop {running_en}'))
+
+                # 锁死所有任务的参数面板，防止在运行期间被修改
+                self.set_simple_card_enable(card, False)
+            else:
+                # 全局空闲，恢复各个按钮的默认名字
+                btn.setText(self._ui_text(f'开始{zh}', f'Start {en}'))
+                # 解锁所有面板
+                self.set_simple_card_enable(card, True)
 
     def _connect_to_slot(self):
         self.SwitchButton_f.checkedChanged.connect(self.on_f_toggled)
         self.SwitchButton_e.checkedChanged.connect(self.on_e_toggled)
         # 反向链接
         self.stackedWidget.currentChanged.connect(self.onCurrentIndexChanged)
-        # 按钮信号
-        self.PushButton_start_fishing.clicked.connect(
-            self.on_fishing_button_click)
-        self.PushButton_start_action.clicked.connect(
-            self.on_action_button_click)
-        self.PushButton_start_water_bomb.clicked.connect(
-            self.on_water_bomb_button_click)
-        self.PushButton_start_alien_guardian.clicked.connect(
-            self.on_alien_guardian_button_click)
-        self.PushButton_start_maze.clicked.connect(self.on_maze_button_click)
-        self.PushButton_start_drink.clicked.connect(self.on_drink_button_click)
-        self.PushButton_start_capture_pals.clicked.connect(
-            self.on_capture_pals_button_click)
+
+        # 【核心】：统一分发信号到中枢
+        self.PushButton_start_fishing.clicked.connect(lambda: self._handle_universal_start_stop('fishing'))
+        self.PushButton_start_action.clicked.connect(lambda: self._handle_universal_start_stop('action'))
+        self.PushButton_start_water_bomb.clicked.connect(lambda: self._handle_universal_start_stop('water_bomb'))
+        self.PushButton_start_alien_guardian.clicked.connect(lambda: self._handle_universal_start_stop('alien_guardian'))
+        self.PushButton_start_maze.clicked.connect(lambda: self._handle_universal_start_stop('maze'))
+        self.PushButton_start_drink.clicked.connect(lambda: self._handle_universal_start_stop('drink'))
+        self.PushButton_start_capture_pals.clicked.connect(lambda: self._handle_universal_start_stop('capture_pals'))
 
         # 链接各种需要保存修改的控件
         self._connect_to_save_changed()
@@ -458,6 +521,9 @@ class Additional(QFrame, BaseInterface):
             if isinstance(child, CheckBox) or isinstance(
                     child, LineEdit) or isinstance(
                         child, SpinBox) or isinstance(child, ComboBox):
+                # 不要把颜色基准文本框给解锁了
+                if child.objectName() == 'LineEdit_fish_base' and enable:
+                    continue
                 child.setEnabled(enable)
 
     def turn_off_e_switch(self, is_running):
@@ -471,7 +537,8 @@ class Additional(QFrame, BaseInterface):
     def on_f_toggled(self, isChecked: bool):
         """自动采集 F"""
         if isChecked:
-            self.redirectOutput(self.textBrowser_log_trigger)  # 重定向日志
+            if hasattr(self, 'redirectOutput'):
+                self.redirectOutput(self.textBrowser_log_trigger)  # 重定向日志
             self.f_thread = SubTask(AutoFModule)
             self.f_thread.is_running.connect(self.turn_off_f_switch)
             self.f_thread.start()
@@ -497,7 +564,8 @@ class Additional(QFrame, BaseInterface):
     def on_e_toggled(self, isChecked: bool):
         """妮塔自动 E"""
         if isChecked:
-            self.redirectOutput(self.textBrowser_log_trigger)  # 重定向日志
+            if hasattr(self, 'redirectOutput'):
+                self.redirectOutput(self.textBrowser_log_trigger)  # 重定向日志
             self.nita_e_thread = SubTask(NitaAutoEModule)
             self.nita_e_thread.is_running.connect(self.turn_off_e_switch)
             self.nita_e_thread.start()
@@ -520,163 +588,13 @@ class Additional(QFrame, BaseInterface):
                     parent=self
                 )
 
-    def on_fishing_button_click(self):
-        """钓鱼开始按键的信号处理"""
-        if not self.is_running_fish:
-            self.redirectOutput(self.textBrowser_log_fishing)
-            self.fishing_task = SubTask(FishingModule)
-            self.fishing_task.is_running.connect(self.handle_fishing)
-            self.fishing_task.start()
-        else:
-            self.fishing_task.stop()
-
-    def handle_fishing(self, is_running):
-        """钓鱼线程开始与结束的信号处理"""
-        if is_running:
-            self.set_simple_card_enable(self.SimpleCardWidget_fish, False)
-            self.PushButton_start_fishing.setText(self._ui_text('停止钓鱼', 'Stop Fishing'))
-            self.is_running_fish = True
-        else:
-            children = get_all_children(self.SimpleCardWidget_fish)
-            for child in children:
-                if isinstance(child, CheckBox) or isinstance(child, SpinBox):
-                    child.setEnabled(True)
-                elif isinstance(child, LineEdit):
-                    if not child.objectName() == 'LineEdit_fish_base':
-                        child.setEnabled(True)
-            self.PushButton_start_fishing.setText(self._ui_text('开始钓鱼', 'Start Fishing'))
-            self.is_running_fish = False
-
-    def on_action_button_click(self):
-        """周常行动开始按键的信号处理"""
-        if not self.is_running_action:
-            self.redirectOutput(self.textBrowser_log_action)
-            self.action_task = SubTask(OperationModule)
-            self.action_task.is_running.connect(self.handle_action)
-            self.action_task.start()
-        else:
-            self.action_task.stop()
-
-    def handle_action(self, is_running):
-        """周常行动线程开始与结束的信号处理"""
-        if is_running:
-            self.set_simple_card_enable(self.SimpleCardWidget_action, False)
-            self.PushButton_start_action.setText(self._ui_text("停止行动", "Stop Operation"))
-            self.is_running_action = True
-        else:
-            children = get_all_children(self.SimpleCardWidget_action)
-            for child in children:
-                if isinstance(child, CheckBox) or isinstance(child, SpinBox):
-                    child.setEnabled(True)
-                elif isinstance(child, LineEdit):
-                    pass
-            self.PushButton_start_action.setText(self._ui_text("开始行动", "Start Operation"))
-            self.is_running_action = False
-
-    def on_water_bomb_button_click(self):
-        if not self.is_running_water_bomb:
-            self.redirectOutput(self.textBrowser_log_water_bomb)
-            self.water_bomb_task = SubTask(WaterBombModule)
-            self.water_bomb_task.is_running.connect(self.handle_water_bomb)
-            self.water_bomb_task.start()
-        else:
-            self.water_bomb_task.stop()
-
-    def handle_water_bomb(self, is_running):
-        if is_running:
-            self.set_simple_card_enable(self.SimpleCardWidget_water_bomb,
-                                        False)
-            self.PushButton_start_water_bomb.setText(self._ui_text('停止心动水弹', 'Stop Water Bomb'))
-            self.is_running_water_bomb = True
-        else:
-            self.set_simple_card_enable(self.SimpleCardWidget_water_bomb, True)
-            self.PushButton_start_water_bomb.setText(self._ui_text('开始心动水弹', 'Start Water Bomb'))
-            self.is_running_water_bomb = False
-
-    def on_alien_guardian_button_click(self):
-        if not self.is_running_alien_guardian:
-            self.redirectOutput(self.textBrowser_log_alien_guardian)
-            self.alien_guardian_task = SubTask(AlienGuardianModule)
-            self.alien_guardian_task.is_running.connect(
-                self.handle_alien_guardian)
-            self.alien_guardian_task.start()
-        else:
-            self.alien_guardian_task.stop()
-
-    def handle_alien_guardian(self, is_running):
-        if is_running:
-            self.set_simple_card_enable(self.SimpleCardWidget_alien_guardian,
-                                        False)
-            self.PushButton_start_alien_guardian.setText(self._ui_text('停止异星守护', 'Stop Alien Guardian'))
-            self.is_running_alien_guardian = True
-        else:
-            self.set_simple_card_enable(self.SimpleCardWidget_alien_guardian,
-                                        True)
-            self.PushButton_start_alien_guardian.setText(self._ui_text('开始异星守护', 'Start Alien Guardian'))
-            self.is_running_alien_guardian = False
-
-    def on_maze_button_click(self):
-        if not self.is_running_maze:
-            self.redirectOutput(self.textBrowser_log_maze)
-            self.maze_task = SubTask(MazeModule)
-            self.maze_task.is_running.connect(self.handle_maze)
-            self.maze_task.start()
-        else:
-            self.maze_task.stop()
-
-    def handle_maze(self, is_running):
-        if is_running:
-            self.set_simple_card_enable(self.SimpleCardWidget_maze, False)
-            self.PushButton_start_maze.setText(self._ui_text('停止迷宫', 'Stop Maze'))
-            self.is_running_maze = True
-        else:
-            self.set_simple_card_enable(self.SimpleCardWidget_maze, True)
-            self.PushButton_start_maze.setText(self._ui_text('开始迷宫', 'Start Maze'))
-            self.is_running_maze = False
-
-    def on_drink_button_click(self):
-        """酒馆开始按键的信号处理"""
-        if not self.is_running_drink:
-            self.redirectOutput(self.textBrowser_log_drink)
-            self.drink_task = SubTask(DrinkModule)
-            self.drink_task.is_running.connect(self.handle_drink)
-            self.drink_task.start()
-        else:
-            self.drink_task.stop()
-
-    def handle_drink(self, is_running):
-        """钓鱼线程开始与结束的信号处理"""
-        if is_running:
-            self.set_simple_card_enable(self.SimpleCardWidget_card, False)
-            self.PushButton_start_drink.setText(self._ui_text('停止喝酒', 'Stop Drink'))
-            self.is_running_drink = True
-        else:
-            self.set_simple_card_enable(self.SimpleCardWidget_card, True)
-            self.PushButton_start_drink.setText(self._ui_text('开始喝酒', 'Start Drink'))
-            self.is_running_drink = False
-
-    def on_capture_pals_button_click(self):
-        """抓帕鲁开始按键的信号处理"""
-        if not self.is_running_capture_pals:
-            self.redirectOutput(self.textBrowser_log_capture_pals)
-            self.capture_pals_task = SubTask(CapturePalsModule)
-            self.capture_pals_task.is_running.connect(self.handle_capture_pals)
-            self.capture_pals_task.start()
-        else:
-            self.capture_pals_task.stop()
-
-    def handle_capture_pals(self, is_running):
-        """抓帕鲁线程开始与结束的信号处理"""
-        if is_running:
-            self.set_simple_card_enable(self.SimpleCardWidget_capture_pals, False)
-            self.PushButton_start_capture_pals.setText(self._ui_text('停止抓帕鲁', 'Stop Capture Pals'))
-            self.is_running_capture_pals = True
-        else:
-            self.set_simple_card_enable(self.SimpleCardWidget_capture_pals, True)
-            self.PushButton_start_capture_pals.setText(self._ui_text('开始抓帕鲁', 'Start Capture Pals'))
-            self.is_running_capture_pals = False
-
     def showEvent(self, event):
         super().showEvent(event)
         # 只要切回这个页面，就强制从 config 重新读取一次最新数据覆盖 UI
         self._load_config()
+
+        # 切回工具页时，如果当前刚好有任务在运行，把日志焦点抢回它对应的黑框
+        if self.current_running_task_id is not None:
+            meta = self._get_task_metadata().get(self.current_running_task_id)
+            if meta and hasattr(self, 'redirectOutput'):
+                self.redirectOutput(meta[2])
