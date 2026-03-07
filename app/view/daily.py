@@ -197,6 +197,7 @@ class StartThread(QThread):
     task_completed_signal = Signal(str)
     task_started_signal = Signal(str)
     task_failed_signal = Signal(str)  # 【新增】任务失败/跳过信号
+    show_tray_message_signal = Signal(str, str)
 
     def __init__(self, tasks_to_run: list, logger_instance, parent=None):
         super().__init__(parent)
@@ -279,17 +280,9 @@ class StartThread(QThread):
 
                 if config.inform_message.value or '--toast-only' in sys.argv:
                     full_time = auto.calculate_power_time() if auto is not None else None
-                    content = ui_text(f'体力将在 {full_time} 完全恢复', f'Power will be fully restored in {full_time}')
+                    content = f'体力将在 {full_time} 完全恢复' if full_time else "体力计算出错"
 
-                    app = QApplication.instance()
-                    if app:
-                        tray_icon = QSystemTrayIcon(QIcon(os.path.abspath("app/resource/images/logo.ico")), app)
-                        tray_icon.show()
-                        tray_icon.showMessage(
-                            ui_text('已完成勾选任务', 'Completed Selected Tasks'),
-                            content,
-                            QIcon(os.path.abspath("app/resource/images/logo.ico")), 1000
-                        )
+                    self.show_tray_message_signal.emit('已完成勾选任务', content)
 
         except Exception as e:
             if str(e) != '已停止':
@@ -1513,12 +1506,13 @@ class Daily(QFrame, BaseInterface):
 
         if tasks_to_run:
             if not self.is_running:
-                # 【修改这里】把 self.logger 传给 StartThread
                 self.start_thread = StartThread(tasks_to_run, self.logger, self)
                 self.start_thread.is_running_signal.connect(self.handle_start)
                 self.start_thread.task_completed_signal.connect(self.record_task_completed)
                 self.start_thread.task_started_signal.connect(self._on_task_actually_started)
                 self.start_thread.task_failed_signal.connect(self.record_task_failed)
+
+                self.start_thread.show_tray_message_signal.connect(self._show_tray_message)
 
                 self.start_thread.start()
             else:
@@ -1533,6 +1527,26 @@ class Daily(QFrame, BaseInterface):
                           position=InfoBarPosition.TOP_RIGHT,
                           duration=2000,
                           parent=self)
+
+    # 【新增】运行在主线程的槽函数，用于安全地调用 UI
+    def _show_tray_message(self, title, content):
+        # 尝试复用主窗口的托盘图标（防止多次创建导致系统托盘出现“幽灵图标”）
+        main_win = self.window()
+        if hasattr(main_win, 'tray_icon') and main_win.tray_icon:
+            main_win.tray_icon.showMessage(
+                title, content,
+                QIcon(os.path.abspath("app/resource/images/logo.ico")), 1000
+            )
+        else:
+            # 如果没获取到主窗口的托盘，临时创建一个（后备方案）
+            app = QApplication.instance()
+            if app:
+                tray_icon = QSystemTrayIcon(QIcon(os.path.abspath("app/resource/images/logo.ico")), app)
+                tray_icon.show()
+                tray_icon.showMessage(
+                    title, content,
+                    QIcon(os.path.abspath("app/resource/images/logo.ico")), 1000
+                )
 
     def _guard_running_game_window(self):
         try:
