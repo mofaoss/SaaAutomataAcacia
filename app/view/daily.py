@@ -1390,8 +1390,8 @@ class Daily(QFrame, BaseInterface):
                 self, '_is_non_chinese_ui', False) else meta.get(
                     "zh_name", task_id)
             self.logger.info(
-                self._ui_text(f"▶️ 开始单独执行任务: {task_name}",
-                              f"▶️ Force running task: {task_name}"))
+                self._ui_text(f"开始单独执行任务: {task_name}",
+                              f"Force running task: {task_name}"))
 
             tasks_to_run = [task_id]
             self._is_running_solo_flag = True
@@ -1423,8 +1423,8 @@ class Daily(QFrame, BaseInterface):
             return
 
         self.logger.info(
-            self._ui_text(f"⏬ 开始从指定位置向下批量执行已勾选任务",
-                          f"⏬ Force running checked tasks from here"))
+            self._ui_text(f"开始从指定位置向下批量执行已勾选任务",
+                          f"Force running checked tasks from here"))
 
         tasks_to_run = []
         start_adding = False
