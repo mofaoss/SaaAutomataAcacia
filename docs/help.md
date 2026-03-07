@@ -1,5 +1,5 @@
 # 注意
-安卡希雅·自律姬是完全免费开源的项目：[前往Github仓库](https://github.com/mofaoss/SaaAutomataAcacia/)
+安卡小助手是完全免费开源的项目：[前往Github仓库](https://github.com/mofaoss/SaaAssistantAca/)
 
 # 帮助文档
 

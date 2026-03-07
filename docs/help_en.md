@@ -1,10 +1,10 @@
 # Notice
-SaaAutomataAcacia is a completely free and open‑source project: [Visit the GitHub Repository](https://github.com/mofaoss/SaaAutomataAcacia/)
+SaaAssistantAca is a completely free and open‑source project: [Visit the GitHub Repository](https://github.com/mofaoss/SaaAssistantAca/)
 
 
 # Help
 
-SaaAutomataAcacia Docs: [https://saadocs.netlify.app](https://saadocs.netlify.app)
+SaaAssistantAca Docs: [https://saadocs.netlify.app](https://saadocs.netlify.app)
 
 Getting Started: [https://saadocs.netlify.app/start/presetting](https://saadocs.netlify.app/start/presetting)
 
@@ -16,7 +16,7 @@ FAQ: [https://saadocs.netlify.app/issue/Q&A](https://saadocs.netlify.app/feature
 
 - Whether in windowed mode or fullscreen, the game must maintain a 16:9 aspect ratio. The resolution should preferably not be lower than 1280×720.
 
-## SaaAutomataAcacia Settings
+## SaaAssistantAca Settings
 
 - Core Check: Must be enabled on first launch
 - Check for updates on startup: Recommended to keep enabled

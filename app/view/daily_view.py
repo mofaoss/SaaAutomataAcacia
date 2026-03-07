@@ -1198,7 +1198,7 @@ class DailyView(ScrollArea):
         ])
 
         self.BodyLabel_run_mode.setText(
-            self._ui_text("执行结束后，安卡希雅会:", "After Execution, Acacia Action:"))
+            self._ui_text("执行结束后，安卡小助手:", "After Execution, Acacia Action:"))
         self.BodyLabel_end_action.setText(
             self._ui_text("执行结束后，尘白禁区将:", "After Execution, Game Action:"))
         self.PushButton_start.setText(self._ui_text("立即执行", "Execute Now"))

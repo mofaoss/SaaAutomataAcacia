@@ -76,7 +76,7 @@ class BannerWidget(QWidget):
 
         self.vBoxLayout = QVBoxLayout(self)
         self.galleryLabel = QLabel(
-            f'安卡希雅·自律姬 {get_local_version()}\nSaaAutomataAcacia', self
+            f'安卡小助手 {get_local_version()}\nSaaAssistantAca', self
         )
         self.galleryLabel.setStyleSheet(
             "color: #ECF9F8;font-size: 30px; font-weight: 600;"

@@ -259,7 +259,7 @@ jobs:
         if: ${{ env.IS_TAG == 'true' || github.event_name == 'workflow_dispatch' }}
         uses: actions/upload-artifact@v4
         with:
-          name: SaaAutomataAcacia-${{ steps.version.outputs.version }}-portable
+          name: SaaAssistantAca-${{ steps.version.outputs.version }}-portable
           path: ${{ steps.collect.outputs.release_files_dir }}/*.zip
           if-no-files-found: error
 
@@ -267,7 +267,7 @@ jobs:
         if: ${{ env.IS_TAG == 'true' || github.event_name == 'workflow_dispatch' }}
         uses: actions/upload-artifact@v4
         with:
-          name: SaaAutomataAcacia-${{ steps.version.outputs.version }}-installer
+          name: SaaAssistantAca-${{ steps.version.outputs.version }}-installer
           path: ${{ steps.collect.outputs.release_files_dir }}/*.exe
           if-no-files-found: error
 
@@ -276,7 +276,7 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           tag_name: ${{ github.ref_name }}
-          name: SaaAutomataAcacia ${{ steps.version.outputs.version }}
+          name: SaaAssistantAca ${{ steps.version.outputs.version }}
           draft: true
           prerelease: ${{ contains(steps.version.outputs.version, 'beta') || contains(steps.version.outputs.version, 'alpha') || contains(steps.version.outputs.version, 'rc') }}
           files: |

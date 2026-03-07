@@ -1,7 +1,7 @@
 # 项目结构
 
 ```bash
-SaaAutomataAcacia/
+SaaAssistantAca/
 ├── 📁 AppData/                     # 一些需要存下来的数据目录
 │   ├── 📄 activity_date.json       # 展示在“提醒”上的活动起止时间
 │   ├── 📄 config.json              # 用户配置
