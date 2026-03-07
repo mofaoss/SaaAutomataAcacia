@@ -1,39 +1,45 @@
+
 <div align="center">
-    <h1>
-        <img src="../asset/logo_head.png" width="200"/>
-        <br/>
-        SaaAssistantAca
-    </h1>
+  <h1>
+    <img src="../asset/logo_head.png" width="200"/>
     <br/>
+    SaaAssistantAca
+  </h1>
 
-<a href="../README.md">简体中文</a> | English
+  <a href="https://github.com/mofaoss/SaaAssistantAca" target="_blank">
+    <b style="color: #ff9800;">Star before you leave~</b>
+    <img src="https://img.shields.io/github/stars/mofaoss/SaaAssistantAca?style=social" alt="Star on GitHub" style="vertical-align: middle; margin-left: 6px;"/>
+  </a>
 
-[![ko-fi](https://ko-fi.com/img/githubbutton_sm.svg)](https://ko-fi.com/P5P21QG9LW)
+  <br/>
+
+  English | <a href="../README.md">简体中文</a>
+
+  [![ko-fi](https://ko-fi.com/img/githubbutton_sm.svg)](https://ko-fi.com/P5P21QG9LW)
 </div>
 
-## ✨Feature Introduction
 
+## ✨Feature Introduction
 > [!Tip]
 > **Update**
-> 1. **Stealth Mode**, allowing the game to run completely hidden in the background
-> 2. SaaAssistantAca is now fully refactored: the installer size is reduced by 40%, with better compatibility, faster speed, and a more concise UI.
-> 3. Added **custom task lists** and **periodic/scheduled execution** features
-> 4. Added support for **Traditional Chinese and English**, including compatibility with Traditional Chinese game clients
-> 5. Added **standard logistics**, **Pals capturing**, and more new features
-> 6. Enhanced OCR accuracy; fixed Steam login issues and stamina potion duration recognition; optimized memory shard usage; **removed the windowed‑mode restriction**
+> 1. **Stealth Mode** is now available, allowing the game to run completely hidden in the background
+> 2. SaaAssistantAca is now fully refactored, installer size reduced by 40%, better compatibility, faster speed, and a more concise UI
+> 3. Added **custom task lists and scheduled/periodic execution**
+> 4. Added support for Traditional Chinese and English, including Traditional Chinese game client
+> 5. Added regular logistics farming, Star Exploration Pal Capture, and more new features
+> 6. Enhanced OCR accuracy, fixed Steam login, stamina potion day recognition; optimized memory shard usage; removed windowed mode restriction
 
 > [!Warning]
 >
-> 1. Currently supports only 16:9 game aspect ratios, with both fullscreen and windowed modes. A resolution of at least 1280×720 is recommended. The higher the resolution, the better.
-> 2. Game language must be simplified/traditional chinese.
+> 1. Only supports 16:9 game aspect ratio, both fullscreen and windowed. Resolution should be at least 1280×720, higher is better
+> 2. Game language must be Simplified or Traditional Chinese
 
 ### ✨Feature List
-
-<details><summary>Click to view development progress</summary>
+<details><summary>👉 Click to view progress 👈</summary>
 
 ✅ Game login
 
-✅ Daily resource collection: Mail, friend stamina, supply station stamina, bait, dorm puzzles
+✅ Daily rewards: mail, friend stamina, supply station stamina, bait, dorm puzzles
 
 ✅ Shop purchases
 
@@ -45,7 +51,7 @@
 
 ✅ Daily mission reward collection
 
-✅ Auto-fishing (pure background)
+✅ Auto-fishing (background)
 
 ✅ Psychube analysis solution calculation
 
@@ -63,15 +69,13 @@
 
 ✅ Light/dark mode adaptation
 
-✅ Auto-collection trigger
+✅ Auto-collection assist
 
-✅ Auto-scaling ratio execution
+✅ Automatic coordinate and schedule reminder updates
 
-✅ Automatic coordinate updates & schedule reminders
+✅ Direct game launch via SAA
 
-✅ Direct game launch via Acacia
-
-✅ GPU acceleration support for NVIDIA/AMD
+✅ GPU acceleration for NVIDIA/AMD
 
 ✅ Auto-start on boot
 
@@ -79,11 +83,11 @@
 
 ✅ Auto redeem codes
 
-✅ Farm operation logistics
+✅ Regular logistics farming
 
 ✅ Star Exploration Pal Capture
 
-⬜ Massage therapy
+⬜ Massage
 
 ⬜ Update log display
 
@@ -91,18 +95,14 @@
 
 ⬜ Auto-gacha
 
-
 </details>
 
-### ⚡ Usage & Documentation
-
+### ⚡Usage & Documentation
 > [!Important]
 >
-> SaaAssistantAca Documentation: https://saadocs.netlify.app/ (Partly outdated)
+> SAA documentation: https://saadocs.netlify.app/ (partly outdated)
 
-
-### ✨ Running
-
+### ✨Running
 <details>
 <summary>👉 Click to expand screenshots 👈</summary>
 <div style="display: flex; flex-wrap: wrap; justify-content: center; gap: 10px;">
@@ -114,15 +114,12 @@
 </details>
 
 ### 📌Download
-
 - [Github Release](https://github.com/mofaoss/SaaAssistantAca/releases)
 
-## ❤️ Related Projects
-
-- Thanks for upstream: https://github.com/LaoZhuJackson/SnowbreakAutoAssistant
+## ❤️Related Projects
+- Tribute to upstream: https://github.com/LaoZhuJackson/SnowbreakAutoAssistant
 
 ## 📝License
-
 > [!Note]
 >
 > GPLv3 License
