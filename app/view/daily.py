@@ -1225,6 +1225,9 @@ class Daily(QFrame, BaseInterface):
             self._on_shared_config_changed)
         self.ui.CheckBox_open_game_directly.stateChanged.connect(
             self.change_auto_open)
+        self.ui.shared_scheduling_panel.copy_to_all_clicked.connect(
+            self._on_copy_config_to_all)
+
         signalBus.sendHwnd.connect(self.set_hwnd)
 
         signalBus.globalTaskStateChanged.connect(self._on_global_state_changed)
@@ -1470,6 +1473,40 @@ class Daily(QFrame, BaseInterface):
         else:
             self.tasks_to_run = tasks_to_run
             self.after_start_button_click(tasks_to_run)
+
+    def _on_copy_config_to_all(self, source_task_id: str):
+        if not source_task_id:
+            return
+
+        # 1. 获取源任务当前的配置（从 UI 实时获取最新的）
+        activation_rules = [w.get_data() for w in self.ui.shared_scheduling_panel._iter_activation_rule_widgets()]
+        execution_rules = [w.get_data() for w in self.ui.shared_scheduling_panel._iter_rule_widgets()]
+        is_periodic = self.ui.shared_scheduling_panel.enable_checkbox.isChecked()
+
+        # 2. 读取当前序列
+        sequence = self._normalize_task_sequence(config.daily_task_sequence.value)
+
+        # 3. 遍历并覆盖
+        for task_cfg in sequence:
+            # “自动登录”通常不建议跟随批量计划，如果你想排除它，可以加 if task_cfg["id"] == "task_login": continue
+            task_cfg["use_periodic"] = is_periodic
+            task_cfg["activation_config"] = copy.deepcopy(activation_rules)
+            task_cfg["execution_config"] = copy.deepcopy(execution_rules)
+
+        # 4. 保存并刷新
+        self._save_task_sequence(sequence)
+        self._auto_adjust_after_use_action()
+
+        # 5. 提示用户
+        InfoBar.success(
+            title=ui_text("复制成功", "Copy Successful"),
+            content=ui_text("已将当前计划应用到所有任务", "Applied current schedule to all tasks"),
+            orient=Qt.Orientation.Horizontal,
+            isClosable=True,
+            position=InfoBarPosition.TOP_RIGHT,
+            duration=2000,
+            parent=self
+        )
 
     def check_game_open(self):
         try:

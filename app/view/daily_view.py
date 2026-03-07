@@ -383,6 +383,7 @@ class SharedSchedulingPanel(QWidget):
     config_changed = Signal(str, dict)
     toggle_all_cycles = Signal(bool)
     view_schedule_clicked = Signal()
+    copy_to_all_clicked = Signal(str)  # 【新增】信号：传递当前任务ID
 
     def __init__(self, is_non_chinese_ui=False, parent=None):
         super().__init__(parent)
@@ -461,8 +462,14 @@ class SharedSchedulingPanel(QWidget):
         self.add_btn.setFixedSize(28, 28)
         self.add_btn.clicked.connect(lambda: self._add_rule({}))
 
+        self.copy_all_btn = ToolButton(FIF.COPY, self)
+        self.copy_all_btn.setToolTip("Copy to all tasks" if is_non_chinese_ui else "复制到全部任务")
+        self.copy_all_btn.setFixedSize(28, 28)
+        self.copy_all_btn.clicked.connect(lambda: self.copy_to_all_clicked.emit(self.task_id))
+
         exec_title_layout.addWidget(self.exec_title_label)
         exec_title_layout.addWidget(self.add_btn)
+        exec_title_layout.addWidget(self.copy_all_btn) # 添加到布局
         exec_title_layout.addStretch(1)
 
         main_layout.addLayout(exec_title_layout)
