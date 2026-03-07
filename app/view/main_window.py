@@ -9,8 +9,8 @@ import threading
 import time
 from pathlib import Path
 from PySide6.QtCore import QSize, QTimer, QThread, Qt, QUrl, QPoint
-from PySide6.QtGui import QIcon, QImage, QPixmap, QMovie, QDesktopServices
-from PySide6.QtWidgets import QApplication, QFrame, QLabel
+from PySide6.QtGui import QIcon, QImage, QPixmap, QMovie, QDesktopServices, QAction
+from PySide6.QtWidgets import QApplication, QFrame, QLabel, QSystemTrayIcon, QMenu
 from qfluentwidgets import FluentIcon as FIF, SystemThemeListener, MessageBox, InfoBar, InfoBarPosition
 from qfluentwidgets import NavigationItemPosition, FluentWindow, setThemeColor
 
@@ -87,12 +87,73 @@ class MainWindow(FluentWindow, BaseInterface):
         }
 
         self.initWindow()
+        self.initSystemTray()  # 初始化系统托盘
+
         self._init_tasks = self._build_initial_init_tasks() + [
             self.connectSignalToSlot,
             self.initNavigation,
             self._finalize_startup,
         ]
         QTimer.singleShot(0, self._run_next_init_task)
+
+    def initSystemTray(self):
+        """初始化系统托盘图标和菜单"""
+        self.tray_icon = QSystemTrayIcon(self)
+        base_dir = Path(getattr(sys, '_MEIPASS', Path(__file__).resolve().parents[2]))
+        icon_path = str(base_dir / 'app/resource/images/logo.png')
+        # 如果有 ico 格式最好，没有就用 png
+        if not os.path.exists(icon_path):
+            icon_path = str(base_dir / 'app/resource/images/logo.ico')
+
+        self.tray_icon.setIcon(QIcon(icon_path))
+        self.tray_icon.setToolTip(self._ui_text("安卡小助手", "SaaAssistantAca"))
+
+        # 创建托盘菜单
+        tray_menu = QMenu(self)
+
+        # 显示主窗口动作
+        show_action = QAction(self._ui_text("显示主窗口", "Show Window"), self)
+        show_action.triggered.connect(self.show_from_tray)
+        tray_menu.addAction(show_action)
+
+        tray_menu.addSeparator()
+
+        # 彻底退出动作
+        quit_action = QAction(self._ui_text("彻底退出", "Quit"), self)
+        quit_action.triggered.connect(self.quit_app)
+        tray_menu.addAction(quit_action)
+
+        self.tray_icon.setContextMenu(tray_menu)
+
+        # 双击托盘图标恢复窗口
+        self.tray_icon.activated.connect(self.on_tray_icon_activated)
+
+        self.tray_icon.show()
+
+    def on_tray_icon_activated(self, reason):
+        # 仅响应双击事件
+        if reason == QSystemTrayIcon.ActivationReason.DoubleClick:
+            self.show_from_tray()
+
+    def show_from_tray(self):
+        """从托盘恢复窗口显示"""
+        self.show()
+        self.activateWindow()
+        if self.isMinimized():
+            self.showNormal()
+
+    def quit_app(self):
+        """彻底退出程序，跳过托盘拦截"""
+        # 标记一个强制退出状态，供 closeEvent 判断
+        self._force_quit = True
+        self.close()  # 触发 closeEvent 进行保存配置等收尾工作
+
+        # 显式通知应用程序彻底结束事件循环
+        QApplication.quit()
+
+        # 针对 VSCode 等调试环境的终极保险，强杀残留的 Python 守护线程
+        import sys
+        sys.exit(0)
 
     def _to_traditional_if_needed(self, text):
         if not isinstance(text, str) or not is_traditional_ui_language():
@@ -328,11 +389,10 @@ class MainWindow(FluentWindow, BaseInterface):
         """统一判断侧边栏当前是否处于展开状态"""
         if not hasattr(self, "navigationInterface") or self.navigationInterface is None:
             return False
-        # 将所有的物理判定逻辑只写在这里一次
         return self.navigationInterface.width() > SIDEBAR_EXPAND_THRESHOLD
 
     def open_game_directly(self):
-        """直接启动游戏（兼容 Steam/Epic 与国服等不同目录结构）"""
+        """直接启动游戏"""
         try:
             result = launch_game_with_guard(logger=logger)
             if not result.get("ok"):
@@ -348,16 +408,13 @@ class MainWindow(FluentWindow, BaseInterface):
         signalBus.showScreenshot.connect(self.showScreenshot)
 
     def initNavigation(self):
-        # 1. 基础 UI 设置
         self.navigationInterface.setCollapsible(True)
 
-        # 2. 侧边栏宽度控制
         if self._is_non_chinese_ui:
             self.navigationInterface.setExpandWidth(130)
         else:
             self.navigationInterface.setExpandWidth(100)
 
-        # 3. 恢复侧边栏折叠/展开记忆状态
         def _restore_nav_state():
             should_be_expanded = bool(config.nav_expanded.value)
             if self.isSidebarExpanded() != should_be_expanded:
@@ -380,43 +437,32 @@ class MainWindow(FluentWindow, BaseInterface):
         self.ocr_module = ocr
 
         def benchmark(ocr_func, img, runs=30):
-            # 预热
             for _ in range(10):
                 ocr_func(img, is_log=False)
-
-            # 正式测试
             start = time.time()
             for _ in range(runs):
                 ocr_func(img, is_log=False)
             return (time.time() - start) / runs
 
         ocr.instance_ocr()
-        # logger.info(f"区域截图识别每次平均耗时：{benchmark(ocr.run, 'app/resource/images/start_game/age.png')}")
 
     def initWindow(self):
-        # 1. 先读取上次保存的位置
         position = config.position.value
         if hasattr(config, "ocr_use_gpu") and config.ocr_use_gpu.value:
             config.set(config.ocr_use_gpu, False)
         target_screen = None
 
-        # 2. 探明将要打开的屏幕
         if position:
-            # 检查这个坐标现在属于哪块屏幕
             target_screen = QApplication.screenAt(QPoint(position[0], position[1]))
 
-        # 如果没有保存过位置，或者原来的副屏被拔掉了导致坐标悬空，安全回退到主屏
         if target_screen is None:
             target_screen = QApplication.primaryScreen()
 
-        # 3. 获取【目标屏幕】的可用几何区域，并以此计算比例
         target_geo = target_screen.availableGeometry()
 
-        # 强制转为 int，防止 float 导致 Qt 报错
         self.resize(int(target_geo.width() * 0.55), int(target_geo.height() * 0.8))
         self.setMinimumSize(int(target_geo.width() * 0.5), int(target_geo.height() * 0.6))
 
-        # 4. 基础 UI 设置
         base_dir = Path(getattr(sys, '_MEIPASS', Path(__file__).resolve().parents[2]))
         self.setWindowIcon(QIcon(str(base_dir / 'app/resource/images/logo.png')))
         self.setWindowTitle(self._ui_text('安卡小助手', 'SaaAssistantAca'))
@@ -424,11 +470,9 @@ class MainWindow(FluentWindow, BaseInterface):
         self.setMicaEffectEnabled(False)
         self.navigationInterface.setReturnButtonVisible(False)
 
-        # 5. 安排窗口就位
         if position and target_screen == QApplication.screenAt(QPoint(position[0], position[1])):
             self.move(*position)
         else:
-            # 如果是首次打开，或由于拔插显示器触发了回退，则在目标屏幕（此时为主屏）完美居中
             rect = self.frameGeometry()
             rect.moveCenter(target_geo.center())
             self.move(rect.topLeft())
@@ -476,31 +520,17 @@ class MainWindow(FluentWindow, BaseInterface):
         ocr_thread.daemon = True
         ocr_thread.start()
 
-    # def update_ring(self, value, speed):
-    #     self.progressRing.setValue(value)
-    #     self.speed.setText(speed)
-
     def yes_click(self):
         self.check_ocr_thread = InstallOcr(self.ocr_installer)
         try:
-            # self.content.setVisible(False)
-            # self.progressRing.setVisible(True)
-            # self.speed.setVisible(True)
             self.check_ocr_thread.start()
         except Exception as e:
             print(e)
-            # traceback.print_exc()
 
     def cancel_click(self):
         self.close()
 
     def switchToSample(self, routeKey, index):
-        """
-        用于跳转到指定页面
-        :param routeKey: 跳转路径
-        :param index:
-        :return:
-        """
         if routeKey == "Home-Start-Now":
             if self.homeInterface is None:
                 self._create_home_and_add_nav()
@@ -512,32 +542,23 @@ class MainWindow(FluentWindow, BaseInterface):
         for w in interfaces:
             if w.objectName() == routeKey:
                 self.stackedWidget.setCurrentWidget(w, False)
-                # w.scrollToCard(index)
 
     def save_log(self):
         """保存所有log到html中"""
 
         def is_empty_html(content):
-            """
-            判断 HTML 内容是否为空
-            """
-            # 使用正则表达式匹配空的段落 (<p>) 或者换行 (<br />)
             empty_html_pattern = re.compile(r'<p[^>]*>\s*(<br\s*/?>)?\s*</p>', re.IGNORECASE)
-
-            # 去掉默认的头部信息后，检查是否只剩下空的段落
             body_content = re.sub(r'<!DOCTYPE[^>]*>|<html[^>]*>|<head[^>]*>.*?</head>|<body[^>]*>|</body>|</html>', '',
                                   content, flags=re.DOTALL)
             return bool(empty_html_pattern.fullmatch(body_content.strip()))
 
         def save_html(path, content):
-            """保存HTML内容，如果是空内容则跳过"""
             if not content or is_empty_html(content):
                 return
             with open(path, "w", encoding='utf-8') as file:
                 file.write(content)
 
         def clean_old_logs(log_dir, max_files=30):
-            """清理旧日志文件，保留最多max_files个"""
             if not os.path.exists(log_dir):
                 return
 
@@ -549,12 +570,10 @@ class MainWindow(FluentWindow, BaseInterface):
             if len(all_logs) <= max_files:
                 return
 
-            # 按创建时间排序并删除最旧的文件
             all_logs.sort(key=lambda x: os.path.getctime(os.path.join(log_dir, x)))
             for file_to_remove in all_logs[:len(all_logs) - max_files]:
                 os.remove(os.path.join(log_dir, file_to_remove))
 
-        # 日志配置：目录、UI组件、文件名前缀
         log_configs = []
         if self.homeInterface is not None:
             log_configs.append(("./log/home", self.homeInterface.textBrowser_log, "home"))
@@ -572,24 +591,36 @@ class MainWindow(FluentWindow, BaseInterface):
         timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
 
         for log_dir, text_browser, prefix in log_configs:
-            # 确保日志目录存在
             os.makedirs(log_dir, exist_ok=True)
-
-            # 清理旧日志
             clean_old_logs(log_dir)
-
-            # 获取并保存日志内容
             log_content = text_browser.toHtml()
             filename = f"{prefix}_{timestamp}.html"
             save_html(os.path.join(log_dir, filename), log_content)
 
     def save_position(self):
-        # 获取当前窗口的位置和大小
         geometry = self.geometry()
         position = (geometry.left(), geometry.top())
         config.set(config.position, position)
 
     def closeEvent(self, a0):
+        # 如果不是彻底退出，且开启了最小化到托盘，则拦截关闭事件并隐藏窗口
+        if not getattr(self, "_force_quit", False) and config.minimizeToTray.value:
+            a0.ignore()  # 忽略关闭事件
+            self.hide()  # 隐藏窗口
+
+            # 显示一个气泡提示，告诉用户程序跑到托盘去了 (只提示一次避免烦人，可以根据需要保留)
+            if not getattr(self, "_has_shown_tray_tip", False):
+                self.tray_icon.showMessage(
+                    self._ui_text("已最小化", "Minimized"),
+                    self._ui_text("安卡希雅已隐藏到系统托盘，后台计划依然生效哦！",
+                                  "Acacia is running in the system tray. Background tasks are still active!"),
+                    QSystemTrayIcon.MessageIcon.Information,
+                    2000
+                )
+                self._has_shown_tray_tip = True
+            return
+
+        # 如果是真的要关闭程序，执行收尾工作
         if self.ocr_module is not None:
             self.ocr_module.stop_ocr()
         self.themeListener.terminate()
@@ -597,15 +628,18 @@ class MainWindow(FluentWindow, BaseInterface):
         if hasattr(self, "navigationInterface") and self.navigationInterface is not None:
             config.set(config.nav_expanded, self.isSidebarExpanded())
         try:
-            # 保存日志到文件
             self.save_log()
             self.save_position()
-            # 保存缩放数据
             if config.saveScaleCache.value:
                 matcher.save_scale_cache()
         except Exception as e:
             logger.error(e)
-            # traceback.print_exc()
+
+        # 【核心修复】：彻底销毁释放托盘图标系统资源，防止进程阻塞
+        if hasattr(self, "tray_icon"):
+            self.tray_icon.hide()
+            self.tray_icon.deleteLater()
+
         super().closeEvent(a0)
 
     def changeEvent(self, event):
@@ -617,7 +651,6 @@ class MainWindow(FluentWindow, BaseInterface):
     def showMessageBox(self, title, content):
         massage = MessageBox(title, content, self)
         if massage.exec():
-            # 1. 切换到设置页面
             if self.settingInterface is None:
                 self._create_setting_and_add_nav()
             w = self.settingInterface
@@ -633,29 +666,17 @@ class MainWindow(FluentWindow, BaseInterface):
                 logger.warning("未能获取到有效的更新下载链接")
 
     def showScreenshot(self, screenshot):
-        """
-        展示当前截图
-        :param screenshot:
-        :return:
-        """
         def ndarray_to_qpixmap(ndarray):
             import numpy as np
             import cv2
-
-            # 确保ndarray是3维的 (height, width, channels)
             if ndarray.ndim == 2:
                 ndarray = np.expand_dims(ndarray, axis=-1)
                 ndarray = np.repeat(ndarray, 3, axis=-1)
 
             height, width, channel = ndarray.shape
             bytes_per_line = 3 * width
-            # 显示需要rgb格式
             ndarray = cv2.cvtColor(ndarray, cv2.COLOR_BGR2RGB)
-
-            # 将ndarray转换为QImage
             qimage = QImage(ndarray.data, width, height, bytes_per_line, QImage.Format_RGB888)
-
-            # 将QImage转换为QPixmap
             return QPixmap.fromImage(qimage)
 
         def save_screenshot(ndarray):
@@ -663,10 +684,8 @@ class MainWindow(FluentWindow, BaseInterface):
                 import cv2
                 self.cv2_module = cv2
 
-            # 检查 temp 目录是否存在，如果不存在则创建
             if not os.path.exists('temp'):
                 os.makedirs('temp')
-            # cv2保存是bgr格式
             self.cv2_module.imwrite(f'temp/{time.time()}.png', ndarray)
 
         save_screenshot(screenshot)
@@ -674,7 +693,6 @@ class MainWindow(FluentWindow, BaseInterface):
         if not isinstance(self.message_window, CustomMessageBox):
             self.message_window = CustomMessageBox(self, '当前截图', 'image')
         screenshot_pixmap = ndarray_to_qpixmap(screenshot)
-        # 按比例缩放图像
         scaled_pixmap = screenshot_pixmap.scaled(
             200, 200, Qt.AspectRatioMode.KeepAspectRatio, Qt.TransformationMode.SmoothTransformation
         )
