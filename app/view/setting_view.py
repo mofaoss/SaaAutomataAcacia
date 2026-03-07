@@ -115,6 +115,16 @@ class AboutHeaderWidget(QWidget, BaseInterface):
         self.downloadLink = HyperlinkButton("", self._ui_text("现在更新", "Update now"), self)
 
         self.downloadLink.setMinimumHeight(24)
+
+        # 2. 核心修复：强行撑开控件内部的留白，给文字底部留出 5 像素的空间 (左, 上, 右, 下)
+        # self.downloadLink.setContentsMargins(0, 0, 0, 5)
+
+        # 3. 微调字号：稍微把字号调小一丁点，防止字体溢出绘制框
+        font = self.downloadLink.font()
+        font.setPointSize(9)  # 默认通常是10
+        self.downloadLink.setFont(font)
+
+        # self.downloadLink.setMinimumHeight(24)
         self.row2Layout.addWidget(self.qqPrefix)
         self.row2Layout.addWidget(self.qqLink)
         self.row2Layout.addSpacing(24)
