@@ -469,7 +469,8 @@ class Daily(QFrame, BaseInterface):
         return True  # 每天都匹配
 
     def _check_and_run_loop_tasks(self):
-        if self.is_running or self.is_launch_pending:
+        # 如果游戏正在启动中，直接跳过本次检查，等下次循环
+        if getattr(self, 'is_launch_pending', False):
             return
 
         now = datetime.now()
@@ -493,8 +494,13 @@ class Daily(QFrame, BaseInterface):
                         prog = rule_progress.get(rule_key, 0)
                         last_trigger_ts = prog.get("last_run", 0) if isinstance(prog, dict) else prog
 
+                        # 防止一分钟内重复触发
                         if int(now.timestamp()) - int(last_trigger_ts) > 60:
-                            new_tasks_found.append(task_id)
+
+                            # 【核心新增】：读取 max_runs 属性，支持同一任务一次性排队多次
+                            max_runs = int(rule.get("max_runs", 1))
+                            if max_runs > 0:
+                                new_tasks_found.extend([task_id] * max_runs)
 
                             if isinstance(prog, dict):
                                 prog["last_run"] = int(now.timestamp())
@@ -512,22 +518,39 @@ class Daily(QFrame, BaseInterface):
         if sequence_updated:
             self._save_task_sequence(sequence)
 
-        if getattr(self, 'is_running', False) or getattr(self, 'is_launch_pending', False):
-            self.logger.info(ui_text(f"⏰ 到点触发计划: {current_time_str}，正在执行其他任务，已加入队列排队: {new_tasks_found}", f"⏰ Scheduled task triggered at {current_time_str}, other tasks are running, added to queue: {new_tasks_found}"))
+        is_self_running = getattr(self, 'is_running', False)
+        is_external_running = getattr(self, 'is_global_running', False)
+
+        # 如果自身在跑，或者外部有任务在跑，都必须进入排队逻辑
+        if is_self_running or is_external_running:
+            self.logger.info(ui_text(f"⏰ 到点触发计划: {current_time_str}，系统正忙，已加入队列排队: {new_tasks_found}",
+                                     f"⏰ Scheduled task triggered at {current_time_str}, system is busy, added to queue: {new_tasks_found}"))
+
+            if not hasattr(self, 'tasks_to_run') or self.tasks_to_run is None:
+                self.tasks_to_run = []
+
             for tid in new_tasks_found:
-                if tid not in self.tasks_to_run:
-                    self.tasks_to_run.append(tid)
-                    task_item = self.task_widget_map.get(tid)
-                    if task_item and hasattr(task_item, 'set_task_state'):
-                        task_item.set_task_state('queued')
+                # 【核心修改】：移除了去重判定，允许相同任务反复 append 追加进队列
+                self.tasks_to_run.append(tid)
+                task_item = self.task_widget_map.get(tid)
+                if task_item and hasattr(task_item, 'set_task_state'):
+                    task_item.set_task_state('queued')
+
+            # 如果是外部在跑，打个标记，等外部结束时自动唤醒日常
+            if is_external_running and not is_self_running:
+                self._waiting_for_external_to_finish = True
+
             return
 
-        self.logger.info(ui_text(f"⏰ 到点触发计划: {current_time_str}，执行列表: {new_tasks_found}", f"⏰ Scheduled task triggered at {current_time_str}, executing tasks: {new_tasks_found}"))
+        # 如果完全空闲，直接执行
+        self.logger.info(ui_text(f"⏰ 到点触发计划: {current_time_str}，执行列表: {new_tasks_found}",
+                                 f"⏰ Scheduled task triggered at {current_time_str}, executing tasks: {new_tasks_found}"))
         self._is_scheduled_run_flag = True
         tasks_to_run = new_tasks_found
 
         if "task_login" in tasks_to_run and tasks_to_run[0] != "task_login":
-            tasks_to_run.remove("task_login")
+            # 【优化安全过滤】：一键清理所有可能因为重复排队混进来的 task_login，然后在最头部统一塞一个
+            tasks_to_run = [t for t in tasks_to_run if t != "task_login"]
             tasks_to_run.insert(0, "task_login")
 
         game_opened = is_exist_snowbreak()
@@ -538,7 +561,7 @@ class Daily(QFrame, BaseInterface):
                 self.tasks_to_run = tasks_to_run
                 self.open_game_directly()
             else:
-                self.logger.warning(self._ui_text("⚠️ 检测到游戏未运行，且未开启【自动打开游戏】！若稍后报错未找到句柄，请勾选该功能或手动启动游戏。", "⚠️ Game is not running and 'Auto open game' is OFF. This may cause handle errors!"))
+                self.logger.warning(ui_text("⚠️ 检测到游戏未运行，且未开启【自动打开游戏】！若稍后报错未找到句柄，请勾选该功能或手动启动游戏。", "⚠️ Game is not running and 'Auto open game' is OFF. This may cause handle errors!"))
                 self.tasks_to_run = tasks_to_run
                 self.after_start_button_click(tasks_to_run)
         else:
@@ -1211,7 +1234,7 @@ class Daily(QFrame, BaseInterface):
     def _on_global_state_changed(self, is_running: bool, zh_name: str, en_name: str, source: str):
         if source == "daily": return # 忽略自己发出的信号
 
-        # 【新增】记录是否有外部任务在运行
+        # 记录是否有外部任务在运行
         self.is_global_running = is_running
 
         if is_running:
@@ -1221,6 +1244,18 @@ class Daily(QFrame, BaseInterface):
         else:
             self.set_checkbox_enable(True)
             self.ui.PushButton_start.setText(self._ui_text("立即执行 (F8)", "Execute Now (F8)"))
+
+            # 【新增：排队唤醒机制】如果外部任务结束了，并且我们有积压的排队任务在等，立刻唤醒执行！
+            if getattr(self, '_waiting_for_external_to_finish', False):
+                self._waiting_for_external_to_finish = False
+
+                # 检查积压的队列里还有没有任务
+                pending_tasks = getattr(self, 'tasks_to_run', [])
+                if pending_tasks and not self.is_running:
+                    self.logger.info(ui_text("外部任务已结束，正在唤醒积压的日常排队任务...",
+                                             "External task finished, waking up queued daily tasks..."))
+                    # 重新触发执行
+                    self.after_start_button_click(pending_tasks)
 
     # 【新增】响应全局的停止请求 (F8)
     def _on_global_stop_request(self):
@@ -1576,6 +1611,7 @@ class Daily(QFrame, BaseInterface):
         self.on_start_button_click()
 
     def on_start_button_click(self):
+        # 拦截：如果全局有外部任务在跑，只允许点击停止！绝不允许手动新增或启动。
         if getattr(self, 'is_global_running', False):
             signalBus.globalStopRequest.emit()
             return
