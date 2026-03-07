@@ -68,7 +68,7 @@ class TaskListView(ListWidget):
         item.setSizeHint(QSize(200, 38))
         item.setData(Qt.ItemDataRole.UserRole, task_item_widget.task_id)
 
-        # 【新增】：彻底剥夺“启动游戏”项的被拖拽能力
+        # 彻底剥夺“启动游戏”项的被拖拽能力
         if task_item_widget.task_id == "task_login":
             item.setFlags(item.flags() & ~Qt.ItemFlag.ItemIsDragEnabled)
 
@@ -214,9 +214,9 @@ class TaskItemWidget(QWidget):
         self._is_non_chinese_ui = is_non_chinese_ui
         self._original_text = en_name if is_non_chinese_ui else zh_name
         self.current_state = 'idle'  # 记录内部状态
-        self.is_scheduled = False    # 【新增】：独立记录是否启用了计划
+        self.is_scheduled = False    # 独立记录是否启用了计划
 
-        # 【新增】：标记当前任务是否为强制底座（登录）
+        # 标记当前任务是否为强制底座（登录）
         self.is_mandatory = (self.task_id == "task_login")
 
         layout = QHBoxLayout(self)
@@ -307,7 +307,6 @@ class TaskItemWidget(QWidget):
             }
             color = colors.get(state, "")
 
-            # 【优化】：直接获取后缀，不再写一堆 if-elif
             suffix = self._get_state_suffix(state)
 
             # 只保留按钮和字体加粗的控制逻辑

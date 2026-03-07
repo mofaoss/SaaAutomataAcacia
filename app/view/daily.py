@@ -719,7 +719,7 @@ class Daily(QFrame, BaseInterface):
             use_periodic = bool(task_cfg.get("use_periodic", False))
 
             if is_globally_running:
-                # 【核心修改】：任务执行期间，仅使用无痕方法刷新 📅 图标，绝对不触发状态机和解锁逻辑！
+                # 任务执行期间，仅使用无痕方法刷新 📅 图标，绝对不触发状态机和解锁逻辑！
                 if hasattr(task_item, 'update_schedule_status'):
                     task_item.update_schedule_status(use_periodic)
             else:
@@ -758,7 +758,7 @@ class Daily(QFrame, BaseInterface):
                 parent=self.ui.taskListWidget,
             )
 
-            # 【新增】：初始化时传入任务的调度状态
+            # 初始化时传入任务的调度状态
             task_item.is_scheduled = bool(task_cfg.get("use_periodic", False))
 
             task_item.checkbox.setObjectName(meta["option_key"])
@@ -960,7 +960,6 @@ class Daily(QFrame, BaseInterface):
                         return
 
             try:
-                # 【核心修复】：不要用 ApiResponse(**data)，改用你写好的 from_dict 进行深层转换！
                 response = ApiResponse.from_dict(data)
                 self._handle_update_logic(data, online_data, response)
             except Exception as e:
@@ -1318,7 +1317,7 @@ class Daily(QFrame, BaseInterface):
                 self.running_game_guard_timer.stop()
                 self.set_checkbox_enable(True)
 
-                # 【核心修改】不论任何情况，停止后按钮直接回到“立即执行”，因为挂机是隐形的
+                # 不论任何情况，停止后按钮直接回到“立即执行”，因为挂机是隐形的
                 self.ui.PushButton_start.setText(self._ui_text("立即执行 (F8)", "Execute Now (F8)"))
 
                 self._is_running_solo_flag = False
@@ -1685,7 +1684,7 @@ class Daily(QFrame, BaseInterface):
         if task_item and hasattr(task_item, 'set_task_state'):
             task_item.set_task_state('completed')
 
-            # 【系统级检查修复】：如果全局队列还在运行（其他任务还在排队或执行），必须立刻把刚完成的任务重新软锁定！
+            # 如果全局队列还在运行（其他任务还在排队或执行），必须立刻把刚完成的任务重新软锁定！
             if getattr(self, 'is_running', False) or getattr(self, 'is_launch_pending', False):
                 if hasattr(task_item, 'lock_ui_for_execution'):
                     task_item.lock_ui_for_execution()

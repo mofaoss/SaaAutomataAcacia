@@ -123,7 +123,7 @@ class Matcher:
         return step_confidences, step_boxes
 
     def match(self, template_path: str, target: cv2.typing.MatLike):
-        # 【核心拦截】：使用 try-except 包裹整个识别流程
+        # 使用 try-except 包裹整个识别流程
         try:
             template = cv2.imread(template_path, cv2.IMREAD_UNCHANGED)
             if template is None:
