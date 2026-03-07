@@ -442,9 +442,7 @@ class Daily(QFrame, BaseInterface):
         return True  # 每天都匹配
 
     def _check_and_run_loop_tasks(self):
-        # 注意：这里我们移除了对 self.is_running 的粗暴 return，允许在运行时继续监控时间
-
-        if self.ui.ComboBox_run_mode.currentIndex() != 2:
+        if self.is_running or self.is_launch_pending:
             return
 
         now = datetime.now()
@@ -487,19 +485,16 @@ class Daily(QFrame, BaseInterface):
         if sequence_updated:
             self._save_task_sequence(sequence)
 
-        # 【核心修复2】：动态排队系统。如果已经有任务在跑，把新触发的追加进去排队！
         if getattr(self, 'is_running', False) or getattr(self, 'is_launch_pending', False):
             self.logger.info(f"⏰ 到点触发计划: {current_time_str}，正在执行其他任务，已加入队列排队: {new_tasks_found}")
             for tid in new_tasks_found:
                 if tid not in self.tasks_to_run:
-                    # 追加到当前正在运行的队列列表末尾，线程会自动按顺序消化它们
                     self.tasks_to_run.append(tid)
                     task_item = self.task_widget_map.get(tid)
                     if task_item and hasattr(task_item, 'set_task_state'):
-                        task_item.set_task_state('queued') # 视觉变紫，排队等候
+                        task_item.set_task_state('queued')
             return
 
-        # 如果当前空闲，则启动全新一轮的执行
         self.logger.info(f"⏰ 到点触发计划: {current_time_str}，执行列表: {new_tasks_found}")
         self._is_scheduled_run_flag = True
         tasks_to_run = new_tasks_found
@@ -652,13 +647,10 @@ class Daily(QFrame, BaseInterface):
         return normalized
 
     def _auto_adjust_after_use_action(self):
-        # 【核心修复1】：防火墙！如果任务正在执行或正在等游戏启动，绝对不允许任何事件去重置 UI 状态！
         if getattr(self, 'is_running', False) or getattr(self, 'is_launch_pending', False):
             return
 
-        sequence = self._normalize_task_sequence(
-            config.daily_task_sequence.value)
-        has_any_periodic = False
+        sequence = self._normalize_task_sequence(config.daily_task_sequence.value)
 
         for task_cfg in sequence:
             task_id = task_cfg.get("id")
@@ -670,21 +662,11 @@ class Daily(QFrame, BaseInterface):
 
             if use_periodic:
                 task_item.set_task_state('scheduled', is_enabled=is_checked)
-                has_any_periodic = True
             else:
                 if getattr(task_item, 'current_state', 'idle') != 'completed':
                     task_item.set_task_state('idle', is_enabled=is_checked)
                 else:
-                    task_item.set_task_state('completed',
-                                             is_enabled=is_checked)
-
-        current_idx = self.ui.ComboBox_run_mode.currentIndex()
-        if has_any_periodic:
-            if current_idx != 2:
-                self.ui.ComboBox_run_mode.setCurrentIndex(2)
-        else:
-            if current_idx == 2:
-                self.ui.ComboBox_run_mode.setCurrentIndex(0)
+                    task_item.set_task_state('completed', is_enabled=is_checked)
 
     def _save_task_sequence(self, sequence):
         self._task_sequence_cache = sequence
@@ -905,7 +887,8 @@ class Daily(QFrame, BaseInterface):
                         return
 
             try:
-                response = ApiResponse(**data)
+                # 【核心修复】：不要用 ApiResponse(**data)，改用你写好的 from_dict 进行深层转换！
+                response = ApiResponse.from_dict(data)
                 self._handle_update_logic(data, online_data, response)
             except Exception as e:
                 self.logger.error(f'解析API响应数据时出错: {str(e)}')
@@ -915,18 +898,16 @@ class Daily(QFrame, BaseInterface):
             self.logger.error(f'处理Cloudflare数据时出错: {str(e)}')
             self.get_tips()
 
-    def _handle_cloudflare_error(self, error_msg):
-        self.logger.error(f'通过cloudflare在线更新出错: {error_msg}')
-        self.get_tips()
-
     def _handle_update_logic(self, raw_data: Dict[str, Any],
-                             online_data: Dict[str,
-                                               Any], response: ApiResponse):
+                             online_data: Dict[str, Any], response: ApiResponse):
         local_config_data = parse_config_update_data(config.update_data.value)
+
         if not local_config_data:
             config.set(config.update_data, raw_data)
             if config.isLog.value:
                 self.logger.info(f'获取到更新信息：{online_data}')
+
+            # 现在 response.data 已经是真正的 ApiData 对象，可以用点号安全调用了
             url = f"https://www.cbjq.com/api.php?op=search_api&action=get_article_detail&catid={response.data.updateData.linkCatId}&id={response.data.updateData.linkId}"
             self.get_tips(url=url)
             InfoBar.success(title='获取更新成功',
@@ -943,39 +924,42 @@ class Daily(QFrame, BaseInterface):
                     code.model_dump()
                     for code in local_config_data.data.redeemCodes
                 ]
-                if online_data['redeemCodes'] != [] and online_data[
-                        'redeemCodes'] != local_redeem_codes:
+
+                if online_data['redeemCodes'] != [] and online_data['redeemCodes'] != local_redeem_codes:
                     new_used_codes = []
                     old_used_codes = config.used_codes.value
+                    # 安全遍历数据模型对象
                     for code in response.data.redeemCodes:
                         if code.code in old_used_codes:
                             new_used_codes.append(code.code)
                     config.set(config.used_codes, new_used_codes)
                     content += ' 兑换码 '
 
-                if online_data[
-                        'updateData'] != local_config_data.data.updateData.model_dump(
-                        ):
+                if online_data['updateData'] != local_config_data.data.updateData.model_dump():
                     content += ' 活动信息 '
 
-                if config.isLog.value:
-                    self.logger.info(f'获取到更新信息：{online_data}')
-                config.set(config.update_data, raw_data)
-                config.set(config.task_name,
-                           response.data.updateData.questName)
-                url = f"https://www.cbjq.com/api.php?op=search_api&action=get_article_detail&catid={response.data.updateData.linkCatId}&id={response.data.updateData.linkId}"
-                self.get_tips(url=url)
-                InfoBar.success(title='获取更新成功',
-                                content=f"检测到新的{content}",
-                                orient=Qt.Orientation.Horizontal,
-                                isClosable=True,
-                                position=InfoBarPosition.TOP_RIGHT,
-                                duration=10000,
-                                parent=self)
+                if content:
+                    if config.isLog.value:
+                        self.logger.info(f'获取到更新信息：{online_data}')
+                    config.set(config.update_data, raw_data)
+                    config.set(config.task_name,
+                               response.data.updateData.questName)
+                    url = f"https://www.cbjq.com/api.php?op=search_api&action=get_article_detail&catid={response.data.updateData.linkCatId}&id={response.data.updateData.linkId}"
+                    self.get_tips(url=url)
+                    InfoBar.success(title='获取更新成功',
+                                    content=f"检测到新的{content}",
+                                    orient=Qt.Orientation.Horizontal,
+                                    isClosable=True,
+                                    position=InfoBarPosition.TOP_RIGHT,
+                                    duration=10000,
+                                    parent=self)
+                else:
+                    self.get_tips()
             else:
                 self.get_tips()
 
     def _handle_update_logic_fallback(self, data, online_data):
+        # Fallback 继续沿用之前的纯字典保险策略
         if not config.update_data.value:
             config.set(config.update_data, data)
             if config.isLog.value:
@@ -992,12 +976,10 @@ class Daily(QFrame, BaseInterface):
                             duration=10000,
                             parent=self)
         else:
-            if not isinstance(config.update_data.value,
-                              dict) or 'data' not in config.update_data.value:
+            if not isinstance(config.update_data.value, dict) or 'data' not in config.update_data.value:
                 self.logger.error('本地配置数据格式不正确，使用在线数据')
                 config.set(config.update_data, data)
-                config.set(config.task_name,
-                           online_data["updateData"]["questName"])
+                config.set(config.task_name, online_data["updateData"]["questName"])
                 catId = online_data["updateData"]["linkCatId"]
                 linkId = online_data["updateData"]["linkId"]
                 url = f"https://www.cbjq.com/api.php?op=search_api&action=get_article_detail&catid={catId}&id={linkId}"
@@ -1017,24 +999,32 @@ class Daily(QFrame, BaseInterface):
                     content += ' 兑换码 '
                 if online_data['updateData'] != local_data['updateData']:
                     content += ' 活动信息 '
-                if config.isLog.value:
-                    self.logger.info(f'获取到更新信息：{online_data}')
-                config.set(config.update_data, data)
-                config.set(config.task_name,
-                           online_data["updateData"]["questName"])
-                catId = online_data["updateData"]["linkCatId"]
-                linkId = online_data["updateData"]["linkId"]
-                url = f"https://www.cbjq.com/api.php?op=search_api&action=get_article_detail&catid={catId}&id={linkId}"
-                self.get_tips(url=url)
-                InfoBar.success(title='获取更新成功',
-                                content=f"检测到新的{content}",
-                                orient=Qt.Orientation.Horizontal,
-                                isClosable=True,
-                                position=InfoBarPosition.TOP_RIGHT,
-                                duration=10000,
-                                parent=self)
+
+                if content:
+                    if config.isLog.value:
+                        self.logger.info(f'获取到更新信息：{online_data}')
+                    config.set(config.update_data, data)
+                    config.set(config.task_name, online_data["updateData"]["questName"])
+                    catId = online_data["updateData"]["linkCatId"]
+                    linkId = online_data["updateData"]["linkId"]
+                    url = f"https://www.cbjq.com/api.php?op=search_api&action=get_article_detail&catid={catId}&id={linkId}"
+                    self.get_tips(url=url)
+                    InfoBar.success(title='获取更新成功',
+                                    content=f"检测到新的{content}",
+                                    orient=Qt.Orientation.Horizontal,
+                                    isClosable=True,
+                                    position=InfoBarPosition.TOP_RIGHT,
+                                    duration=10000,
+                                    parent=self)
+                else:
+                    self.get_tips()
             else:
                 self.get_tips()
+
+    def _handle_cloudflare_error(self, error_msg):
+        self.logger.error(f'通过cloudflare在线更新出错: {error_msg}')
+        self.get_tips()
+
 
     def on_select_directory_click(self):
         folder = QFileDialog.getExistingDirectory(self, '选择游戏文件夹', "./")
@@ -1256,12 +1246,8 @@ class Daily(QFrame, BaseInterface):
                 self.running_game_guard_timer.stop()
                 self.set_checkbox_enable(True)
 
-                if getattr(self, 'is_loop_waiting', False):
-                    self.ui.PushButton_start.setText(
-                        self._ui_text("停止挂机", "Stop Waiting"))
-                else:
-                    self.ui.PushButton_start.setText(
-                        self._ui_text("立即执行", "Execute Now"))
+                # 【核心修改】不论任何情况，停止后按钮直接回到“立即执行”，因为挂机是隐形的
+                self.ui.PushButton_start.setText(self._ui_text("立即执行", "Execute Now"))
 
                 self._is_running_solo_flag = False
                 self._is_scheduled_run_flag = False
@@ -1296,10 +1282,6 @@ class Daily(QFrame, BaseInterface):
                 self._ui_text(f"▶️ 开始单独执行任务: {task_name}",
                               f"▶️ Force running task: {task_name}"))
 
-            self.ui.ComboBox_run_mode.setCurrentIndex(0)
-            self.ui.PushButton_start.setText(
-                self._ui_text("立即执行", "Execute Now"))
-
             tasks_to_run = [task_id]
             self._is_running_solo_flag = True
             self.tasks_to_run = tasks_to_run
@@ -1332,9 +1314,6 @@ class Daily(QFrame, BaseInterface):
         self.logger.info(
             self._ui_text(f"⏬ 开始从指定位置向下批量执行已勾选任务",
                           f"⏬ Force running checked tasks from here"))
-
-        self.ui.ComboBox_run_mode.setCurrentIndex(0)
-        self.ui.PushButton_start.setText(self._ui_text("立即执行", "Execute Now"))
 
         tasks_to_run = []
         start_adding = False
@@ -1497,14 +1476,6 @@ class Daily(QFrame, BaseInterface):
                 self.start_thread.stop(reason="User Stop")
             return
 
-        if self.ui.PushButton_start.text() == self._ui_text(
-                "停止挂机", "Stop Waiting"):
-            self.ui.ComboBox_run_mode.setCurrentIndex(0)
-            self.ui.PushButton_start.setText(
-                self._ui_text("立即执行", "Execute Now"))
-            self.logger.info("已手动退出挂机监控状态。")
-            return
-
         tasks_to_run = []
         ordered_ids = self.ui.taskListWidget.get_task_order()
         for tid in ordered_ids:
@@ -1517,7 +1488,6 @@ class Daily(QFrame, BaseInterface):
                 tasks_to_run.remove("task_login")
                 tasks_to_run.insert(0, "task_login")
 
-            # 【智能拉起决策】
             game_opened = is_exist_snowbreak()
             if not game_opened:
                 if config.CheckBox_open_game_directly.value:
@@ -1526,11 +1496,7 @@ class Daily(QFrame, BaseInterface):
                     self.tasks_to_run = tasks_to_run
                     self.open_game_directly()
                 else:
-                    self.logger.warning(
-                        self._ui_text(
-                            "⚠️ 检测到游戏未运行，且未开启【自动打开游戏】！若稍后报错未找到句柄，请勾选该功能或手动启动游戏。",
-                            "⚠️ Game is not running and 'Auto open game' is OFF. This may cause handle errors!"
-                        ))
+                    self.logger.warning(self._ui_text("⚠️ 检测到游戏未运行，且未开启【自动打开游戏】！", "⚠️ Game is not running and 'Auto open game' is OFF."))
                     self.tasks_to_run = tasks_to_run
                     self.after_start_button_click(tasks_to_run)
             else:
@@ -1550,15 +1516,14 @@ class Daily(QFrame, BaseInterface):
         if end_action_idx in [1, 3] and self.game_hwnd:
             win32gui.SendMessage(self.game_hwnd, win32con.WM_CLOSE, 0, 0)
 
-        if run_mode_idx == 0:
-            return
-        elif run_mode_idx == 1:
-            if end_action_idx in [2, 3]: self.parent.close()
-            return
-        elif run_mode_idx == 2:
+        # 【核心修改】调整新下拉菜单对应的索引处理
+        if run_mode_idx == 0:  # 0变成了“挂机等待” (原先是无动作)
             self._auto_adjust_after_use_action()
             self.logger.info("轮次执行完毕，后台持续监控计划时间点中...")
-        elif run_mode_idx == 3:
+        elif run_mode_idx == 1:  # 关闭程序
+            if end_action_idx in [2, 3]: self.parent.close()
+            return
+        elif run_mode_idx == 2:  # 关闭电脑
             os.system('shutdown -s -t 60')
             self.parent.close()
 

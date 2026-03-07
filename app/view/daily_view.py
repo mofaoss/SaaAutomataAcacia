@@ -1160,15 +1160,12 @@ class DailyView(ScrollArea):
         return en_text if self.is_non_chinese_ui else zh_text
 
     def _apply_ui_settings(self):
-        # 程序模式
         self.ComboBox_run_mode.addItems([
-            self._ui_text('无动作', 'No Action'),
-            self._ui_text('关闭程序', 'Exit Program'),
             self._ui_text('挂机等待', 'Loop & Wait'),
+            self._ui_text('关闭程序', 'Exit Program'),
             self._ui_text('关闭电脑', 'Shutdown'),
         ])
 
-        # 游戏动作
         self.ComboBox_end_action.addItems([
             self._ui_text('无动作', 'Do Nothing'),
             self._ui_text('退出游戏', 'Exit Game'),

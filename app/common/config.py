@@ -186,7 +186,7 @@ class Config(QConfig):
     CheckBox_weapon_8    = ConfigItem("home_interface_option", "CheckBox_weapon_8", False, BoolValidator())
     CheckBox_shard_exchange_9 = ConfigItem("home_interface_option", "CheckBox_shard_exchange_9", False, BoolValidator())
 
-    ComboBox_run_mode    = OptionsConfigItem("home_interface_after_use", "ComboBox_run_mode", 0, OptionsValidator([0, 1, 2, 3]))
+    ComboBox_run_mode    = OptionsConfigItem("home_interface_after_use", "ComboBox_run_mode", 0, OptionsValidator([0, 1, 2]))
     ComboBox_end_action  = OptionsConfigItem("home_interface_after_use", "ComboBox_end_action", 0, OptionsValidator([0, 1, 2, 3]))
 
     # --- 角色碎片 (Person) ---
