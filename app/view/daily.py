@@ -214,7 +214,7 @@ class StartThread(QThread):
 
                 # =================【核心新增：前置校验】=================
                 task_success = True
-                if task_id != "task_login":
+                if task_id not in ["task_login", "task_close_game"]:
                     self.logger.info(ui_text(f"正在准备 {task_name}，尝试返回主界面...", f"Preparing {task_name}, returning to home..."))
 
                     if not auto.back_to_home():
@@ -230,7 +230,7 @@ class StartThread(QThread):
                     module.run()
 
                     # =================【核心新增：后置复位】=================
-                    if task_id != "task_login" and self._is_running:
+                    if task_id not in ["task_login", "task_close_game"] and self._is_running:
                         msg = ui_text(f"{task_name} 执行完毕，正在返回主界面...", f"{task_name} finished, returning to home...")
                         self.logger.info(msg)
                         auto.back_to_home()

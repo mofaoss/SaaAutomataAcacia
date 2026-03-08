@@ -97,3 +97,17 @@ Traceback (most recent call last):
     ^^
 IndentationError: expected an indented block after 'if' statement on line 1180
 
+
+[2026-03-08 21:41:03.209354] 
+Traceback (most recent call last):
+  File "D:\Workspace\SaaAssistantAca\app\view\main_window.py", line 274, in _run_next_init_task
+    task()
+  File "D:\Workspace\SaaAssistantAca\app\view\main_window.py", line 353, in _finalize_startup
+    self._create_home_interface()
+  File "D:\Workspace\SaaAssistantAca\app\view\main_window.py", line 246, in _create_home_interface
+    from .daily import Daily
+  File "D:\Workspace\SaaAssistantAca\app\view\daily.py", line 218
+    if task_id not in ["task_login", "task_close_game"]:
+    ^^
+IndentationError: expected an indented block after 'if' statement on line 217
+
