@@ -39,6 +39,7 @@ from app.repackage.tree import TreeFrame_person, TreeFrame_weapon
 from app.modules.operation_action.operation_action import OperationModule
 from app.modules.upgrade.weapon import WeaponUpgradeModule
 from app.modules.jigsaw.shards import ShardExchangeModule
+from app.modules.close_game.close_game import CloseGameModule
 from app.common.constants import get_person_text_to_key_map, get_weapon_text_to_key_map
 from app.common.scheduler import Scheduler
 from app.common.gui_logger import setup_ui_logger
@@ -119,6 +120,13 @@ TASK_REGISTRY = {
         "option_key": "CheckBox_shard_exchange_9",
         "zh_name": "信源碎片",
         "en_name": "Shard Exchange",
+    },
+    "task_close_game": {
+        "module_class": CloseGameModule,
+        "ui_page_index": 10,
+        "option_key": "CheckBox_close_game_10",
+        "zh_name": "执行退出",
+        "en_name": "Execute Exit",
     },
 }
 
@@ -292,6 +300,7 @@ class Daily(QFrame, BaseInterface):
             self._ui_text('常规训练', 'Operation'),
             self._ui_text('武器培养', 'Weapon'),
             self._ui_text('信源碎片', 'Shard Exchange'),
+            self._ui_text('执行退出', 'Execute Exit'),
         ]
 
         self.person_text_to_key = get_person_text_to_key_map(self._is_non_chinese_ui)
@@ -357,6 +366,7 @@ class Daily(QFrame, BaseInterface):
         self.scheduler.start()
 
     def _on_init_sync(self):
+        self._load_presets()
         self._auto_adjust_after_use_action()
         self._output_schedule_log()
 
@@ -809,6 +819,10 @@ class Daily(QFrame, BaseInterface):
 
         self.ui.shared_scheduling_panel.copy_single_rule_clicked.connect(
             self._on_copy_single_rule_to_checked)
+
+        self.ui.PushButton_save_preset.clicked.connect(self._save_current_preset)
+        self.ui.PushButton_delete_preset.clicked.connect(self._delete_current_preset)
+        self.ui.ComboBox_presets.currentIndexChanged.connect(self._on_preset_changed)
 
         self.scheduler.tasks_due.connect(self._on_scheduled_tasks_due)
         self.scheduler.sequence_updated.connect(self._auto_adjust_after_use_action)
@@ -1288,36 +1302,8 @@ class Daily(QFrame, BaseInterface):
             self.logger.info(self._ui_text("单独执行完毕，已返回空闲状态...", "Solo execution completed, returned to idle state..."))
             return
 
-        run_mode_idx = self.ui.ComboBox_run_mode.currentIndex()
-        end_action_idx = self.ui.ComboBox_end_action.currentIndex()
-
-        # 1. 处理游戏窗口关闭
-        # 索引 1: 退出游戏, 3: 退出游戏和代理
-        if end_action_idx in [1, 3] and self.game_hwnd:
-            self.logger.info(self._ui_text("正在关闭游戏窗口...", "Closing game window..."))
-            win32gui.SendMessage(self.game_hwnd, win32con.WM_CLOSE, 0, 0)
-
-        # 2. 处理“安卡小助手”自身的后续动作
-        if run_mode_idx == 0:  # 挂机等待
-            self._auto_adjust_after_use_action()
-            self.logger.info(self._ui_text("所有任务执行完毕，助手已进入挂机监控模式...", "All tasks completed, assistant entered monitoring mode..."))
-
-        elif run_mode_idx == 1:  # 关闭程序
-            self.logger.info(self._ui_text("执行完毕，正在退出安卡小助手...", "Execution completed, exiting Anka Assistant..."))
-            self.scheduler.stop()
-
-            main_window = self.window()
-            if hasattr(main_window, 'quit_app'):
-                main_window.quit_app()
-            else:
-                QApplication.quit()
-                os._exit(0)
-
-        elif run_mode_idx == 2:  # 关闭电脑
-            self.logger.info(self._ui_text("执行完毕，系统将于60秒后关机...", "Execution completed, system will shut down in 60 seconds..."))
-            os.system('shutdown -s -t 60')
-
-            self.scheduler.stop()
+        self._auto_adjust_after_use_action()
+        self.logger.info(self._ui_text("所有任务执行完毕，助手已进入挂机监控模式...", "All tasks completed, assistant entered monitoring mode..."))
 
     def set_checkbox_enable(self, enable: bool):
         for checkbox in self.ui.findChildren(CheckBox):
@@ -1502,6 +1488,60 @@ class Daily(QFrame, BaseInterface):
 
         except Exception as e:
             self.logger.error(ui_text(f"更新控件出错：{e}", f"Error occurred while updating controls: {e}"))
+
+    def _load_presets(self):
+        presets = config.task_presets.value
+        if not presets:
+            presets = {"Default": []}
+            config.set(config.task_presets, presets)
+
+        self.ui.ComboBox_presets.blockSignals(True)
+        self.ui.ComboBox_presets.clear()
+        self.ui.ComboBox_presets.addItems(list(presets.keys()))
+        self.ui.ComboBox_presets.setCurrentIndex(0)
+        self.ui.ComboBox_presets.blockSignals(False)
+        # Load the first preset
+        self._on_preset_changed(0)
+
+    def _on_preset_changed(self, index):
+        preset_name = self.ui.ComboBox_presets.currentText()
+        presets = config.task_presets.value
+        if preset_name in presets:
+            enabled_tasks = presets[preset_name]
+            # Apply to checkboxes
+            for task_id, item in self.task_widget_map.items():
+                item.checkbox.setChecked(task_id in enabled_tasks)
+
+    def _save_current_preset(self):
+        preset_name = self.ui.ComboBox_presets.currentText().strip()
+        if not preset_name:
+            return
+
+        enabled_tasks = []
+        for task_id, item in self.task_widget_map.items():
+            if item.checkbox.isChecked():
+                enabled_tasks.append(task_id)
+
+        presets = config.task_presets.value
+        presets[preset_name] = enabled_tasks
+        config.set(config.task_presets, presets)
+
+        # Refresh list if new
+        if self.ui.ComboBox_presets.findText(preset_name) == -1:
+            self.ui.ComboBox_presets.addItem(preset_name)
+
+        InfoBar.success(title=ui_text("保存成功", "Saved"), content=ui_text(f"预设 '{preset_name}' 已保存", f"Preset '{preset_name}' saved"), parent=self)
+
+    def _delete_current_preset(self):
+        preset_name = self.ui.ComboBox_presets.currentText()
+        presets = config.task_presets.value
+        if preset_name in presets and len(presets) > 1:
+            del presets[preset_name]
+            config.set(config.task_presets, presets)
+            self.ui.ComboBox_presets.removeItem(self.ui.ComboBox_presets.currentIndex())
+            InfoBar.success(title=ui_text("删除成功", "Deleted"), content=ui_text(f"预设 '{preset_name}' 已删除", f"Preset '{preset_name}' deleted"), parent=self)
+        elif len(presets) <= 1:
+             InfoBar.warning(title=ui_text("无法删除", "Cannot Delete"), content=ui_text("至少保留一个预设", "At least one preset must remain"), parent=self)
 
     def closeEvent(self, event):
         super().closeEvent(event)

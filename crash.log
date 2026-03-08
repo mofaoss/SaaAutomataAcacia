@@ -54,3 +54,16 @@ Traceback (most recent call last):
     from utils.net_utils import start_cloudflare_update
 ImportError: cannot import name 'start_cloudflare_update' from 'utils.net_utils' (D:\Workspace\SaaAssistantAca\utils\net_utils.py)
 
+
+[2026-03-08 19:39:18.931779] 
+Traceback (most recent call last):
+  File "D:\Workspace\SaaAssistantAca\app\view\main_window.py", line 274, in _run_next_init_task
+    task()
+  File "D:\Workspace\SaaAssistantAca\app\view\main_window.py", line 353, in _finalize_startup
+    self._create_home_interface()
+  File "D:\Workspace\SaaAssistantAca\app\view\main_window.py", line 246, in _create_home_interface
+    from .daily import Daily
+  File "D:\Workspace\SaaAssistantAca\app\view\daily.py", line 42, in <module>
+    from app.modules.close_game.close_game import CloseGameModule
+ModuleNotFoundError: No module named 'app.modules.close_game'
+

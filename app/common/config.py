@@ -187,9 +187,12 @@ class Config(QConfig):
     CheckBox_reward_7    = ConfigItem("home_interface_option", "CheckBox_reward", False, BoolValidator())
     CheckBox_weapon_8    = ConfigItem("home_interface_option", "CheckBox_weapon_8", False, BoolValidator())
     CheckBox_shard_exchange_9 = ConfigItem("home_interface_option", "CheckBox_shard_exchange_9", False, BoolValidator())
+    CheckBox_close_game_10 = ConfigItem("home_interface_option", "CheckBox_close_game_10", False, BoolValidator())
 
-    ComboBox_run_mode    = OptionsConfigItem("home_interface_after_use", "ComboBox_run_mode", 0, OptionsValidator([0, 1, 2]))
-    ComboBox_end_action  = OptionsConfigItem("home_interface_after_use", "ComboBox_end_action", 0, OptionsValidator([0, 1, 2, 3]))
+    # --- 退出设置 (Close Game) ---
+    CheckBox_close_game  = ConfigItem("home_interface_close", "CheckBox_close_game", False, BoolValidator())
+    CheckBox_close_proxy = ConfigItem("home_interface_close", "CheckBox_close_proxy", False, BoolValidator())
+    CheckBox_shutdown    = ConfigItem("home_interface_close", "CheckBox_shutdown", False, BoolValidator())
 
     # --- 角色碎片 (Person) ---
     LineEdit_c1          = ConfigItem("home_interface_person", "LineEdit_c1", "")
@@ -254,6 +257,8 @@ class Config(QConfig):
     enable_gift_shards    = ConfigItem("ShardExchange", "enable_gift_shards", True, BoolValidator())
     enable_recycle_shards = ConfigItem("ShardExchange", "enable_recycle_shards", True, BoolValidator())
 
+    task_presets = ConfigItem("home_interface_option", "task_presets", {"Default": []})
+
     # =========================================================
     # 4. 自动化任务调度清单 (DailyTasks Sequence)
     # =========================================================
@@ -307,6 +312,11 @@ class Config(QConfig):
             },
             {
                 "id": "task_shard_exchange", "enabled": False, "use_periodic": False, "last_run": 0,
+                "activation_config": [{"type": "daily", "day": 0, "time": "00:00", "max_runs": 1}],
+                "execution_config":  []
+            },
+            {
+                "id": "task_close_game", "enabled": False, "use_periodic": False, "last_run": 0,
                 "activation_config": [{"type": "daily", "day": 0, "time": "00:00", "max_runs": 1}],
                 "execution_config":  []
             },

@@ -447,6 +447,7 @@ class MainWindow(FluentWindow, BaseInterface):
         signalBus.switchToSampleCard.connect(self.switchToSample)
         signalBus.showMessageBox.connect(self.showMessageBox)
         signalBus.showScreenshot.connect(self.showScreenshot)
+        signalBus.requestExitApp.connect(self.quit_app)
 
     def initNavigation(self):
         self.navigationInterface.setCollapsible(True)

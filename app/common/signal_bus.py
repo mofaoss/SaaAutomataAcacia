@@ -18,6 +18,7 @@ class SignalBus(QObject):
 
     globalTaskStateChanged = Signal(bool, str, str, str)
     globalStopRequest = Signal()
+    requestExitApp = Signal()
 
 
 

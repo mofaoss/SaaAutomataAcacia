@@ -30,6 +30,7 @@ from qfluentwidgets import (
     TitleLabel,
     ToolButton,
     TextEdit,
+    EditableComboBox,
     isDarkTheme,
 )
 
@@ -946,6 +947,23 @@ class ShardExchangePage(BaseDailyPage):
         self.finalize()
 
 
+class CloseGamePage(BaseDailyPage):
+    def __init__(self, parent=None):
+        super().__init__("page_close_game", parent=parent)
+
+        self.CheckBox_close_game = CheckBox(self)
+        self.CheckBox_close_game.setObjectName("CheckBox_close_game")
+        self.CheckBox_close_proxy = CheckBox(self)
+        self.CheckBox_close_proxy.setObjectName("CheckBox_close_proxy")
+        self.CheckBox_shutdown = CheckBox(self)
+        self.CheckBox_shutdown.setObjectName("CheckBox_shutdown")
+
+        self.main_layout.addWidget(self.CheckBox_close_game)
+        self.main_layout.addWidget(self.CheckBox_close_proxy)
+        self.main_layout.addWidget(self.CheckBox_shutdown)
+        self.finalize()
+
+
 class DailyView(ScrollArea):
 
     def __init__(self, parent=None, is_non_chinese_ui=False):
@@ -967,7 +985,7 @@ class DailyView(ScrollArea):
         self.gridLayout_2.setSpacing(12)
 
         self._build_option_card()
-        self._build_action_card()
+        self._build_preset_card()
         self._build_setting_card()
         self._build_log_card()
         self._build_tips_card()
@@ -1017,7 +1035,7 @@ class DailyView(ScrollArea):
 
         self.gridLayout_2.addWidget(self.SimpleCardWidget_option, 0, 0, 1, 1)
 
-    def _build_action_card(self):
+    def _build_preset_card(self):
         self.SimpleCardWidget_3 = SimpleCardWidget(self.content_widget)
         self.SimpleCardWidget_3.setObjectName("SimpleCardWidget_3")
         self.SimpleCardWidget_3.setMinimumHeight(190)
@@ -1025,24 +1043,25 @@ class DailyView(ScrollArea):
 
         layout = QVBoxLayout(self.SimpleCardWidget_3)
 
-        self.BodyLabel_run_mode = BodyLabel(self.SimpleCardWidget_3)
-        self.ComboBox_run_mode = ComboBox(self.SimpleCardWidget_3)
-        self.ComboBox_run_mode.setObjectName("ComboBox_run_mode")
+        self.BodyLabel_preset = BodyLabel(self.SimpleCardWidget_3)
 
-        self.BodyLabel_end_action = BodyLabel(self.SimpleCardWidget_3)
-        self.ComboBox_end_action = ComboBox(self.SimpleCardWidget_3)
-        self.ComboBox_end_action.setObjectName("ComboBox_end_action")
+        preset_row = QHBoxLayout()
+        self.ComboBox_presets = EditableComboBox(self.SimpleCardWidget_3)
+        self.ComboBox_presets.setObjectName("ComboBox_presets")
+        self.PushButton_save_preset = ToolButton(FIF.SAVE, self.SimpleCardWidget_3)
+        self.PushButton_delete_preset = ToolButton(FIF.DELETE, self.SimpleCardWidget_3)
+
+        preset_row.addWidget(self.ComboBox_presets, 1)
+        preset_row.addWidget(self.PushButton_save_preset)
+        preset_row.addWidget(self.PushButton_delete_preset)
 
         self.PushButton_start = PushButton(self.SimpleCardWidget_3)
         self.PushButton_start.setObjectName("PushButton_start")
         self.PushButton_start.setMinimumSize(QSize(0, 60))
 
         layout.addStretch(1)
-        layout.addWidget(self.BodyLabel_run_mode)
-        layout.addWidget(self.ComboBox_run_mode)
-        layout.addSpacing(6)
-        layout.addWidget(self.BodyLabel_end_action)
-        layout.addWidget(self.ComboBox_end_action)
+        layout.addWidget(self.BodyLabel_preset)
+        layout.addLayout(preset_row)
         layout.addStretch(1)
         layout.addWidget(self.PushButton_start)
         layout.addStretch(1)
@@ -1079,6 +1098,7 @@ class DailyView(ScrollArea):
         self.page_weapon = WeaponUpgradePage(self.PopUpAniStackedWidget)
         self.page_shard_exchange = ShardExchangePage(
             self.PopUpAniStackedWidget)
+        self.page_close_game = CloseGamePage(self.PopUpAniStackedWidget)
 
         self.PopUpAniStackedWidget.addWidget(self.page_enter)
         self.PopUpAniStackedWidget.addWidget(self.page_collect)
@@ -1090,6 +1110,7 @@ class DailyView(ScrollArea):
         self.PopUpAniStackedWidget.addWidget(self.page_operation)
         self.PopUpAniStackedWidget.addWidget(self.page_weapon)
         self.PopUpAniStackedWidget.addWidget(self.page_shard_exchange)
+        self.PopUpAniStackedWidget.addWidget(self.page_close_game)
 
         layout.addWidget(self.TitleLabel_setting)
         layout.addWidget(self.PopUpAniStackedWidget, 1)
@@ -1172,6 +1193,11 @@ class DailyView(ScrollArea):
         self.CheckBox_recycle_shards = self.page_shard_exchange.CheckBox_recycle_shards
         self.BodyLabel_shard_tip = self.page_shard_exchange.BodyLabel_shard_tip
 
+        # CloseGamePage
+        self.CheckBox_close_game = self.page_close_game.CheckBox_close_game
+        self.CheckBox_close_proxy = self.page_close_game.CheckBox_close_proxy
+        self.CheckBox_shutdown = self.page_close_game.CheckBox_shutdown
+
     def _build_log_card(self):
         self.SimpleCardWidget = SimpleCardWidget(self.content_widget)
         self.SimpleCardWidget.setObjectName("SimpleCardWidget")
@@ -1232,23 +1258,10 @@ class DailyView(ScrollArea):
         return en_text if self.is_non_chinese_ui else zh_text
 
     def _apply_ui_settings(self):
-        self.ComboBox_run_mode.addItems([
-            self._ui_text('挂机等待', 'Wait'),
-            self._ui_text('关闭程序', 'Exit Program'),
-            self._ui_text('关闭电脑', 'Shutdown'),
-        ])
-
-        self.ComboBox_end_action.addItems([
-            self._ui_text('无动作', 'Do Nothing'),
-            self._ui_text('退出游戏', 'Exit Game'),
-            self._ui_text('退出代理', 'Exit Assistant'),
-            self._ui_text('退出游戏和代理', 'Exit Game and Assistant'),
-        ])
-
-        self.BodyLabel_run_mode.setText(
-            self._ui_text("执行结束后，安卡小助手:", "After Execution, Acacia Action:"))
-        self.BodyLabel_end_action.setText(
-            self._ui_text("执行结束后，尘白禁区将:", "After Execution, Game Action:"))
+        self.BodyLabel_preset.setText(
+            self._ui_text("任务勾选记录：", "Task Preset:"))
+        self.PushButton_save_preset.setToolTip(self._ui_text("保存当前勾选到预设", "Save current selection to preset"))
+        self.PushButton_delete_preset.setToolTip(self._ui_text("删除当前预设", "Delete current preset"))
         self.PushButton_start.setText(self._ui_text("立即执行 (F8)", "Execute Now (F8)"))
 
         self.ComboBox_power_day.addItems(['1', '2', '3', '4', '5', '6'])
@@ -1296,6 +1309,10 @@ class DailyView(ScrollArea):
             "### Tips\n* Auto receive, gift, and recycle puzzle shards\n* Retains at least 15 of each shard when recycling"
             if self.is_non_chinese_ui else
             "### 提示\n* 自动进行基地信源碎片的接收、赠送和回收\n* 回收时每种碎片默认至少保留15个")
+
+        self.CheckBox_close_game.setText(self._ui_text("退出游戏", "Exit Game"))
+        self.CheckBox_close_proxy.setText(self._ui_text("退出小助手但不关机", "Exit SAA but don't shutdown"))
+        self.CheckBox_shutdown.setText(self._ui_text("关机", "Shutdown PC"))
 
         self.TitleLabel.setText(self._ui_text("日志", "Log"))
         self.PushButton_select_all.setText(self._ui_text("全选", "All"))
