@@ -822,6 +822,7 @@ class Daily(QFrame, BaseInterface):
         self.ui.shared_scheduling_panel.withdraw_single_rule_clicked.connect(
             self._on_withdraw_single_rule_from_checked)
 
+        self.ui.PushButton_add_preset.clicked.connect(self._on_add_preset_clicked)
         self.ui.PushButton_save_preset.clicked.connect(self._save_current_preset)
         self.ui.PushButton_delete_preset.clicked.connect(self._delete_current_preset)
         self.ui.ComboBox_presets.currentIndexChanged.connect(self._on_preset_changed)
@@ -1594,6 +1595,13 @@ class Daily(QFrame, BaseInterface):
             for task_id, item in self.task_widget_map.items():
                 item.checkbox.setChecked(task_id in enabled_tasks)
 
+    def _on_add_preset_clicked(self):
+        self.ui.ComboBox_presets.blockSignals(True)
+        self.ui.ComboBox_presets.setCurrentIndex(-1)
+        self.ui.ComboBox_presets.setCurrentText("")
+        self.ui.ComboBox_presets.blockSignals(False)
+        self.ui.ComboBox_presets.setFocus()
+
     def _save_current_preset(self):
         preset_name = self.ui.ComboBox_presets.currentText().strip()
         if not preset_name:
@@ -1604,7 +1612,7 @@ class Daily(QFrame, BaseInterface):
             if item.checkbox.isChecked():
                 enabled_tasks.append(task_id)
 
-        presets = config.task_presets.value
+        presets = dict(config.task_presets.value)
         presets[preset_name] = enabled_tasks
         config.set(config.task_presets, presets)
 
@@ -1612,18 +1620,31 @@ class Daily(QFrame, BaseInterface):
         if self.ui.ComboBox_presets.findText(preset_name) == -1:
             self.ui.ComboBox_presets.addItem(preset_name)
 
+        self.ui.ComboBox_presets.setCurrentIndex(self.ui.ComboBox_presets.findText(preset_name))
+
         InfoBar.success(title=ui_text("保存成功", "Saved"), content=ui_text(f"预设 '{preset_name}' 已保存", f"Preset '{preset_name}' saved"), parent=self)
 
     def _delete_current_preset(self):
-        preset_name = self.ui.ComboBox_presets.currentText()
-        presets = config.task_presets.value
-        if preset_name in presets and len(presets) > 1:
-            del presets[preset_name]
-            config.set(config.task_presets, presets)
-            self.ui.ComboBox_presets.removeItem(self.ui.ComboBox_presets.currentIndex())
-            InfoBar.success(title=ui_text("删除成功", "Deleted"), content=ui_text(f"预设 '{preset_name}' 已删除", f"Preset '{preset_name}' deleted"), parent=self)
-        elif len(presets) <= 1:
+        preset_name = self.ui.ComboBox_presets.currentText().strip()
+        presets = dict(config.task_presets.value)
+
+        if preset_name not in presets:
+            return
+
+        if len(presets) <= 1:
              InfoBar.warning(title=ui_text("无法删除", "Cannot Delete"), content=ui_text("至少保留一个预设", "At least one preset must remain"), parent=self)
+             return
+
+        del presets[preset_name]
+        config.set(config.task_presets, presets)
+
+        idx = self.ui.ComboBox_presets.findText(preset_name)
+        if idx >= 0:
+            self.ui.ComboBox_presets.removeItem(idx)
+
+        self.ui.ComboBox_presets.setCurrentIndex(0)
+
+        InfoBar.success(title=ui_text("删除成功", "Deleted"), content=ui_text(f"预设 '{preset_name}' 已删除", f"Preset '{preset_name}' deleted"), parent=self)
 
     def closeEvent(self, event):
         super().closeEvent(event)

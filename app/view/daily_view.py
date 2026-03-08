@@ -1070,10 +1070,12 @@ class DailyView(ScrollArea):
         preset_row = QHBoxLayout()
         self.ComboBox_presets = EditableComboBox(self.SimpleCardWidget_3)
         self.ComboBox_presets.setObjectName("ComboBox_presets")
+        self.PushButton_add_preset = ToolButton(FIF.ADD, self.SimpleCardWidget_3)
         self.PushButton_save_preset = ToolButton(FIF.SAVE, self.SimpleCardWidget_3)
         self.PushButton_delete_preset = ToolButton(FIF.DELETE, self.SimpleCardWidget_3)
 
         preset_row.addWidget(self.ComboBox_presets, 1)
+        preset_row.addWidget(self.PushButton_add_preset)
         preset_row.addWidget(self.PushButton_save_preset)
         preset_row.addWidget(self.PushButton_delete_preset)
 
@@ -1282,6 +1284,7 @@ class DailyView(ScrollArea):
     def _apply_ui_settings(self):
         self.BodyLabel_preset.setText(
             self._ui_text("任务勾选记录：", "Task Preset:"))
+        self.PushButton_add_preset.setToolTip(self._ui_text("新建预设", "Create New Preset"))
         self.PushButton_save_preset.setToolTip(self._ui_text("保存当前勾选到预设", "Save current selection to preset"))
         self.PushButton_delete_preset.setToolTip(self._ui_text("删除当前预设", "Delete current preset"))
         self.PushButton_start.setText(self._ui_text("立即执行 (F8)", "Execute Now (F8)"))
