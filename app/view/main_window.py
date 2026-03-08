@@ -20,8 +20,8 @@ from ..common.icon import Icon
 from ..common.matcher import matcher
 from ..common.setting import REPO_URL
 from ..common.signal_bus import signalBus
+from app.modules.enter_game.enter_game import launch_game_with_guard
 from .base_interface import BaseInterface
-from utils.game_launcher import launch_game_with_guard
 from utils.updater_utils import get_local_version, get_best_update_candidate
 from ..repackage.custom_message_box import CustomMessageBox
 from ..common import resource  # don't delete

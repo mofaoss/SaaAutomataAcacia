@@ -20,7 +20,6 @@ from app.common.config import config, is_non_chinese_ui_language
 from app.common.data_models import ApiResponse, parse_config_update_data
 from app.common.signal_bus import signalBus
 from app.common.style_sheet import StyleSheet
-from utils.game_launcher import launch_game_with_guard
 from utils.net_utils import get_cloudflare_data, get_date_from_api
 from utils.ui_utils import get_all_children, ui_text
 from utils.win_utils import is_exist_snowbreak
@@ -29,7 +28,7 @@ from utils.win_utils import is_exist_snowbreak
 from app.modules.base_task.base_task import BaseTask
 from app.modules.chasm.chasm import ChasmModule
 from app.modules.collect_supplies.collect_supplies import CollectSuppliesModule
-from app.modules.enter_game.enter_game import EnterGameModule
+from app.modules.enter_game.enter_game import EnterGameModule, launch_game_with_guard
 from app.modules.get_reward.get_reward import GetRewardModule
 from app.modules.ocr import ocr
 from app.modules.person.person import PersonModule
