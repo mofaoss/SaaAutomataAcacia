@@ -501,7 +501,7 @@ class MainWindow(FluentWindow, BaseInterface):
 
         target_geo = target_screen.availableGeometry()
 
-        self.resize(int(target_geo.width() * 0.55), int(target_geo.height() * 0.8))
+        self.resize(int(target_geo.width() * 0.58), int(target_geo.height() * 0.8))
         self.setMinimumSize(int(target_geo.width() * 0.5), int(target_geo.height() * 0.6))
 
         base_dir = Path(getattr(sys, '_MEIPASS', Path(__file__).resolve().parents[2]))

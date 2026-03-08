@@ -1235,7 +1235,7 @@ class DailyView(ScrollArea):
 
     def _apply_ui_settings(self):
         self.ComboBox_run_mode.addItems([
-            self._ui_text('挂机等待', 'Loop & Wait'),
+            self._ui_text('挂机等待', 'Wait'),
             self._ui_text('关闭程序', 'Exit Program'),
             self._ui_text('关闭电脑', 'Shutdown'),
         ])
