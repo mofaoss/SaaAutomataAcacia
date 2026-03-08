@@ -89,7 +89,7 @@ TASK_REGISTRY = {
         "ui_page_index": 5,
         "option_key": "CheckBox_chasm_6",
         "zh_name": "精神拟境",
-        "en_name": "Mental Simulation",
+        "en_name": "Neural Sim",
     },
     "task_reward": {
         "module_class": GetRewardModule,
@@ -326,7 +326,7 @@ class Daily(QFrame, BaseInterface):
             self._ui_text('商店', 'Shop'),
             self._ui_text('体力', 'Stamina'),
             self._ui_text('碎片', 'Shards'),
-            self._ui_text('拟境', 'Mental Simulation'),
+            self._ui_text('拟境', 'Neural Sim'),
             self._ui_text('奖励', 'Claim Rewards'),
             self._ui_text('常规训练', 'Operation'),
             self._ui_text('武器培养', 'Weapon'),

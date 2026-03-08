@@ -47,7 +47,7 @@
 
 ✅ Daily character fragments
 
-✅ Mental Simulation sweep
+✅ Neural Simulation sweep
 
 ✅ Daily mission reward collection
 

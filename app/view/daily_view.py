@@ -1285,7 +1285,7 @@ class DailyView(ScrollArea):
             "### 提示 \n* 默认必领供应站体力和好友体力\n* 勾选“领取兑换码”会自动拉取在线兑换码进行兑换\n* 在线兑换码由开发者维护，更新不一定及时\n* 导入txt文本文件可以批量使用用户兑换码，txt需要一行一个兑换码"
         )
         self.BodyLabel_chasm_tip.setText(
-            "### Tips\n* Mental Simulation Realm opens every Tuesday at 10:00"
+            "### Tips\n* Neural Simulation opens every Tuesday at 10:00"
             if self.is_non_chinese_ui else "### 提示\n* 拟境每周2的10:00开启")
         self.BodyLabel_reward_tip.setText(
             "### Tips\n* Claim monthly card and daily rewards" if self.
