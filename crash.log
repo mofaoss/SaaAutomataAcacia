@@ -15,3 +15,42 @@ Traceback (most recent call last):
     raise AttributeError(
 AttributeError: 'Daily' object has no attribute 'scheduler'
 
+
+[2026-03-08 19:07:06.177192] 
+Traceback (most recent call last):
+  File "D:\Workspace\SaaAssistantAca\app\view\main_window.py", line 274, in _run_next_init_task
+    task()
+  File "D:\Workspace\SaaAssistantAca\app\view\main_window.py", line 353, in _finalize_startup
+    self._create_home_interface()
+  File "D:\Workspace\SaaAssistantAca\app\view\main_window.py", line 246, in _create_home_interface
+    from .daily import Daily
+  File "D:\Workspace\SaaAssistantAca\app\view\daily.py", line 24, in <module>
+    from utils.net_utils import get_cloudflare_data, get_date_from_api, calculate_time_difference, start_cloudflare_update
+ImportError: cannot import name 'start_cloudflare_update' from 'utils.net_utils' (D:\Workspace\SaaAssistantAca\utils\net_utils.py)
+
+
+[2026-03-08 19:10:30.577736] 
+Traceback (most recent call last):
+  File "D:\Workspace\SaaAssistantAca\app\view\main_window.py", line 274, in _run_next_init_task
+    task()
+  File "D:\Workspace\SaaAssistantAca\app\view\main_window.py", line 353, in _finalize_startup
+    self._create_home_interface()
+  File "D:\Workspace\SaaAssistantAca\app\view\main_window.py", line 247, in _create_home_interface
+    self.homeInterface = Daily('Daily Interface', self)
+  File "D:\Workspace\SaaAssistantAca\app\view\daily.py", line 367, in __init__
+    from utils.net_utils import start_cloudflare_update
+ImportError: cannot import name 'start_cloudflare_update' from 'utils.net_utils' (D:\Workspace\SaaAssistantAca\utils\net_utils.py)
+
+
+[2026-03-08 19:15:14.527692] 
+Traceback (most recent call last):
+  File "D:\Workspace\SaaAssistantAca\app\view\main_window.py", line 274, in _run_next_init_task
+    task()
+  File "D:\Workspace\SaaAssistantAca\app\view\main_window.py", line 353, in _finalize_startup
+    self._create_home_interface()
+  File "D:\Workspace\SaaAssistantAca\app\view\main_window.py", line 247, in _create_home_interface
+    self.homeInterface = Daily('Daily Interface', self)
+  File "D:\Workspace\SaaAssistantAca\app\view\daily.py", line 367, in __init__
+    from utils.net_utils import start_cloudflare_update
+ImportError: cannot import name 'start_cloudflare_update' from 'utils.net_utils' (D:\Workspace\SaaAssistantAca\utils\net_utils.py)
+

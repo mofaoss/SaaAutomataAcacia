@@ -20,7 +20,7 @@ from app.common.config import config, is_non_chinese_ui_language
 from app.common.data_models import ApiResponse, parse_config_update_data
 from app.common.signal_bus import signalBus
 from app.common.style_sheet import StyleSheet
-from utils.net_utils import get_cloudflare_data, get_date_from_api
+from utils.net_utils import get_cloudflare_data, get_date_from_api, calculate_time_difference
 from utils.ui_utils import get_all_children, ui_text
 from utils.win_utils import is_exist_snowbreak
 
@@ -123,48 +123,8 @@ TASK_REGISTRY = {
 }
 
 # ==========================================
-# Model 层：专门负责纯数据与逻辑计算
-# ==========================================
-class DailyModel:
-    @staticmethod
-    def calculate_time_difference(date_due: str):
-        current_year = datetime.now().year
-        start_date_str, end_date_str = date_due.split('-')
-        start_time = datetime.strptime(f"{current_year}.{start_date_str}", "%Y.%m.%d")
-        end_time = datetime.strptime(f"{current_year}.{end_date_str}", "%Y.%m.%d")
-
-        if end_time < start_time:
-            end_time = datetime.strptime(f"{current_year + 1}.{end_date_str}", "%Y.%m.%d")
-
-        now = datetime.now().replace(hour=0, minute=0, second=0, microsecond=0)
-        total_day = (end_time - start_time).days + 1
-
-        if now < start_time:
-            days_to_start = (start_time - now).days
-            return days_to_start, total_day, 1
-        elif now > end_time:
-            return 0, total_day, -1
-        else:
-            days_remaining = (end_time - now).days + 1
-            return days_remaining, total_day, 0
-
-# ==========================================
 # 线程与后台任务类
 # ==========================================
-class CloudflareUpdateThread(QThread):
-    update_finished = Signal(dict)
-    update_failed = Signal(str)
-
-    def run(self):
-        try:
-            data = get_cloudflare_data()
-            if 'error' in data:
-                self.update_failed.emit(data["error"])
-            else:
-                self.update_finished.emit(data)
-        except Exception as e:
-            self.update_failed.emit(f"网络请求异常: {str(e)}")
-
 class AutomationSession:
     def __init__(self, logger_instance):
         self.logger = logger_instance
@@ -389,7 +349,8 @@ class Daily(QFrame, BaseInterface):
         QTimer.singleShot(500, self._on_init_sync)
 
         if config.checkUpdateAtStartUp.value:
-            self.update_online_cloudflare()
+            from utils.net_utils import start_cloudflare_update
+            start_cloudflare_update(self)
         else:
             self.get_tips()
 
@@ -715,178 +676,6 @@ class Daily(QFrame, BaseInterface):
         view.widgetLayout.addSpacing(5)
         w = Flyout.make(view, self.ui.PrimaryPushButton_path_tutorial, self)
         view.closed.connect(w.close)
-
-    def update_online_cloudflare(self):
-        self.cloudflare_thread = CloudflareUpdateThread()
-        self.cloudflare_thread.update_finished.connect(
-            self._handle_cloudflare_success)
-        self.cloudflare_thread.update_failed.connect(
-            self._handle_cloudflare_error)
-        self.cloudflare_thread.start()
-
-    def _handle_cloudflare_success(self, data):
-        try:
-            if 'data' not in data:
-                self.logger.error(ui_text('通过cloudflare在线更新出错: 返回数据格式不正确', 'Error occurred while updating through Cloudflare: Incorrect data format returned'))
-                self.get_tips()
-                return
-
-            online_data = data["data"]
-            required_fields = ['updateData', 'redeemCodes', 'version']
-            update_data_fields = ['linkCatId', 'linkId', 'questName']
-
-            for field in required_fields:
-                if field not in online_data:
-                    self.logger.error(ui_text(f'通过cloudflare在线更新出错: 缺少必要字段 {field}', f'Error occurred while updating through Cloudflare: Missing required field {field} in updateData'))
-                    self.get_tips()
-                    return
-
-            if 'updateData' in online_data:
-                for field in update_data_fields:
-                    if field not in online_data['updateData']:
-                        self.logger.error(
-                            ui_text(f'通过cloudflare在线更新出错: updateData缺少必要字段 {field}', f'Error occurred while updating through Cloudflare: Missing required field {field} in updateData'))
-                        self.get_tips()
-                        return
-
-            try:
-                response = ApiResponse.from_dict(data)
-                self._handle_update_logic(data, online_data, response)
-            except Exception as e:
-                self.logger.error(ui_text(f'解析API响应数据时出错: {str(e)}', f'Error occurred while parsing API response data: {str(e)}'))
-                traceback.print_exc()
-                self._handle_update_logic_fallback(data, online_data)
-        except Exception as e:
-            self.logger.error(ui_text(f'处理Cloudflare数据时出错: {str(e)}', f'Error occurred while processing Cloudflare data: {str(e)}'))
-            self.get_tips()
-
-    def _handle_update_logic(self, raw_data: Dict[str, Any],
-                             online_data: Dict[str, Any], response: ApiResponse):
-        local_config_data = parse_config_update_data(config.update_data.value)
-
-        if not local_config_data:
-            config.set(config.update_data, raw_data)
-            if config.isLog.value:
-                self.logger.info(ui_text(f'获取到更新信息：{online_data}', f'Obtained update information: {online_data}'))
-
-            # 现在 response.data 已经是真正的 ApiData 对象，可以用点号安全调用了
-            url = f"https://www.cbjq.com/api.php?op=search_api&action=get_article_detail&catid={response.data.updateData.linkCatId}&id={response.data.updateData.linkId}"
-            self.get_tips(url=url)
-            InfoBar.success(title=ui_text('获取更新成功', 'Update Successful'),
-                            content=ui_text("检测到新的 兑换码 活动信息", "New redeem code event information detected"),
-                            orient=Qt.Orientation.Horizontal,
-                            isClosable=True,
-                            position=InfoBarPosition.TOP_RIGHT,
-                            duration=10000,
-                            parent=self)
-        else:
-            if online_data != local_config_data.data.model_dump():
-                content = ''
-                local_redeem_codes = [
-                    code.model_dump()
-                    for code in local_config_data.data.redeemCodes
-                ]
-
-                if online_data['redeemCodes'] != [] and online_data['redeemCodes'] != local_redeem_codes:
-                    new_used_codes = []
-                    old_used_codes = config.used_codes.value
-                    # 安全遍历数据模型对象
-                    for code in response.data.redeemCodes:
-                        if code.code in old_used_codes:
-                            new_used_codes.append(code.code)
-                    config.set(config.used_codes, new_used_codes)
-                    content += ' 兑换码 '
-
-                if online_data['updateData'] != local_config_data.data.updateData.model_dump():
-                    content += ' 活动信息 '
-
-                if content:
-                    if config.isLog.value:
-                        self.logger.info(ui_text(f'获取到更新信息：{online_data}', f'Obtained update information: {online_data}'))
-                    config.set(config.update_data, raw_data)
-                    config.set(config.task_name,
-                               response.data.updateData.questName)
-                    url = f"https://www.cbjq.com/api.php?op=search_api&action=get_article_detail&catid={response.data.updateData.linkCatId}&id={response.data.updateData.linkId}"
-                    self.get_tips(url=url)
-                    InfoBar.success(title=ui_text('获取更新成功', 'Update Successful'),
-                                    content=ui_text(f"检测到新的{content}", f"New {content} detected"),
-                                    orient=Qt.Orientation.Horizontal,
-                                    isClosable=True,
-                                    position=InfoBarPosition.TOP_RIGHT,
-                                    duration=10000,
-                                    parent=self)
-                else:
-                    self.get_tips()
-            else:
-                self.get_tips()
-
-    def _handle_update_logic_fallback(self, data, online_data):
-        # Fallback 继续沿用之前的纯字典保险策略
-        if not config.update_data.value:
-            config.set(config.update_data, data)
-            if config.isLog.value:
-                self.logger.info(f'获取到更新信息：{online_data}')
-            catId = online_data["updateData"]["linkCatId"]
-            linkId = online_data["updateData"]["linkId"]
-            url = f"https://www.cbjq.com/api.php?op=search_api&action=get_article_detail&catid={catId}&id={linkId}"
-            self.get_tips(url=url)
-            InfoBar.success(title=ui_text('获取更新成功', 'Update Successful'),
-                            content=ui_text("检测到新的 兑换码 活动信息", "New redeem code event information detected"),
-                            orient=Qt.Orientation.Horizontal,
-                            isClosable=True,
-                            position=InfoBarPosition.TOP_RIGHT,
-                            duration=10000,
-                            parent=self)
-        else:
-            if not isinstance(config.update_data.value, dict) or 'data' not in config.update_data.value:
-                self.logger.error(ui_text('本地配置数据格式不正确，使用在线数据', 'Local configuration data format is incorrect, using online data'))
-                config.set(config.update_data, data)
-                config.set(config.task_name, online_data["updateData"]["questName"])
-                catId = online_data["updateData"]["linkCatId"]
-                linkId = online_data["updateData"]["linkId"]
-                url = f"https://www.cbjq.com/api.php?op=search_api&action=get_article_detail&catid={catId}&id={linkId}"
-                self.get_tips(url=url)
-                return
-
-            local_data = config.update_data.value["data"]
-            if online_data != local_data:
-                content = ''
-                if online_data['redeemCodes'] != local_data['redeemCodes']:
-                    new_used_codes = []
-                    old_used_codes = config.used_codes.value
-                    for code in online_data['redeemCodes']:
-                        if code['code'] in old_used_codes:
-                            new_used_codes.append(code['code'])
-                    config.set(config.used_codes, new_used_codes)
-                    content += ' 兑换码 '
-                if online_data['updateData'] != local_data['updateData']:
-                    content += ' 活动信息 '
-
-                if content:
-                    if config.isLog.value:
-                        self.logger.info(ui_text(f'获取到更新信息：{online_data}', f'Obtained update information: {online_data}'))
-                    config.set(config.update_data, data)
-                    config.set(config.task_name, online_data["updateData"]["questName"])
-                    catId = online_data["updateData"]["linkCatId"]
-                    linkId = online_data["updateData"]["linkId"]
-                    url = f"https://www.cbjq.com/api.php?op=search_api&action=get_article_detail&catid={catId}&id={linkId}"
-                    self.get_tips(url=url)
-                    InfoBar.success(title=ui_text('获取更新成功', 'Update Successful'),
-                                    content=ui_text(f"检测到新的{content}", f"New {content} detected"),
-                                    orient=Qt.Orientation.Horizontal,
-                                    isClosable=True,
-                                    position=InfoBarPosition.TOP_RIGHT,
-                                    duration=10000,
-                                    parent=self)
-                else:
-                    self.get_tips()
-            else:
-                self.get_tips()
-
-    def _handle_cloudflare_error(self, error_msg):
-        self.logger.error(f'通过cloudflare在线更新出错: {error_msg}')
-        self.get_tips()
-
 
     def on_select_directory_click(self):
         folder = QFileDialog.getExistingDirectory(self, '选择游戏文件夹', "./")
@@ -1646,7 +1435,7 @@ class Daily(QFrame, BaseInterface):
             self.logger.info(ui_text("获取活动日程成功", "Successfully fetched event schedule"))
 
         for key, value in tips_dic.items():
-            tips_dic[key] = DailyModel.calculate_time_difference(value)
+            tips_dic[key] = calculate_time_difference(value)
 
         max_total_days = 1
         for key, value in tips_dic.items():
