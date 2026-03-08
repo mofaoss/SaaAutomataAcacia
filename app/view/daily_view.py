@@ -1338,7 +1338,7 @@ class DailyView(ScrollArea):
         self.BodyLabel_8.setText(self._ui_text("角色4：", "Character 4:"))
         self.CheckBox_is_use_chip.setText(
             self._ui_text("记忆嵌片不足时自动使用2片", "Auto use 2 chips when not enough"))
-        self.TitleLabel_3.setText(self._ui_text("日程提醒", "Schedule"))
+        self.TitleLabel_3.setText(self._ui_text("日程提醒", "Event Reminder"))
         self.BodyLabel_22.setText(self._ui_text("疾跑方式", "Sprint mode"))
         self.BodyLabel_7.setText(self._ui_text("刷取次数", "Run count"))
         self.BodyLabel_tip_action.setText(
