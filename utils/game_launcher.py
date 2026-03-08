@@ -6,6 +6,8 @@ import time
 from pathlib import Path
 from typing import Any, Dict, Optional
 
+from utils.ui_utils import ui_text
+
 
 _launch_lock = threading.Lock()
 _last_game_process = None
@@ -178,7 +180,7 @@ def launch_game_with_guard(
     with _launch_lock:
         if _last_game_process is not None and _last_game_process.poll() is None:
             if logger:
-                logger.info("检测到已由程序启动的游戏进程仍在运行，跳过重复启动")
+                logger.info(ui_text("检测到已由程序启动的游戏进程仍在运行，跳过重复启动", "Detected that the game process started by the program is still running, skipping duplicate startup"))
             return {
                 "ok": True,
                 "already_running": True,
@@ -197,30 +199,30 @@ def launch_game_with_guard(
 
         if is_game_running():
             if logger:
-                logger.info("游戏窗口已存在")
+                logger.info(ui_text("游戏窗口已存在", "Game window already exists"))
             return {"ok": True, "already_running": True, "message": "game window already exists", "process": None}
 
         exe_path = resolve_game_exe(start_path)
         if not exe_path or not os.path.exists(exe_path):
             if logger:
-                logger.error(f"未找到游戏主程序 Game.exe，请检查路径: {start_path}")
-            return {"ok": False, "error": f"game exe not found under: {start_path}"}
+                logger.error(ui_text(f"未找到游戏主程序 Game.exe，请检查路径: {start_path}", f"Game.exe not found, please check the path: {start_path}"))
+            return {"ok": False, "error": ui_text(f"game exe not found under: {start_path}", f"Game executable not found under: {start_path}")}
 
         launch_args = get_start_arguments(start_path, game_channel, exe_path=exe_path)
         if launch_args is None:
             if logger:
-                logger.error(f"游戏启动失败未找到对应参数，start_path：{start_path}，game_channel:{game_channel}")
-            return {"ok": False, "error": "failed to resolve launch arguments"}
+                logger.error(ui_text(f"游戏启动失败未找到对应参数，start_path：{start_path}，game_channel:{game_channel}", f"Failed to resolve launch arguments, start_path: {start_path}, game_channel: {game_channel}"))
+            return {"ok": False, "error": ui_text("failed to resolve launch arguments", "Failed to resolve launch arguments")}
 
         if logger:
-            logger.debug(f"正在启动 {exe_path} {launch_args}")
+            logger.debug(ui_text(f"正在启动 {exe_path} {launch_args}", f"Starting {exe_path} {launch_args}"))
 
         try:
             process = subprocess.Popen([exe_path] + launch_args)
         except Exception as e:
             if logger:
-                logger.error(f"启动进程失败: {e}")
-            return {"ok": False, "error": f"failed to spawn process: {e}"}
+                logger.error(ui_text(f"启动进程失败: {e}", f"Failed to spawn process: {e}"))
+            return {"ok": False, "error": ui_text(f"failed to spawn process: {e}", f"Failed to spawn process: {e}")}
 
         _last_game_process = process
         _last_launch_ts = time.time()
