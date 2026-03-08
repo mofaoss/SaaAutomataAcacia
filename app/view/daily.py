@@ -1143,12 +1143,18 @@ class Daily(QFrame, BaseInterface):
         if not rule_data:
             return
 
+        # 获取当前正在展示/编辑的任务ID
+        current_panel_task_id = self.ui.shared_scheduling_panel.task_id
+
         # 1. 找出所有已勾选的任务 ID
         checked_task_ids = []
         ordered_ids = self.ui.taskListWidget.get_task_order()
         for tid in ordered_ids:
             if tid == "task_login":
-                continue
+                # 【修正】自动登录任务仅在“当前正在编辑自动登录”时才允许被撤回
+                # 防止编辑其他任务时误伤自动登录
+                if current_panel_task_id != "task_login":
+                    continue
             item = self.task_widget_map.get(tid)
             if item and item.checkbox.isChecked():
                 checked_task_ids.append(tid)
@@ -1170,7 +1176,7 @@ class Daily(QFrame, BaseInterface):
         modified_count = 0
 
         for task_cfg in sequence:
-            if task_cfg["id"] in checked_task_ids and task_cfg["id"] != "task_login":
+            if task_cfg["id"] in checked_task_ids:
                 existing_rules = task_cfg.get("execution_config", [])
                 if not isinstance(existing_rules, list):
                     continue

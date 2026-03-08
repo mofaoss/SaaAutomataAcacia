@@ -1304,9 +1304,9 @@ class DailyView(ScrollArea):
             self._ui_text("快捷键：F8", "Shortcut: F8"))
 
         self.BodyLabel_enter_tip.setText(
-            "### Tips\n* Select your server in Settings\n* Enable \"Auto open game\" and select the correct game path by the tutorial above\n* Game will be launched automatically when you click start or when a task needs to execute, no need to set schedule"
+            "### Tips\n* Select your server in Settings\n* Enable \"Auto open game\" and select the correct game path by the tutorial above\n* Game will be launched automatically when you click start or when a task needs to execute, no need to set schedule\n* Schedule for auto login is not affected by other modules"
             if self.is_non_chinese_ui else
-            "### 提示\n* 去设置里选择你的区服\n* 建议勾选“自动打开游戏”，勾选后根据上方教程选择好对应的路径\n* 点击开始或有任务需要执行时会自动拉起游戏，无需设置计划"
+            "### 提示\n* 去设置里选择你的区服\n* 建议勾选“自动打开游戏”，请根据上方教程选择对应的路径\n* 点击开始或有任务需要执行时会自动拉起游戏，无需设置计划 \n* 自动登录的计划功能不受其他模块影响"
         )
         self.BodyLabel_person_tip.setText(
             "### Tips\n* Enter codename instead of full name, e.g. use \"朝翼\" (Dawnwing) for \"凯茜娅-朝翼\" (Katya-Dawnwing)"
