@@ -546,27 +546,7 @@ class Daily(QFrame, BaseInterface):
         self.logger.info(ui_text(f"⏰ 到点触发计划: {current_time_str}，执行列表: {new_tasks_found}",
                                  f"⏰ Scheduled task triggered at {current_time_str}, executing tasks: {new_tasks_found}"))
         self._is_scheduled_run_flag = True
-        tasks_to_run = new_tasks_found
-
-        if "task_login" in tasks_to_run and tasks_to_run[0] != "task_login":
-            # 【优化安全过滤】：一键清理所有可能因为重复排队混进来的 task_login，然后在最头部统一塞一个
-            tasks_to_run = [t for t in tasks_to_run if t != "task_login"]
-            tasks_to_run.insert(0, "task_login")
-
-        game_opened = is_exist_snowbreak()
-        if not game_opened:
-            if config.CheckBox_open_game_directly.value:
-                if "task_login" not in tasks_to_run:
-                    tasks_to_run.insert(0, "task_login")
-                self.tasks_to_run = tasks_to_run
-                self.open_game_directly()
-            else:
-                self.logger.warning(ui_text("⚠️ 检测到游戏未运行，且未开启【自动打开游戏】！若稍后报错未找到句柄，请勾选该功能或手动启动游戏。", "⚠️ Game is not running and 'Auto open game' is OFF. This may cause handle errors!"))
-                self.tasks_to_run = tasks_to_run
-                self.after_start_button_click(tasks_to_run)
-        else:
-            self.tasks_to_run = tasks_to_run
-            self.after_start_button_click(tasks_to_run)
+        self._initiate_task_run(new_tasks_found)
 
     def _initWidget(self):
 
@@ -1336,6 +1316,36 @@ class Daily(QFrame, BaseInterface):
             self.ui.PushButton_start.setText(self._ui_text("立即执行 (F8)", "Execute Now (F8)"))
             self._auto_adjust_after_use_action()
 
+    def _initiate_task_run(self, tasks_to_run: List[str]):
+        """
+        Centralized method to start a task sequence.
+        It checks if the game is running and decides whether to launch it
+        or proceed directly with the automation thread.
+        """
+        game_opened = is_exist_snowbreak()
+        should_launch_game = not game_opened and config.CheckBox_open_game_directly.value
+
+        final_tasks = list(tasks_to_run)
+
+        # Determine if task_login is required and enforce it at the start of the list
+        if should_launch_game or "task_login" in final_tasks:
+            # Remove all instances of task_login to avoid duplicates, then add one at the start.
+            final_tasks = [t for t in final_tasks if t != "task_login"]
+            final_tasks.insert(0, "task_login")
+
+        self.tasks_to_run = final_tasks
+        
+        if not self.tasks_to_run:
+            return
+
+        if should_launch_game:
+            self.open_game_directly()
+        else:
+            # If game isn't open and we are not launching it, issue a warning.
+            if not game_opened:
+                self.logger.warning(self._ui_text("⚠️ 检测到游戏未运行，且未开启【自动打开游戏】！若稍后报错未找到句柄，请勾选该功能或手动启动游戏。", "⚠️ Game is not running and 'Auto open game' is OFF. This may cause handle errors!"))
+            self.after_start_button_click(self.tasks_to_run)
+
     def handle_start(self, str_flag):
         try:
             if str_flag == 'start':
@@ -1403,27 +1413,7 @@ class Daily(QFrame, BaseInterface):
 
             tasks_to_run = [task_id]
             self._is_running_solo_flag = True
-            self.tasks_to_run = tasks_to_run
-
-            # 【智能拉起决策】
-            game_opened = is_exist_snowbreak()
-            if not game_opened:
-                if config.CheckBox_open_game_directly.value:
-                    if "task_login" not in tasks_to_run:
-                        tasks_to_run.insert(0, "task_login")
-                    self.tasks_to_run = tasks_to_run
-                    self.open_game_directly()
-                else:
-                    self.logger.warning(
-                        self._ui_text(
-                            "⚠️ 检测到游戏未运行，且未开启【自动打开游戏】！若稍后报错未找到句柄，请勾选该功能或手动启动游戏。",
-                            "⚠️ Game is not running and 'Auto open game' is OFF. This may cause handle errors!"
-                        ))
-                    self.tasks_to_run = tasks_to_run
-                    self.after_start_button_click(tasks_to_run)
-            else:
-                self.tasks_to_run = tasks_to_run
-                self.after_start_button_click(tasks_to_run)
+            self._initiate_task_run(tasks_to_run)
 
     def _on_task_play_from_here_clicked(self, start_task_id: str):
         if self.is_running or self.is_launch_pending:
@@ -1456,31 +1446,7 @@ class Daily(QFrame, BaseInterface):
                               "⚠️ No checked tasks found below!"))
             return
 
-        self.tasks_to_run = tasks_to_run
-
-        if "task_login" in tasks_to_run and tasks_to_run[0] != "task_login":
-            tasks_to_run.remove("task_login")
-            tasks_to_run.insert(0, "task_login")
-
-        # 【智能拉起决策】
-        game_opened = is_exist_snowbreak()
-        if not game_opened:
-            if config.CheckBox_open_game_directly.value:
-                if "task_login" not in tasks_to_run:
-                    tasks_to_run.insert(0, "task_login")
-                self.tasks_to_run = tasks_to_run
-                self.open_game_directly()
-            else:
-                self.logger.warning(
-                    self._ui_text(
-                        "⚠️ 检测到游戏未运行，且未开启【自动打开游戏】！若稍后报错未找到句柄，请勾选该功能或手动启动游戏。",
-                        "⚠️ Game is not running and 'Auto open game' is OFF. This may cause handle errors!"
-                    ))
-                self.tasks_to_run = tasks_to_run
-                self.after_start_button_click(tasks_to_run)
-        else:
-            self.tasks_to_run = tasks_to_run
-            self.after_start_button_click(tasks_to_run)
+        self._initiate_task_run(tasks_to_run)
 
     def _on_copy_single_rule_to_checked(self, rule_data: dict):
         if not rule_data:
@@ -1719,24 +1685,7 @@ class Daily(QFrame, BaseInterface):
                 tasks_to_run.append(tid)
 
         if tasks_to_run:
-            if "task_login" in tasks_to_run and tasks_to_run[0] != "task_login":
-                tasks_to_run.remove("task_login")
-                tasks_to_run.insert(0, "task_login")
-
-            game_opened = is_exist_snowbreak()
-            if not game_opened:
-                if config.CheckBox_open_game_directly.value:
-                    if "task_login" not in tasks_to_run:
-                        tasks_to_run.insert(0, "task_login")
-                    self.tasks_to_run = tasks_to_run
-                    self.open_game_directly()
-                else:
-                    self.logger.warning(self._ui_text("⚠️ 检测到游戏未运行，且未开启【自动打开游戏】！", "⚠️ Game is not running and 'Auto open game' is OFF."))
-                    self.tasks_to_run = tasks_to_run
-                    self.after_start_button_click(tasks_to_run)
-            else:
-                self.tasks_to_run = tasks_to_run
-                self.after_start_button_click(tasks_to_run)
+            self._initiate_task_run(tasks_to_run)
         else:
             InfoBar.error(title="队列为空", content=self._ui_text("请至少勾选一个任务进行立即执行", "Please select at least one task to run immediately"), parent=self)
 
