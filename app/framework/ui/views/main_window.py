@@ -304,7 +304,6 @@ class MainWindow(FluentWindow, BaseInterface):
         from app.features.modules.shopping.usecase.shopping_usecase import (
             ShoppingSelectionUseCase,
         )
-        from app.features.scheduling.periodic_ui_texts import apply_periodic_module_texts
         from app.framework.application.tasks.periodic_task_profile import (
             get_periodic_task_profile,
         )
@@ -331,7 +330,6 @@ class MainWindow(FluentWindow, BaseInterface):
                 )
             ),
             startup_update_hook=start_cloudflare_update,
-            module_text_applier=apply_periodic_module_texts,
         )
         self._localize_widget_if_needed(self.homeInterface)
         self._sync_task_workspace_sidebar()

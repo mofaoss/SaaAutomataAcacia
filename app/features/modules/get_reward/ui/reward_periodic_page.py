@@ -12,6 +12,11 @@ class RewardPage(ModulePageBase):
         self.BodyLabel_reward_tip.setObjectName("BodyLabel_reward_tip")
         self.BodyLabel_reward_tip.setTextFormat(Qt.TextFormat.MarkdownText)
         self.BodyLabel_reward_tip.setWordWrap(True)
+        self.BodyLabel_reward_tip.setText(
+            "### Tips\n* Claim monthly card and daily rewards"
+            if self._is_non_chinese_ui
+            else "### 提示\n* 领取大月卡和日常奖励"
+        )
 
         self.main_layout.addWidget(self.BodyLabel_reward_tip)
         self.finalize()

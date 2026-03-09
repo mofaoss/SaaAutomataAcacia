@@ -28,7 +28,22 @@ class OperationPage(ModulePageBase):
         self.main_layout.addLayout(self._row(self.BodyLabel_7, self.SpinBox_action_times))
         self.main_layout.addLayout(self._row(self.BodyLabel_22, self.ComboBox_run))
         self.main_layout.addWidget(self.BodyLabel_tip_action)
+        self._apply_i18n()
         self.finalize()
+
+    def _apply_i18n(self):
+        self.BodyLabel_22.setText(self._ui_text("疾跑方式", "Sprint mode"))
+        self.BodyLabel_7.setText(self._ui_text("刷取次数", "Run count"))
+        self.ComboBox_run.addItems(
+            ["Toggle Sprint", "Hold Sprint"]
+            if self._is_non_chinese_ui
+            else ["切换疾跑", "按住疾跑"]
+        )
+        self.BodyLabel_tip_action.setText(
+            "### Tips\n* Auto-run operation \n* Repeats the first training stage for specified times with no stamina cost\n* Useful for weekly pass mission count"
+            if self._is_non_chinese_ui
+            else "### 提示\n* 重复刷指定次数无需体力的实战训练第一关\n* 用于完成凭证20次常规行动周常任务"
+        )
 
     @staticmethod
     def _row(label, edit):

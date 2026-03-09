@@ -68,7 +68,6 @@ class PeriodicTasksPage(QFrame, BaseInterface):
         create_collect_supplies_actions: CollectSuppliesActionsFactory | None = None,
         create_event_tips_actions: EventTipsActionsFactory | None = None,
         startup_update_hook: Callable[[object], None] | None = None,
-        module_text_applier: Callable | None = None,
     ):
         super().__init__(parent)
         BaseInterface.__init__(self)
@@ -103,7 +102,6 @@ class PeriodicTasksPage(QFrame, BaseInterface):
         self.ui = PeriodicTasksView(
             self,
             is_non_chinese_ui=self._is_non_chinese_ui,
-            module_text_applier=module_text_applier,
         )
         root_layout = QVBoxLayout(self)
         root_layout.setContentsMargins(0, 0, 0, 0)

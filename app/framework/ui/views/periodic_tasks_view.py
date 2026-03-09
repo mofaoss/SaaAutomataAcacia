@@ -651,11 +651,10 @@ class SharedSchedulingPanel(QWidget):
 
 class PeriodicTasksView(ScrollArea):
 
-    def __init__(self, parent=None, is_non_chinese_ui=False, module_text_applier=None):
+    def __init__(self, parent=None, is_non_chinese_ui=False):
         super().__init__(parent)
         self.setObjectName("daily")
         self.is_non_chinese_ui = is_non_chinese_ui
-        self._module_text_applier = module_text_applier
 
         self.setWidgetResizable(True)
         self.setStyleSheet(
@@ -891,10 +890,3 @@ class PeriodicTasksView(ScrollArea):
         self.PushButton_no_select.setText(self._ui_text("清空", "Clear"))
         self.hint_label.setText(self._ui_text("拖动调整顺序", "Drag to sort"))
         self.TitleLabel_3.setText(self._ui_text("日程提醒", "Event Reminder"))
-
-        if callable(self._module_text_applier):
-            self._module_text_applier(
-                self,
-                is_non_chinese_ui=self.is_non_chinese_ui,
-                ui_text_fn=self._ui_text,
-            )

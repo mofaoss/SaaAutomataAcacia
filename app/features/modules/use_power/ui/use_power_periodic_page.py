@@ -27,4 +27,17 @@ class UsePowerPage(ModulePageBase):
         self.main_layout.addLayout(first_line)
         self.main_layout.addWidget(self.StrongBodyLabel_2)
         self.main_layout.addWidget(self.ComboBox_power_usage)
+        self._apply_i18n()
         self.finalize()
+
+    def _apply_i18n(self):
+        self.ComboBox_power_day.addItems(["1", "2", "3", "4", "5", "6"])
+        self.ComboBox_power_usage.addItems(
+            [
+                self._ui_text("活动材料本", "Event Stages"),
+                self._ui_text("刷常规后勤", "Operation Logistics"),
+            ]
+        )
+        self.StrongBodyLabel_2.setText(self._ui_text("选择体力使用方式", "Stamina usage mode"))
+        self.CheckBox_is_use_power.setText(self._ui_text("自动使用期限", "Auto use expiring"))
+        self.BodyLabel_6.setText(self._ui_text("天内的体力药", "day potion"))

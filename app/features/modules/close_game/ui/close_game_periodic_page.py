@@ -13,6 +13,9 @@ class CloseGamePage(ModulePageBase):
         self.CheckBox_close_proxy.setObjectName("CheckBox_close_proxy")
         self.CheckBox_shutdown = CheckBox(self)
         self.CheckBox_shutdown.setObjectName("CheckBox_shutdown")
+        self.CheckBox_close_game.setText(self._ui_text("退出游戏", "Exit Game"))
+        self.CheckBox_close_proxy.setText(self._ui_text("退出小助手但不关机", "Exit SAA but don't shutdown"))
+        self.CheckBox_shutdown.setText(self._ui_text("关机", "Shutdown PC"))
 
         self.main_layout.addWidget(self.CheckBox_close_game)
         self.main_layout.addWidget(self.CheckBox_close_proxy)

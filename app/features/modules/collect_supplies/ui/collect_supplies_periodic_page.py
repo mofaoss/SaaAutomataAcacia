@@ -50,4 +50,18 @@ class CollectSuppliesPage(ModulePageBase):
         self.main_layout.addLayout(redeem_line)
         self.main_layout.addWidget(self.TextEdit_import_codes)
         self.main_layout.addWidget(self.BodyLabel_collect_supplies)
+        self._apply_i18n()
         self.finalize()
+
+    def _apply_i18n(self):
+        self.CheckBox_mail.setText(self._ui_text("领取邮件", "Claim Mail"))
+        self.CheckBox_fish_bait.setText(self._ui_text("领取鱼饵", "Claim Bait"))
+        self.CheckBox_dormitory.setText(self._ui_text("宿舍碎片", "Dorm Shards"))
+        self.CheckBox_redeem_code.setText(self._ui_text("领取兑换码", "Redeem Codes"))
+        self.PrimaryPushButton_import_codes.setText(self._ui_text("导入", "Import"))
+        self.PushButton_reset_codes.setText(self._ui_text("重置", "Reset"))
+        self.BodyLabel_collect_supplies.setText(
+            "### Tips\n* Default: Always claim Supply Station stamina and friend stamina \n* Enable \"Redeem Code\" to fetch and redeem online codes automatically\n* Online codes are maintained by developers and may not always be updated in time\n* You can import a txt file for batch redeem (one code per line)"
+            if self._is_non_chinese_ui
+            else "### 提示 \n* 默认必领供应站体力和好友体力\n* 勾选“领取兑换码”会自动拉取在线兑换码进行兑换\n* 在线兑换码由开发者维护，更新不一定及时\n* 导入txt文本文件可以批量使用用户兑换码，txt需要一行一个兑换码"
+        )

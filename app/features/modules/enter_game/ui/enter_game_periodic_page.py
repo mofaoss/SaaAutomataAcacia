@@ -46,7 +46,19 @@ class EnterGamePage(ModulePageBase):
         self.main_layout.addWidget(self.LineEdit_game_directory)
         self.main_layout.addLayout(action_line)
         self.main_layout.addWidget(self.BodyLabel_enter_tip)
+        self._apply_i18n()
         self.finalize()
+
+    def _apply_i18n(self):
+        self.PrimaryPushButton_path_tutorial.setText(self._ui_text("查看教程", "Tutorial"))
+        self.StrongBodyLabel_4.setText(self._ui_text("启动器中查看游戏路径", "Find game path in launcher"))
+        self.CheckBox_open_game_directly.setText(self._ui_text("自动打开游戏", "Auto open game"))
+        self.PushButton_select_directory.setText(self._ui_text("选择", "Browse"))
+        self.BodyLabel_enter_tip.setText(
+            "### Tips\n* Select your server in Settings\n* Enable \"Auto open game\" and select the correct game path by the tutorial above\n* Game will be launched automatically when you click start or when a task needs to execute, no need to set schedule\n* Schedule for auto login is not affected by other modules"
+            if self._is_non_chinese_ui
+            else "### 提示\n* 去设置里选择你的区服\n* 建议勾选“自动打开游戏”，请根据上方教程选择对应的路径\n* 点击开始或有任务需要执行时会自动拉起游戏，无需设置计划 \n* 自动登录的计划功能不受其他模块影响"
+        )
 
     @staticmethod
     def build_path_tutorial_payload(is_non_chinese_ui: bool) -> dict[str, str]:
