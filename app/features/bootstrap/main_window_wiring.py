@@ -1,0 +1,94 @@
+# coding:utf-8
+from __future__ import annotations
+
+from app.framework.application.modules import configure_module_spec_providers
+from app.framework.core.interfaces.main_window_bridge import MainWindowFeatureBridge
+from app.framework.core.task_engine.threads import ModuleTaskThread
+from app.framework.ui.views.on_demand_tasks_page import OnDemandTasksPage
+from app.framework.ui.views.periodic_tasks_page import PeriodicTasksPage
+
+from app.features.modules.collect_supplies.usecase.collect_supplies_usecase import (
+    CollectSuppliesModule,
+)
+from app.features.modules.enter_game.usecase.enter_game_actions import (
+    EnterGameActions,
+    SnowbreakGameEnvironment,
+)
+from app.features.modules.event_tips.usecase.event_tips_usecase import (
+    EventTipsActions,
+    EventTipsUseCase,
+)
+from app.features.modules.module_specs import (
+    get_on_demand_module_specs as get_feature_on_demand_specs,
+)
+from app.features.modules.module_specs import (
+    get_periodic_module_specs as get_feature_periodic_specs,
+)
+from app.features.modules.redeem_codes.ui.ui_view import RedeemCodesView
+from app.features.modules.redeem_codes.usecase.redeem_codes_usecase import (
+    RedeemCodesUseCase,
+)
+from app.features.modules.shopping.usecase.shopping_usecase import ShoppingSelectionUseCase
+from app.features.modules.trigger.usecase.auto_f_usecase import AutoFModule
+from app.features.modules.trigger.usecase.nita_auto_e_usecase import NitaAutoEModule
+from app.features.utils.home_navigation import back_to_home
+from app.features.utils.network import start_cloudflare_update
+from app.framework.application.tasks.periodic_task_profile import get_periodic_task_profile
+
+
+class SnowbreakMainWindowBridge(MainWindowFeatureBridge):
+    """Feature-side composition root that wires Snowbreak business modules into framework shell."""
+
+    def configure_module_registry(self) -> None:
+        configure_module_spec_providers(
+            periodic_provider=get_feature_periodic_specs,
+            on_demand_provider=lambda: get_feature_on_demand_specs(include_passive=True),
+        )
+
+    def create_home_interface(self, window):
+        return PeriodicTasksPage(
+            "Periodic Tasks",
+            window,
+            game_environment=SnowbreakGameEnvironment(window._is_non_chinese_ui),
+            home_sync=back_to_home,
+            task_profile_provider=get_periodic_task_profile,
+            create_shopping_selection_usecase=lambda is_non_chinese_ui: ShoppingSelectionUseCase(is_non_chinese_ui),
+            create_enter_game_actions=lambda game_environment: EnterGameActions(game_environment),
+            create_collect_supplies_actions=lambda settings_usecase: CollectSuppliesModule(
+                redeem_codes_usecase=RedeemCodesUseCase(settings_usecase),
+                redeem_codes_view=RedeemCodesView(),
+            ),
+            create_event_tips_actions=lambda settings_usecase, is_non_chinese_ui, ui_text_fn: EventTipsActions(
+                EventTipsUseCase(
+                    settings_usecase,
+                    is_non_chinese_ui=is_non_chinese_ui,
+                    ui_text_fn=ui_text_fn,
+                )
+            ),
+            startup_update_hook=start_cloudflare_update,
+        )
+
+    def create_additional_interface(self, window):
+        shared_log_browser = None
+        if window.homeInterface is not None and hasattr(window.homeInterface, "textBrowser_log"):
+            shared_log_browser = window.homeInterface.textBrowser_log
+
+        return OnDemandTasksPage(
+            "On Demand Tasks",
+            window,
+            shared_log_browser=shared_log_browser,
+            auto_f_module_cls=AutoFModule,
+            auto_e_module_cls=NitaAutoEModule,
+            module_thread_cls=ModuleTaskThread,
+        )
+
+    def initialize_ocr_module(self):
+        from app.features.modules.ocr import ocr
+
+        ocr.instance_ocr()
+        return ocr
+
+
+def build_main_window_bridge() -> MainWindowFeatureBridge:
+    return SnowbreakMainWindowBridge()
+

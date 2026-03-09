@@ -23,13 +23,13 @@ from app.framework.infra.runtime.paths import LOG_DIR, TEMP_DIR, APPDATA_DIR, en
 from app.framework.infra.events.signal_bus import signalBus
 from app.framework.core.event_bus.global_task_bus import global_task_bus
 from app.framework.core.observability import AppErrorCode, capture_exception
+from app.framework.core.interfaces.main_window_bridge import MainWindowFeatureBridge
 from app.framework.core.task_engine.hotkey_poller import GlobalHotkeyPoller
 from app.framework.application.hotkey.routing import resolve_f8_action, HotkeyAction
 from app.framework.application.startup.interface_plan import (
     build_deferred_interface_keys,
     build_initial_interface_keys,
 )
-from app.framework.application.modules import configure_module_spec_providers
 from .periodic_base import BaseInterface
 from app.framework.infra.update.updater import (
     get_best_update_candidate,
@@ -64,7 +64,11 @@ class MainWindow(FluentWindow, BaseInterface):
     DEFAULT_WINDOW_HEIGHT = 800
     _ui_text_use_qt_tr = True
 
-    def __init__(self):
+    def __init__(
+        self,
+        *,
+        feature_bridge: MainWindowFeatureBridge | None = None,
+    ):
         super().__init__()
         BaseInterface.__init__(self)
         self.splashMovie = None
@@ -101,6 +105,7 @@ class MainWindow(FluentWindow, BaseInterface):
         }
         self._shared_task_sidebar_cards = None
         self._task_sidebar_owner = None
+        self._feature_bridge = feature_bridge
 
         # 【新增】全局任务运行状态
         self.global_is_running = False
@@ -265,19 +270,9 @@ class MainWindow(FluentWindow, BaseInterface):
         )
         return [lambda key=key: self._create_interface_by_key(key) for key in keys]
 
-    @staticmethod
-    def _configure_module_registry():
-        from app.features.modules.module_specs import (
-            get_on_demand_module_specs as _get_feature_on_demand_specs,
-        )
-        from app.features.modules.module_specs import (
-            get_periodic_module_specs as _get_feature_periodic_specs,
-        )
-
-        configure_module_spec_providers(
-            periodic_provider=_get_feature_periodic_specs,
-            on_demand_provider=lambda: _get_feature_on_demand_specs(include_passive=True),
-        )
+    def _configure_module_registry(self):
+        if self._feature_bridge is not None:
+            self._feature_bridge.configure_module_registry()
 
     def _create_display_interface(self):
         from .display import DisplayInterface
@@ -285,71 +280,16 @@ class MainWindow(FluentWindow, BaseInterface):
         self._localize_widget_if_needed(self.displayInterface)
 
     def _create_home_interface(self):
-        from .periodic_tasks_page import PeriodicTasksPage
-        from app.features.modules.collect_supplies.usecase.collect_supplies_actions import (
-            CollectSuppliesActions,
-        )
-        from app.features.modules.enter_game.usecase.enter_game_actions import (
-            EnterGameActions,
-            SnowbreakGameEnvironment,
-        )
-        from app.features.modules.event_tips.usecase.event_tips_usecase import (
-            EventTipsActions,
-            EventTipsUseCase,
-        )
-        from app.features.modules.redeem_codes.ui.ui_view import RedeemCodesView
-        from app.features.modules.redeem_codes.usecase.redeem_codes_usecase import (
-            RedeemCodesUseCase,
-        )
-        from app.features.modules.shopping.usecase.shopping_usecase import (
-            ShoppingSelectionUseCase,
-        )
-        from app.framework.application.tasks.periodic_task_profile import (
-            get_periodic_task_profile,
-        )
-        from app.features.utils.home_navigation import back_to_home
-        from app.features.utils.network import start_cloudflare_update
-
-        self.homeInterface = PeriodicTasksPage(
-            'Periodic Tasks',
-            self,
-            game_environment=SnowbreakGameEnvironment(self._is_non_chinese_ui),
-            home_sync=back_to_home,
-            task_profile_provider=get_periodic_task_profile,
-            create_shopping_selection_usecase=lambda is_non_chinese_ui: ShoppingSelectionUseCase(is_non_chinese_ui),
-            create_enter_game_actions=lambda game_environment: EnterGameActions(game_environment),
-            create_collect_supplies_actions=lambda settings_usecase: CollectSuppliesActions(
-                redeem_codes_usecase=RedeemCodesUseCase(settings_usecase),
-                redeem_codes_view=RedeemCodesView(),
-            ),
-            create_event_tips_actions=lambda settings_usecase, is_non_chinese_ui, ui_text_fn: EventTipsActions(
-                EventTipsUseCase(
-                    settings_usecase,
-                    is_non_chinese_ui=is_non_chinese_ui,
-                    ui_text_fn=ui_text_fn,
-                )
-            ),
-            startup_update_hook=start_cloudflare_update,
-        )
+        if self._feature_bridge is None:
+            raise RuntimeError("feature_bridge is not configured")
+        self.homeInterface = self._feature_bridge.create_home_interface(self)
         self._localize_widget_if_needed(self.homeInterface)
         self._sync_task_workspace_sidebar()
 
     def _create_additional_interface(self):
-        from .on_demand_tasks_page import OnDemandTasksPage
-        from app.features.modules.trigger.usecase.auto_f_usecase import AutoFModule
-        from app.features.modules.trigger.usecase.nita_auto_e_usecase import NitaAutoEModule
-        from app.framework.core.task_engine.threads import ModuleTaskThread
-        shared_log_browser = None
-        if self.homeInterface is not None and hasattr(self.homeInterface, "textBrowser_log"):
-            shared_log_browser = self.homeInterface.textBrowser_log
-        self.additionalInterface = OnDemandTasksPage(
-            'On Demand Tasks',
-            self,
-            shared_log_browser=shared_log_browser,
-            auto_f_module_cls=AutoFModule,
-            auto_e_module_cls=NitaAutoEModule,
-            module_thread_cls=ModuleTaskThread,
-        )
+        if self._feature_bridge is None:
+            raise RuntimeError("feature_bridge is not configured")
+        self.additionalInterface = self._feature_bridge.create_additional_interface(self)
         self._localize_widget_if_needed(self.additionalInterface)
         self._sync_task_workspace_sidebar()
 
@@ -633,18 +573,10 @@ class MainWindow(FluentWindow, BaseInterface):
             self.stackedWidget.setCurrentWidget(self.displayInterface, False)
 
     def init_ocr(self):
-        from app.features.modules.ocr import ocr
-        self.ocr_module = ocr
-
-        def benchmark(ocr_func, img, runs=30):
-            for _ in range(10):
-                ocr_func(img, is_log=False)
-            start = time.time()
-            for _ in range(runs):
-                ocr_func(img, is_log=False)
-            return (time.time() - start) / runs
-
-        ocr.instance_ocr()
+        if self._feature_bridge is None:
+            logger.warning("feature_bridge is not configured")
+            return
+        self.ocr_module = self._feature_bridge.initialize_ocr_module()
 
     def initWindow(self):
         position = config.position.value

@@ -189,7 +189,9 @@ class StartupController(QObject):
         self.patch_infobar_for_traditional()
 
     def _create_main_window(self):
-        self.window = self.MainWindow()
+        from app.features.bootstrap.main_window_wiring import build_main_window_bridge
+
+        self.window = self.MainWindow(feature_bridge=build_main_window_bridge())
         self.localize_widget_tree_for_traditional(self.window)
 
     def _show_main_window(self):

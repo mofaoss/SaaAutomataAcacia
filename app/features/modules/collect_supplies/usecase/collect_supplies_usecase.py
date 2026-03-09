@@ -1,6 +1,10 @@
 import time
 from datetime import datetime
 
+from PySide6.QtCore import Qt
+from qfluentwidgets import InfoBar, InfoBarPosition
+
+from app.framework.ui.shared.text import ui_text
 from app.framework.infra.config.app_config import config
 from app.framework.infra.config.data_models import parse_config_update_data
 from app.features.utils.network import get_cloudflare_data
@@ -9,9 +13,11 @@ from app.features.utils.home_navigation import back_to_home
 
 
 class CollectSuppliesModule:
-    def __init__(self, auto, logger):
+    def __init__(self, auto=None, logger=None, *, redeem_codes_usecase=None, redeem_codes_view=None):
         self.auto = auto
         self.logger = logger
+        self.redeem_codes_usecase = redeem_codes_usecase
+        self.redeem_codes_view = redeem_codes_view
         self.is_log = False
         super().__init__()
 
@@ -31,6 +37,30 @@ class CollectSuppliesModule:
 
         self.friends_power()
         self.station_power()
+
+    def on_reset_codes_click(self, host, text_edit):
+        if self.redeem_codes_usecase is None:
+            raise RuntimeError("redeem_codes_usecase is not configured")
+        content = self.redeem_codes_usecase.reset_codes(text_edit)
+        InfoBar.success(
+            title=ui_text("重置成功", "Reset Successful"),
+            content=ui_text(f"已重置 导入展示 {content}", f"Successfully reset import and display {content}"),
+            orient=Qt.Orientation.Horizontal,
+            isClosable=True,
+            position=InfoBarPosition.TOP_RIGHT,
+            duration=2000,
+            parent=host,
+        )
+
+    def on_import_codes_click(self, host, text_edit):
+        if self.redeem_codes_view is None:
+            raise RuntimeError("redeem_codes_view is not configured")
+        if self.redeem_codes_usecase is None:
+            raise RuntimeError("redeem_codes_usecase is not configured")
+        raw_codes = self.redeem_codes_view.prompt_import_codes(host)
+        if raw_codes is None:
+            return
+        self.redeem_codes_usecase.import_codes(raw_codes, text_edit)
 
     def friends_power(self):
         timeout = Timer(30).start()
@@ -322,6 +352,5 @@ class CollectSuppliesModule:
                 self.logger.error("兑换兑换码超时")
                 break
         back_to_home(self.auto, self.logger)
-
 
 
