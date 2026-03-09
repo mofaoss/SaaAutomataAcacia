@@ -1,10 +1,12 @@
 # coding:utf-8
+from __future__ import annotations
 
-PRIMARY_PERIODIC_TASK_ID = "task_login"
-
+import copy
 
 # Periodic host scheduling metadata only.
 # UI display names are sourced from module registry (module_specs), not here.
+PRIMARY_PERIODIC_TASK_ID = "task_login"
+
 PERIODIC_TASK_SPECS = [
     {
         "id": PRIMARY_PERIODIC_TASK_ID,
@@ -77,3 +79,22 @@ PERIODIC_TASK_SPECS = [
         "default_activation_config": [{"type": "daily", "day": 0, "time": "00:00", "max_runs": 1}],
     },
 ]
+
+
+def build_default_periodic_task_sequence() -> list[dict]:
+    sequence: list[dict] = []
+    for spec in PERIODIC_TASK_SPECS:
+        sequence.append(
+            {
+                "id": spec["id"],
+                "enabled": False,
+                "use_periodic": False,
+                "last_run": 0,
+                "activation_config": copy.deepcopy(spec["default_activation_config"]),
+                "execution_config": [],
+            }
+        )
+    return sequence
+
+
+__all__ = ["PRIMARY_PERIODIC_TASK_ID", "PERIODIC_TASK_SPECS", "build_default_periodic_task_sequence"]
