@@ -104,7 +104,7 @@ class EnterGameModule:
             if self.auto.click_element(['X', 'x'], 'text', crop=(1271 / 1920, 88 / 1080, 1890 / 1920, 367 / 1080),
                                        is_log=self.is_log):
                 continue
-            if self.auto.click_element("app/features/modules/enter_game/resources/images/newbird_cancel.png", "image",
+            if self.auto.click_element("app/features/assets/start_game/newbird_cancel.png", "image",
                                        crop=(0.5, 0, 1, 0.5), is_log=self.is_log):
                 continue
 

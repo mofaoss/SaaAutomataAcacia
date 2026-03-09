@@ -50,21 +50,21 @@ class CapturePalsModule:
         self.stop_requested = False
 
         # ===== collect =====
-        self.collect_image = "app/features/modules/fishing/resources/images/collect.png"
+        self.collect_image = "app/features/assets/fishing/collect.png"
         self.collect_crop = (1506 / 1920, 684 / 1080, 1547 / 1920, 731 / 1080)
         self.collect_threshold = 0.65
 
         # ===== exit map =====
-        self.btn_exit_map_image = "app/features/modules/capture_pals/resources/images/exit_map.png"
+        self.btn_exit_map_image = "app/features/assets/capture_pals/exit_map.png"
         self.btn_exit_map_crop = (1838 / 1920, 968 / 1080, 1870 / 1920, 1006 / 1080)
         self.btn_exit_map_threshold = 0.5
 
-        self.btn_exit_confirm_image = "app/features/modules/capture_pals/resources/images/exit_confirm.png"
+        self.btn_exit_confirm_image = "app/features/assets/capture_pals/exit_confirm.png"
         self.btn_exit_confirm_crop = (1371 / 1920, 740 / 1080, 1421 / 1920, 787 / 1080)
 
         # ===== island select =====
-        self.partner_island_image = "app/features/modules/capture_pals/resources/images/partner_island.png"
-        self.adventure_island_image = "app/features/modules/capture_pals/resources/images/adventure_island.png"
+        self.partner_island_image = "app/features/assets/capture_pals/partner_island.png"
+        self.adventure_island_image = "app/features/assets/capture_pals/adventure_island.png"
 
         self.partner_island_crop = (707 / 1920, 451 / 1080, 770 / 1920, 504 / 1080)
         self.adventure_island_crop = (1318 / 1920, 558 / 1080, 1378 / 1920, 612 / 1080)
@@ -73,7 +73,7 @@ class CapturePalsModule:
         self.start_battle_crop = (1734 / 1920, 973 / 1080, 1798 / 1920, 1013 / 1080)
 
         # ===== in-map task icon =====
-        self.in_map_task_image = "app/features/modules/capture_pals/resources/images/in_map_task.png"
+        self.in_map_task_image = "app/features/assets/capture_pals/in_map_task.png"
         self.in_map_task_crop = (1824 / 1920, 434 / 1080, 1857 / 1920, 465 / 1080)
         self.in_map_task_threshold = 0.65
 

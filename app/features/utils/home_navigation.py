@@ -22,7 +22,7 @@ def back_to_home(auto, logger, timeout_seconds=10):
             return True
 
         if auto.find_element(
-            "app/features/modules/get_reward/resources/images/home.png",
+            "app/features/assets/reward/home.png",
             "image",
             threshold=0.5,
             crop=(1580 / 1920, 18 / 1080, 1701 / 1920, 120 / 1080),

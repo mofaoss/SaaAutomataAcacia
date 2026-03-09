@@ -92,7 +92,7 @@ class ChasmModule:
         enter_flag = False
         while True:
             self.auto.take_screenshot()
-            if not self.auto.find_element("app/features/modules/chasm/resources/images/reward.png", "image",
+            if not self.auto.find_element("app/features/assets/chasm/reward.png", "image",
                                               threshold=0.65, crop=(62 / 1920, 857 / 1080, 193 / 1920, 973 / 1080),
                                               is_log=self.is_log):
                 self.logger.warning('当前未开放拟境')

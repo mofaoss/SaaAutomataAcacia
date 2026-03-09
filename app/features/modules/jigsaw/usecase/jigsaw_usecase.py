@@ -305,7 +305,7 @@ class JigsawModule:
         self.auto.take_screenshot()
         for i in [1, 2, 3, 11, 13, 16]:
             try:
-                result = self.auto.find_element(f"app/features/modules/jigsaw/resources/images/{i}.png", "image", threshold=0.7,
+                result = self.auto.find_element(f"app/features/assets/jigsaw/{i}.png", "image", threshold=0.7,
                                                 crop=(833 / 2560, 285 / 1440, 1959 / 2560, 1214 / 1440),
                                                 is_log=self.is_log)
                 if result:
@@ -497,24 +497,24 @@ class JigsawModule:
     def place_jigsaw(self, best_solution):
         pass
     #     path_dict = {
-    #         "1": ["app/features/modules/jigsaw/resources/images/piece_1_0.png"],
-    #         "2": ["app/features/modules/jigsaw/resources/images/piece_2_0.png", "app/features/modules/jigsaw/resources/images/piece_2_1.png",
-    #               "app/features/modules/jigsaw/resources/images/piece_2_2.png", "app/features/modules/jigsaw/resources/images/piece_2_3.png"],
-    #         "3": ["app/features/modules/jigsaw/resources/images/piece_3_0.png", "app/features/modules/jigsaw/resources/images/piece_3_1.png",
-    #               "app/features/modules/jigsaw/resources/images/piece_3_2.png", "app/features/modules/jigsaw/resources/images/piece_3_3.png"],
-    #         "4": ["app/features/modules/jigsaw/resources/images/piece_4_0.png", "app/features/modules/jigsaw/resources/images/piece_4_1.png",
-    #               "app/features/modules/jigsaw/resources/images/piece_4_2.png", "app/features/modules/jigsaw/resources/images/piece_4_3.png"],
-    #         "5": ["app/features/modules/jigsaw/resources/images/piece_5_0.png", "app/features/modules/jigsaw/resources/images/piece_5_1.png",
-    #               "app/features/modules/jigsaw/resources/images/piece_5_2.png", "app/features/modules/jigsaw/resources/images/piece_5_3.png"],
-    #         "6": ["app/features/modules/jigsaw/resources/images/piece_6_0.png", "app/features/modules/jigsaw/resources/images/piece_6_1.png",
-    #               "app/features/modules/jigsaw/resources/images/piece_6_2.png", "app/features/modules/jigsaw/resources/images/piece_6_3.png"],
-    #         "7": ["app/features/modules/jigsaw/resources/images/piece_7_0.png", "app/features/modules/jigsaw/resources/images/piece_7_1.png",
-    #               "app/features/modules/jigsaw/resources/images/piece_7_2.png", "app/features/modules/jigsaw/resources/images/piece_7_3.png"],
-    #         "8": ["app/features/modules/jigsaw/resources/images/piece_8_0.png"],
-    #         "9": ["app/features/modules/jigsaw/resources/images/piece_9_0.png"],
-    #         "10": ["app/features/modules/jigsaw/resources/images/piece_10_0.png", "app/features/modules/jigsaw/resources/images/piece_10_1.png"],
-    #         "11": ["app/features/modules/jigsaw/resources/images/piece_11_0.png", "app/features/modules/jigsaw/resources/images/piece_11_1.png",
-    #                "app/features/modules/jigsaw/resources/images/piece_11_2.png", "app/features/modules/jigsaw/resources/images/piece_11_3.png"],
+    #         "1": ["app/features/assets/jigsaw/piece_1_0.png"],
+    #         "2": ["app/features/assets/jigsaw/piece_2_0.png", "app/features/assets/jigsaw/piece_2_1.png",
+    #               "app/features/assets/jigsaw/piece_2_2.png", "app/features/assets/jigsaw/piece_2_3.png"],
+    #         "3": ["app/features/assets/jigsaw/piece_3_0.png", "app/features/assets/jigsaw/piece_3_1.png",
+    #               "app/features/assets/jigsaw/piece_3_2.png", "app/features/assets/jigsaw/piece_3_3.png"],
+    #         "4": ["app/features/assets/jigsaw/piece_4_0.png", "app/features/assets/jigsaw/piece_4_1.png",
+    #               "app/features/assets/jigsaw/piece_4_2.png", "app/features/assets/jigsaw/piece_4_3.png"],
+    #         "5": ["app/features/assets/jigsaw/piece_5_0.png", "app/features/assets/jigsaw/piece_5_1.png",
+    #               "app/features/assets/jigsaw/piece_5_2.png", "app/features/assets/jigsaw/piece_5_3.png"],
+    #         "6": ["app/features/assets/jigsaw/piece_6_0.png", "app/features/assets/jigsaw/piece_6_1.png",
+    #               "app/features/assets/jigsaw/piece_6_2.png", "app/features/assets/jigsaw/piece_6_3.png"],
+    #         "7": ["app/features/assets/jigsaw/piece_7_0.png", "app/features/assets/jigsaw/piece_7_1.png",
+    #               "app/features/assets/jigsaw/piece_7_2.png", "app/features/assets/jigsaw/piece_7_3.png"],
+    #         "8": ["app/features/assets/jigsaw/piece_8_0.png"],
+    #         "9": ["app/features/assets/jigsaw/piece_9_0.png"],
+    #         "10": ["app/features/assets/jigsaw/piece_10_0.png", "app/features/assets/jigsaw/piece_10_1.png"],
+    #         "11": ["app/features/assets/jigsaw/piece_11_0.png", "app/features/assets/jigsaw/piece_11_1.png",
+    #                "app/features/assets/jigsaw/piece_11_2.png", "app/features/assets/jigsaw/piece_11_3.png"],
     #     }
     #
     #     def calculate_grid_centers(top_left, bottom_right, grid_size=128):
@@ -612,10 +612,10 @@ class JigsawModule:
     #                 for i in range(click_times):
     #                     # print(f"当前状态：{now_state}")
     #                     while not auto.find_element(
-    #                             f"app/features/modules/jigsaw/resources/images/piece_{piece_id}_{(now_state + 1) % len(path_dict[piece_id])}.png",
+    #                             f"app/features/assets/jigsaw/piece_{piece_id}_{(now_state + 1) % len(path_dict[piece_id])}.png",
     #                             "image",
     #                             threshold=threshold, crop=(76 / 1920, 128 / 1080, 338 / 1920, 855 / 1080)):
-    #                         auto.click_element(f"app/features/modules/jigsaw/resources/images/piece_{piece_id}_{now_state}.png", "image",
+    #                         auto.click_element(f"app/features/assets/jigsaw/piece_{piece_id}_{now_state}.png", "image",
     #                                            threshold=0.75, crop=(76 / 1920, 128 / 1080, 338 / 1920, 855 / 1080),
     #                                            action="move_click")
     #                     now_state = (now_state + 1) % len(path_dict[piece_id])
