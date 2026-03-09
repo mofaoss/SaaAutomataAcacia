@@ -10,6 +10,8 @@ from PySide6.QtWidgets import (
 from qfluentwidgets import SegmentedWidget, SimpleCardWidget, TitleLabel
 
 class OnDemandTasksView(QWidget):
+    PERIODIC_SECOND_ROW_MIN_HEIGHT = 190
+
     def __init__(self, parent=None):
         super().__init__(parent)
         self.setObjectName("on_demand_tasks")
@@ -53,14 +55,18 @@ class OnDemandTasksView(QWidget):
         self.sharedLogLayout.addWidget(self.sharedLogTitle)
         self.sharedLogLayout.addWidget(self.textBrowser_shared_log)
 
-        self.gridLayout.setColumnStretch(0, 5)
-        self.gridLayout.setColumnStretch(1, 2)
-        self.gridLayout.setColumnMinimumWidth(1, 246)
+        # Keep the same 3-column skeleton as periodic page:
+        # left functional area spans col0+col1, right shared sidebar is col2.
+        self.gridLayout.setColumnStretch(0, 2)
+        self.gridLayout.setColumnStretch(1, 3)
+        self.gridLayout.setColumnStretch(2, 2)
+        self.gridLayout.setColumnMinimumWidth(2, 246)
         self.gridLayout.setRowStretch(0, 1)
         self.gridLayout.setRowStretch(1, 0)
+        self.gridLayout.setRowMinimumHeight(1, 0)
 
-        self.gridLayout.addWidget(self.leftPane, 0, 0, 2, 1)
-        self.gridLayout.addWidget(self.sharedLogCard, 0, 1, 2, 1)
+        self.gridLayout.addWidget(self.leftPane, 0, 0, 2, 2)
+        self.gridLayout.addWidget(self.sharedLogCard, 0, 2, 2, 1)
         self.sharedLogTitle.setText(self.tr("共享日志"))
         self._external_sidebar_cards = []
         self._right_column_cards = [self.sharedLogCard]
@@ -88,18 +94,20 @@ class OnDemandTasksView(QWidget):
         if len(cards) >= 2:
             self.gridLayout.setRowStretch(0, 1)
             self.gridLayout.setRowStretch(1, 0)
-            self.gridLayout.addWidget(cards[0], 0, 1, 1, 1)
-            self.gridLayout.addWidget(cards[1], 1, 1, 1, 1)
+            self.gridLayout.setRowMinimumHeight(1, self.PERIODIC_SECOND_ROW_MIN_HEIGHT)
+            self.gridLayout.addWidget(cards[0], 0, 2, 1, 1)
+            self.gridLayout.addWidget(cards[1], 1, 2, 1, 1)
             for card in cards[2:]:
-                self.gridLayout.addWidget(card, 1, 1, 1, 1)
+                self.gridLayout.addWidget(card, 1, 2, 1, 1)
             return
 
         self.gridLayout.setRowStretch(0, 1)
         self.gridLayout.setRowStretch(1, 1)
-        self.gridLayout.addWidget(cards[0], 0, 1, 2, 1)
+        self.gridLayout.setRowMinimumHeight(1, 0)
+        self.gridLayout.addWidget(cards[0], 0, 2, 2, 1)
 
     def show_external_sidebar_cards(self, cards: list[QWidget]):
-        self.gridLayout.setColumnMinimumWidth(1, 0)
+        self.gridLayout.setColumnMinimumWidth(2, 246)
         self._clear_right_column_layout()
         self._external_sidebar_cards = list(cards)
         self._mount_right_cards(self._external_sidebar_cards)
@@ -111,7 +119,8 @@ class OnDemandTasksView(QWidget):
         return cards
 
     def show_internal_sidebar(self):
-        self.gridLayout.setColumnMinimumWidth(1, 246)
+        self.gridLayout.setColumnMinimumWidth(2, 246)
+        self.gridLayout.setRowMinimumHeight(1, 0)
         self._clear_right_column_layout()
         self._external_sidebar_cards = []
         self._mount_right_cards([self.sharedLogCard])

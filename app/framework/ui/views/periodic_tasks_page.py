@@ -190,7 +190,7 @@ class PeriodicTasksPage(QFrame, BaseInterface):
             if widget is None or not widget.isVisible():
                 continue
             end_pos = widget.pos()
-            start_pos = QPoint(end_pos.x() - (offset_step + index * 6), end_pos.y())
+            start_pos = QPoint(end_pos.x(), end_pos.y() + (offset_step + index * 6))
             widget.move(start_pos)
 
             animation = QPropertyAnimation(widget, b"pos", self)

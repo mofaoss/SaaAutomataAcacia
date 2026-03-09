@@ -76,6 +76,51 @@ def _resolve_display_image_dir() -> Path:
     return PROJECT_ROOT / "resources" / "display"
 
 
+def _resolve_display_icon_dir() -> Path:
+    candidates = []
+
+    compiled_info = globals().get("__compiled__")
+    containing_dir = getattr(compiled_info, "containing_dir", None)
+    if containing_dir:
+        candidates.append(Path(containing_dir))
+
+    meipass = getattr(sys, "_MEIPASS", None)
+    if meipass:
+        candidates.append(Path(meipass))
+
+    nuitka_onefile_temp = os.environ.get("NUITKA_ONEFILE_TEMP")
+    if nuitka_onefile_temp:
+        candidates.append(Path(nuitka_onefile_temp))
+
+    candidates.append(Path(getattr(sys, "_MEIPASS", PROJECT_ROOT)))
+
+    if getattr(sys, "frozen", False):
+        try:
+            candidates.append(Path(sys.executable).resolve().parent)
+        except Exception:
+            pass
+
+    try:
+        candidates.append(Path(sys.argv[0]).resolve().parent)
+    except Exception:
+        pass
+
+    candidates.append(Path.cwd())
+
+    seen = set()
+    for base in candidates:
+        key = str(base)
+        if key in seen:
+            continue
+        seen.add(key)
+
+        root_icons_dir = base / "resources" / "icons"
+        if root_icons_dir.exists() and root_icons_dir.is_dir():
+            return root_icons_dir
+
+    return PROJECT_ROOT / "resources" / "icons"
+
+
 class BannerWidget(QWidget):
     """Banner widget"""
 
@@ -176,6 +221,7 @@ class DisplayInterface(ScrollArea, BaseInterface):
         BaseInterface.__init__(self)
         self._is_non_chinese_ui = is_non_chinese_ui_language()
         self.basedir = str(_resolve_display_image_dir())
+        self.icondir = str(_resolve_display_icon_dir())
         self.windowTrackingQuickSwitchCard = None
 
         self._setup_ui()
@@ -237,7 +283,7 @@ class DisplayInterface(ScrollArea, BaseInterface):
 
         # 1. 设置卡片
         quick_jump.addSampleCard(
-            icon=os.path.join(self.basedir, "setting.svg"),
+            icon=os.path.join(self.icondir, "setting.svg"),
             title="Settings" if self._is_non_chinese_ui else "核心设置",
             content="Please confirm the settings when you first download" if self._is_non_chinese_ui else self.tr("首次下载，请先确认"),
             routeKey="settingInterface",
@@ -246,7 +292,7 @@ class DisplayInterface(ScrollArea, BaseInterface):
 
         # 2. 日常卡片
         quick_jump.addSampleCard(
-            icon=os.path.join(self.basedir, "play.svg"),
+            icon=os.path.join(self.icondir, "play.svg"),
             title="Start Daily" if self._is_non_chinese_ui else "开始日常",
             content="Acacia, Let's go!" if self._is_non_chinese_ui else self.tr("安卡希雅，Let's go!"),
             routeKey="Home-Start-Now",
@@ -255,7 +301,7 @@ class DisplayInterface(ScrollArea, BaseInterface):
 
         # 3. 教程卡片
         quick_jump.addSampleCard(
-            icon=os.path.join(self.basedir, "explain.svg"),
+            icon=os.path.join(self.icondir, "explain.svg"),
             title="Tutorial" if self._is_non_chinese_ui else "使用教程",
             content="Read the guide to get started quickly" if self._is_non_chinese_ui else self.tr("查看教程，答疑解惑"),
             routeKey="Help-Interface",
@@ -265,7 +311,7 @@ class DisplayInterface(ScrollArea, BaseInterface):
         # 4. 隐身模式开关卡片
         stealth_on = bool(config.windowTrackingInput.value) and int(config.windowTrackingAlpha.value) == 1
         self.windowTrackingQuickSwitchCard = quick_jump.addSampleCard_Switch(
-            icon=os.path.join(self.basedir, "electronics.svg"),
+            icon=os.path.join(self.icondir, "electronics.svg"),
             title="Stealth Mode" if self._is_non_chinese_ui else "隐身模式",
             content="Make the game completely invisible in the background" if self._is_non_chinese_ui else self.tr("游戏隐身，完全后台"),
             checked=stealth_on,

@@ -85,7 +85,7 @@ class OnDemandTasksPage(QFrame, BaseInterface):
             return
 
         end_pos = left_pane.pos()
-        start_pos = QPoint(end_pos.x() - 26, end_pos.y())
+        start_pos = QPoint(end_pos.x(), end_pos.y() + 26)
         left_pane.move(start_pos)
 
         animation = QPropertyAnimation(left_pane, b"pos", self)
