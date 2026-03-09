@@ -1,0 +1,100 @@
+# coding:utf-8
+
+from app.framework.application.tasks.task_policy import PRIMARY_TASK_ID
+
+
+# Single source of truth for periodic task metadata and default activation.
+PERIODIC_TASK_SPECS = [
+    {
+        "id": PRIMARY_TASK_ID,
+        "zh_name": "自动登录",
+        "en_name": "Auto Login",
+        "ui_page_index": 0,
+        "option_key": "CheckBox_entry_1",
+        "requires_home_sync": False,
+        "is_mandatory": True,
+        "force_first": True,
+        "default_activation_config": [{"type": "daily", "day": 0, "time": "00:00", "max_runs": 1}],
+    },
+    {
+        "id": "task_supplies",
+        "zh_name": "领取福利",
+        "en_name": "Collect Supplies",
+        "ui_page_index": 1,
+        "option_key": "CheckBox_stamina_2",
+        "default_activation_config": [{"type": "daily", "day": 0, "time": "00:00", "max_runs": 1}],
+    },
+    {
+        "id": "task_shop",
+        "zh_name": "商店购买",
+        "en_name": "Shop",
+        "ui_page_index": 2,
+        "option_key": "CheckBox_shop_3",
+        "default_activation_config": [{"type": "daily", "day": 0, "time": "00:00", "max_runs": 1}],
+    },
+    {
+        "id": "task_stamina",
+        "zh_name": "体力扫荡",
+        "en_name": "Use Stamina",
+        "ui_page_index": 3,
+        "option_key": "CheckBox_use_power_4",
+        "default_activation_config": [{"type": "daily", "day": 0, "time": "00:00", "max_runs": 1}],
+    },
+    {
+        "id": "task_shards",
+        "zh_name": "角色碎片",
+        "en_name": "Character Shards",
+        "ui_page_index": 4,
+        "option_key": "CheckBox_person_5",
+        "default_activation_config": [{"type": "daily", "day": 0, "time": "00:00", "max_runs": 1}],
+    },
+    {
+        "id": "task_chasm",
+        "zh_name": "精神拟境",
+        "en_name": "Neural Sim",
+        "ui_page_index": 5,
+        "option_key": "CheckBox_chasm_6",
+        "default_activation_config": [{"type": "weekly", "day": 1, "time": "10:00", "max_runs": 1}],
+    },
+    {
+        "id": "task_reward",
+        "zh_name": "收取奖励",
+        "en_name": "Claim Rewards",
+        "ui_page_index": 6,
+        "option_key": "CheckBox_reward_7",
+        "default_activation_config": [{"type": "daily", "day": 0, "time": "00:00", "max_runs": 1}],
+    },
+    {
+        "id": "task_operation",
+        "zh_name": "常规训练",
+        "en_name": "Operation",
+        "ui_page_index": 7,
+        "option_key": "CheckBox_operation_8",
+        "default_activation_config": [{"type": "daily", "day": 0, "time": "00:00", "max_runs": 1}],
+    },
+    {
+        "id": "task_weapon",
+        "zh_name": "武器升级",
+        "en_name": "Weapon Upgrade",
+        "ui_page_index": 8,
+        "option_key": "CheckBox_weapon_8",
+        "default_activation_config": [{"type": "daily", "day": 0, "time": "00:00", "max_runs": 1}],
+    },
+    {
+        "id": "task_shard_exchange",
+        "zh_name": "信源碎片",
+        "en_name": "Shard Exchange",
+        "ui_page_index": 9,
+        "option_key": "CheckBox_shard_exchange_9",
+        "default_activation_config": [{"type": "daily", "day": 0, "time": "00:00", "max_runs": 1}],
+    },
+    {
+        "id": "task_close_game",
+        "zh_name": "执行退出",
+        "en_name": "Execute Exit",
+        "ui_page_index": 10,
+        "option_key": "CheckBox_close_game_10",
+        "requires_home_sync": False,
+        "default_activation_config": [{"type": "daily", "day": 0, "time": "00:00", "max_runs": 1}],
+    },
+]

@@ -264,13 +264,13 @@ class MainWindow(FluentWindow, BaseInterface):
         self._localize_widget_if_needed(self.displayInterface)
 
     def _create_home_interface(self):
-        from .periodic_tasks import PeriodicTasks
-        self.homeInterface = PeriodicTasks('Periodic Tasks', self)
+        from .periodic_tasks_page import PeriodicTasksPage
+        self.homeInterface = PeriodicTasksPage('Periodic Tasks', self)
         self._localize_widget_if_needed(self.homeInterface)
 
     def _create_additional_interface(self):
-        from .on_demand_tasks import OnDemandTasks
-        self.additionalInterface = OnDemandTasks('On Demand Tasks', self)
+        from .on_demand_tasks_page import OnDemandTasksPage
+        self.additionalInterface = OnDemandTasksPage('On Demand Tasks', self)
         self._localize_widget_if_needed(self.additionalInterface)
 
     def _create_help_interface(self):

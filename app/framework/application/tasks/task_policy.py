@@ -1,0 +1,4 @@
+# coding:utf-8
+
+PRIMARY_TASK_ID = "task_login"
+MANDATORY_PERIODIC_TASK_IDS = {PRIMARY_TASK_ID}

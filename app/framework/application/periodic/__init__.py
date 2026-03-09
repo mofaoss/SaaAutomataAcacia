@@ -12,6 +12,7 @@ from .periodic_orchestration import (
 from .periodic_settings_usecase import PeriodicSettingsUseCase
 from .periodic_ui_binding_usecase import PeriodicUiBindingUseCase
 from .periodic_dispatcher import PeriodicDispatcher
+from .on_demand_runner import OnDemandRunner, OnDemandState, SingleTaskToggle
 
 __all__ = [
     "PeriodicController",
@@ -28,4 +29,7 @@ __all__ = [
     "PeriodicSettingsUseCase",
     "PeriodicUiBindingUseCase",
     "PeriodicDispatcher",
+    "SingleTaskToggle",
+    "OnDemandRunner",
+    "OnDemandState",
 ]

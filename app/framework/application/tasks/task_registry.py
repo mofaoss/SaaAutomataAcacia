@@ -17,22 +17,38 @@ from app.features.modules.upgrade.usecase.weapon_upgrade_usecase import WeaponUp
 from app.features.modules.use_power.usecase.use_power_usecase import UsePowerModule
 from app.features.modules.water_bomb.usecase.water_bomb_usecase import WaterBombModule
 
-from app.framework.application.tasks.daily_policy import PRIMARY_TASK_ID
 from app.framework.application.tasks.task_definition import TaskDefinition, TaskDomain
+from app.framework.application.tasks.periodic_task_specs import PERIODIC_TASK_SPECS
 
+
+_PERIODIC_MODULE_CLASS_BY_TASK_ID = {
+    "task_login": EnterGameModule,
+    "task_supplies": CollectSuppliesModule,
+    "task_shop": ShoppingModule,
+    "task_stamina": UsePowerModule,
+    "task_shards": PersonModule,
+    "task_chasm": ChasmModule,
+    "task_reward": GetRewardModule,
+    "task_operation": OperationModule,
+    "task_weapon": WeaponUpgradeModule,
+    "task_shard_exchange": ShardExchangeModule,
+    "task_close_game": CloseGameModule,
+}
 
 DAILY_TASKS: list[TaskDefinition] = [
-    TaskDefinition(PRIMARY_TASK_ID, EnterGameModule, "自动登录", "Auto Login", TaskDomain.DAILY, ui_page_index=0, option_key="CheckBox_entry_1", requires_home_sync=False, is_mandatory=True, force_first=True),
-    TaskDefinition("task_supplies", CollectSuppliesModule, "领取福利", "Collect Supplies", TaskDomain.DAILY, ui_page_index=1, option_key="CheckBox_stamina_2"),
-    TaskDefinition("task_shop", ShoppingModule, "商店购买", "Shop", TaskDomain.DAILY, ui_page_index=2, option_key="CheckBox_shop_3"),
-    TaskDefinition("task_stamina", UsePowerModule, "体力扫荡", "Use Stamina", TaskDomain.DAILY, ui_page_index=3, option_key="CheckBox_use_power_4"),
-    TaskDefinition("task_shards", PersonModule, "角色碎片", "Character Shards", TaskDomain.DAILY, ui_page_index=4, option_key="CheckBox_person_5"),
-    TaskDefinition("task_chasm", ChasmModule, "精神拟境", "Neural Sim", TaskDomain.DAILY, ui_page_index=5, option_key="CheckBox_chasm_6"),
-    TaskDefinition("task_reward", GetRewardModule, "收取奖励", "Claim Rewards", TaskDomain.DAILY, ui_page_index=6, option_key="CheckBox_reward_7"),
-    TaskDefinition("task_operation", OperationModule, "常规训练", "Operation", TaskDomain.DAILY, ui_page_index=7, option_key="CheckBox_operation_8"),
-    TaskDefinition("task_weapon", WeaponUpgradeModule, "武器升级", "Weapon Upgrade", TaskDomain.DAILY, ui_page_index=8, option_key="CheckBox_weapon_8"),
-    TaskDefinition("task_shard_exchange", ShardExchangeModule, "信源碎片", "Shard Exchange", TaskDomain.DAILY, ui_page_index=9, option_key="CheckBox_shard_exchange_9"),
-    TaskDefinition("task_close_game", CloseGameModule, "执行退出", "Execute Exit", TaskDomain.DAILY, ui_page_index=10, option_key="CheckBox_close_game_10", requires_home_sync=False),
+    TaskDefinition(
+        id=spec["id"],
+        module_class=_PERIODIC_MODULE_CLASS_BY_TASK_ID[spec["id"]],
+        zh_name=spec["zh_name"],
+        en_name=spec["en_name"],
+        domain=TaskDomain.DAILY,
+        ui_page_index=spec.get("ui_page_index"),
+        option_key=spec.get("option_key"),
+        requires_home_sync=spec.get("requires_home_sync", True),
+        is_mandatory=spec.get("is_mandatory", False),
+        force_first=spec.get("force_first", False),
+    )
+    for spec in PERIODIC_TASK_SPECS
 ]
 
 ADDITIONAL_TASKS: list[TaskDefinition] = [

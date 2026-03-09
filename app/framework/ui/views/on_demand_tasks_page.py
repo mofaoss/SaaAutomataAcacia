@@ -19,10 +19,11 @@ from app.features.modules.fishing.ui.subtask import SubTask
 from app.framework.infra.logging.gui_logger import setup_ui_logger
 from app.framework.core.event_bus.global_task_bus import global_task_bus
 from app.framework.application.modules import HostContext, get_on_demand_module_specs
-from app.framework.application.scheduling.on_demand_runner import OnDemandRunner
+from app.framework.application.periodic.on_demand_runner import OnDemandRunner
 
 
 class OnDemandTasksPage(QFrame, BaseInterface):
+    """On-demand task host: a single-run specialization over periodic scheduling primitives."""
 
     def __init__(self, text: str, parent=None):
         super().__init__(parent)

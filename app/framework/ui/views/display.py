@@ -60,15 +60,19 @@ def _resolve_display_image_dir() -> Path:
             continue
         seen.add(key)
 
-        framework_dir = base / "app" / "framework" / "ui" / "resources" / "images" / "display"
+        framework_dir = base / "app" / "framework" / "ui" / "resources" / "display"
         if framework_dir.exists() and framework_dir.is_dir():
             return framework_dir
+
+        framework_legacy_dir = base / "app" / "framework" / "ui" / "resources" / "images" / "display"
+        if framework_legacy_dir.exists() and framework_legacy_dir.is_dir():
+            return framework_legacy_dir
 
         legacy_dir = base / "app" / "presentation" / "resources" / "images" / "display"
         if legacy_dir.exists() and legacy_dir.is_dir():
             return legacy_dir
 
-    return Path("app") / "framework" / "ui" / "resources" / "images" / "display"
+    return Path("app") / "framework" / "ui" / "resources" / "display"
 
 
 class BannerWidget(QWidget):
@@ -110,8 +114,11 @@ class BannerWidget(QWidget):
             if not pixmap.isNull():
                 return pixmap
 
-        fallback = self.basedir / "background_1.jpg"
-        return QPixmap(str(fallback))
+        for fallback_name in ("bg1.jpg", "101.jpg", "background_1.jpg"):
+            fallback = self.basedir / fallback_name
+            if fallback.exists():
+                return QPixmap(str(fallback))
+        return QPixmap()
 
     def _get_banner_candidates(self):
         if not self.basedir.exists() or not self.basedir.is_dir():

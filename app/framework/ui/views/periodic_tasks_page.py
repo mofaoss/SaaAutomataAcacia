@@ -30,11 +30,11 @@ from app.framework.infra.logging.gui_logger import setup_ui_logger
 from app.framework.application.periodic.periodic_controller import PeriodicController
 from app.framework.application.periodic.periodic_settings_usecase import PeriodicSettingsUseCase
 from app.framework.application.periodic.periodic_ui_binding_usecase import PeriodicUiBindingUseCase
-from app.framework.application.tasks.daily_policy import PRIMARY_TASK_ID
+from app.framework.application.tasks.task_policy import PRIMARY_TASK_ID
 from app.framework.core.event_bus.global_task_bus import global_task_bus
 from app.framework.application.tasks.task_registry import DAILY_TASK_REGISTRY
 from app.framework.application.periodic.periodic_dispatcher import PeriodicDispatcher
-from app.framework.application.scheduling.single_task_toggle import SingleTaskToggle
+from app.framework.application.periodic.on_demand_runner import SingleTaskToggle
 from app.framework.application.periodic.periodic_orchestration import (
     build_active_schedule_lines,
     collect_checked_task_ids_for_rule,
@@ -68,6 +68,7 @@ def no_select(widget):
 # Controller 层
 # ==========================================
 class PeriodicTasksPage(QFrame, BaseInterface):
+    """Periodic task host: supports scheduled, queue, and manual run strategies."""
 
     def __init__(self, text: str, parent=None):
         super().__init__(parent)

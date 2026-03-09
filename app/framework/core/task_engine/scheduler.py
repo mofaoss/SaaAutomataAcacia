@@ -5,7 +5,7 @@ from typing import Any, Dict, List
 
 from PySide6.QtCore import QObject, QTimer, Signal
 
-from app.framework.application.tasks.daily_policy import MANDATORY_DAILY_TASK_IDS, PRIMARY_TASK_ID
+from app.framework.application.tasks.task_policy import MANDATORY_PERIODIC_TASK_IDS, PRIMARY_TASK_ID
 from app.framework.infra.config.app_config import config
 from app.framework.core.config.daily_sequence import normalize_daily_task_sequence
 from app.framework.core.config.migration import migrate_daily_sequence_schema
@@ -38,7 +38,7 @@ class Scheduler(QObject):
         self._task_sequence_cache = normalize_daily_task_sequence(
             sequence=sequence,
             defaults=defaults,
-            mandatory_task_ids=MANDATORY_DAILY_TASK_IDS,
+            mandatory_task_ids=MANDATORY_PERIODIC_TASK_IDS,
             primary_task_id=PRIMARY_TASK_ID,
         )
         self.save_task_sequence(self._task_sequence_cache, silent=True)
@@ -119,7 +119,7 @@ class Scheduler(QObject):
         return normalize_daily_task_sequence(
             sequence=sequence,
             defaults=defaults,
-            mandatory_task_ids=MANDATORY_DAILY_TASK_IDS,
+            mandatory_task_ids=MANDATORY_PERIODIC_TASK_IDS,
             primary_task_id=PRIMARY_TASK_ID,
         )
 

@@ -33,7 +33,7 @@ from qfluentwidgets import (
     EditableComboBox,
     isDarkTheme,
 )
-from app.framework.application.tasks.daily_policy import PRIMARY_TASK_ID, MANDATORY_DAILY_TASK_IDS
+from app.framework.application.tasks.task_policy import PRIMARY_TASK_ID, MANDATORY_PERIODIC_TASK_IDS
 from app.features.modules.chasm.ui.chasm_periodic_page import ChasmPage
 from app.features.modules.close_game.ui.close_game_periodic_page import CloseGamePage
 from app.features.modules.collect_supplies.ui.collect_supplies_periodic_page import (
@@ -263,7 +263,7 @@ class TaskItemWidget(QWidget):
         self.is_scheduled = False    # 独立记录是否启用了计划
 
         # 标记当前任务是否为强制底座（由注册中心定义）
-        self.is_mandatory = self.task_id in MANDATORY_DAILY_TASK_IDS
+        self.is_mandatory = self.task_id in MANDATORY_PERIODIC_TASK_IDS
 
         layout = QHBoxLayout(self)
         layout.setContentsMargins(4, 4, 4, 4)
