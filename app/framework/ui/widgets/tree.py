@@ -1,6 +1,6 @@
 from PySide6.QtCore import Qt, Signal
-from PySide6.QtWidgets import QTreeWidgetItem, QFrame, QHBoxLayout, QTreeWidgetItemIterator, QScrollArea, QApplication
-from qfluentwidgets import TreeWidget, ScrollArea
+from PySide6.QtWidgets import QTreeWidgetItem, QFrame, QHBoxLayout, QTreeWidgetItemIterator
+from qfluentwidgets import TreeWidget
 
 from app.framework.ui.shared.style_sheet import StyleSheet
 

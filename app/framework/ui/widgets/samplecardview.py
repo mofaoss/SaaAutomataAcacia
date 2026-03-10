@@ -1,7 +1,7 @@
 # coding:utf-8
 from PySide6.QtCore import Qt, QUrl
 from PySide6.QtGui import QDesktopServices
-from PySide6.QtWidgets import QWidget, QFrame, QLabel, QVBoxLayout, QHBoxLayout, QGraphicsOpacityEffect
+from PySide6.QtWidgets import QWidget, QLabel, QVBoxLayout, QHBoxLayout, QGraphicsOpacityEffect
 
 from qfluentwidgets import IconWidget, TextWrap, FlowLayout, CardWidget, FluentIcon, SwitchButton
 from app.framework.infra.events.signal_bus import signalBus

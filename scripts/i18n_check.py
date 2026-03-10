@@ -17,7 +17,7 @@ def _run_step(name: str, cmd: list[str]) -> int:
 
 
 def main() -> int:
-    parser = argparse.ArgumentParser(description="Unified i18n workflow: extract -> normalize -> seed -> audit -> guard")
+    parser = argparse.ArgumentParser(description="Unified i18n workflow: extract -> normalize -> seed -> audit -> ui-sync-check -> guard")
     parser.add_argument("--all", action="store_true", help="Run guard on all files (default: changed files only)")
     args = parser.parse_args()
 
@@ -27,6 +27,7 @@ def main() -> int:
         ("normalize", [py, "scripts/normalize_i18n_data.py"]),
         ("seed-missing", [py, "scripts/seed_i18n_missing.py"]),
         ("audit", [py, "scripts/audit_i18n.py", "--fail-on-issues"]),
+        ("ui-sync-check", [py, "scripts/ui_sync.py", "--audit", "--fail-on-issues"]),
     ]
     guard_cmd = [py, "scripts/i18n_guard.py"]
     if args.all:

@@ -1,0 +1,13 @@
+{
+  "_meta": {
+    "schema_version": 1,
+    "managed_by": "scripts/ui_sync.py"
+  },
+  "text": {},
+  "image": {},
+  "position": {},
+  "match": {
+    "_default": {}
+  },
+  "name": "drink"
+}

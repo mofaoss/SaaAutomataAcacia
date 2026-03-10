@@ -790,12 +790,9 @@ def main() -> int:
         template_meta.update(owner_dynamic_meta.get(owner, {}))
         _save_json(template_meta_path, dict(sorted(template_meta.items(), key=lambda x: x[0])))
 
-        callsite_meta_path = i18n_dir / "callsite_meta.json"
-        callsite_meta = _load_json(callsite_meta_path)
-        if not isinstance(callsite_meta, dict):
-            callsite_meta = {}
-        callsite_meta.update(owner_callsite_meta.get(owner, {}))
-        _save_json(callsite_meta_path, dict(sorted(callsite_meta.items(), key=lambda x: x[0])))
+        # callsite metadata is intentionally not persisted as a standalone i18n
+        # artifact anymore; source_map + template_meta already cover extraction
+        # governance needs while reducing per-owner JSON clutter.
 
         updated_owners += 1
 

@@ -1,5 +1,6 @@
 import functools
 import math
+import re
 import threading
 import time
 from datetime import datetime, timedelta
@@ -20,6 +21,7 @@ from app.framework.infra.automation.input import Input
 from app.framework.infra.automation.screenshot import Screenshot
 from app.framework.infra.vision.ocr_service import run_ocr
 from app.framework.i18n import _
+from app.framework.ui_resources import ModuleContext, UIDefinition, UIReference, UIResolver, UIResolveError, U
 
 
 def atoms(func):
@@ -53,6 +55,7 @@ class Automation:
     _click_verify_second_delay = 0.2
     _click_verify_change_threshold = 1.0
     _click_verify_roi_padding = 12
+    _ui_id_pattern = re.compile(r"^[A-Za-z0-9_.-]+$")
 
     def __init__(self, window_title, window_class, logger):
         """
@@ -82,8 +85,190 @@ class Automation:
         self.is_paused = False
         self.pause_event = threading.Event()  # 用来控制暂停
         self._last_error_log = {}
+        self._ui_resolver = UIResolver()
 
         self._init_input()
+
+    def _resolve_ui_click(self, ref_or_id, **kwargs):
+        if isinstance(ref_or_id, UIReference):
+            ref = UIReference(
+                id=ref_or_id.id,
+                source_file=ref_or_id.source_file,
+                source_line=ref_or_id.source_line,
+                module_name=ref_or_id.module_name,
+                text=ref_or_id.text,
+                image=ref_or_id.image,
+                roi=ref_or_id.roi if "roi" not in kwargs else kwargs.get("roi"),
+                threshold=ref_or_id.threshold if "threshold" not in kwargs else kwargs.get("threshold"),
+                include=ref_or_id.include if "include" not in kwargs else kwargs.get("include"),
+                need_ocr=ref_or_id.need_ocr if "need_ocr" not in kwargs else kwargs.get("need_ocr"),
+                find_type=ref_or_id.find_type if "find_type" not in kwargs else kwargs.get("find_type"),
+                extra={**ref_or_id.extra, **kwargs},
+            )
+        elif isinstance(ref_or_id, UIDefinition):
+            ref = UIReference(
+                id=ref_or_id.id,
+                source_file=ref_or_id.source_file,
+                source_line=ref_or_id.source_line,
+                module_name=ref_or_id.module_name,
+                text=ref_or_id.content if isinstance(ref_or_id.content, str) and ref_or_id.kind == "text" else None,
+                image=ref_or_id.image,
+                roi=ref_or_id.roi if "roi" not in kwargs else kwargs.get("roi"),
+                threshold=ref_or_id.threshold if "threshold" not in kwargs else kwargs.get("threshold"),
+                include=ref_or_id.include if "include" not in kwargs else kwargs.get("include"),
+                need_ocr=ref_or_id.need_ocr if "need_ocr" not in kwargs else kwargs.get("need_ocr"),
+                find_type=ref_or_id.find_type if "find_type" not in kwargs else kwargs.get("find_type"),
+                extra={**ref_or_id.extra, **kwargs},
+            )
+        elif isinstance(ref_or_id, str):
+            ref = U(
+                ref_or_id,
+                id=kwargs.pop("id", None),
+                roi=kwargs.pop("roi", None),
+                image=kwargs.pop("image", None),
+                threshold=kwargs.pop("threshold", None),
+                include=kwargs.pop("include", None),
+                need_ocr=kwargs.pop("need_ocr", None),
+                find_type=kwargs.pop("find_type", None),
+                **kwargs,
+            )
+        else:
+            raise UIResolveError("resolve/invalid_reference_type", f"Unsupported UI ref type: {type(ref_or_id).__name__}")
+
+        module_ctx = ModuleContext.from_callsite(skip=3)
+        current_resolution = None
+        if self.first_screenshot is not None and hasattr(self.first_screenshot, "shape") and len(self.first_screenshot.shape) >= 2:
+            h, w = self.first_screenshot.shape[:2]
+            current_resolution = (int(w), int(h))
+        return self._ui_resolver.resolve(
+            ref,
+            module_ctx,
+            environment={"window_title": self.window_title, "window_class": self.window_class},
+            current_resolution=current_resolution,
+        )
+
+    def _maybe_resolve_legacy_target(
+        self,
+        target,
+        find_type: str | None,
+        threshold: float,
+        crop: tuple,
+        include: bool,
+        need_ocr: bool,
+    ):
+        if isinstance(target, (UIReference, UIDefinition)):
+            return self._resolve_ui_click(
+                target,
+                find_type=find_type,
+                threshold=threshold,
+                roi=crop,
+                include=include,
+                need_ocr=need_ocr,
+            )
+        if not isinstance(target, str):
+            return None
+        probe = target.strip()
+        if not probe or not self._ui_id_pattern.fullmatch(probe):
+            return None
+        if probe.lower().endswith((".png", ".jpg", ".jpeg", ".bmp", ".webp")):
+            return None
+        try:
+            return self._resolve_ui_click(
+                U(probe),
+                find_type=find_type,
+                threshold=threshold,
+                roi=crop,
+                include=include,
+                need_ocr=need_ocr,
+            )
+        except UIResolveError:
+            return None
+
+    def click(self, ref_or_id, **kwargs):
+        """
+        High-level UI resource click API.
+        Supports:
+        - self.auto.click(U("开始", id="start", roi=(...)))
+        - self.auto.click("start")
+        """
+        action = kwargs.pop("action", "move_click")
+        offset = kwargs.pop("offset", (0, 0))
+        n = kwargs.pop("n", 3)
+        take_screenshot = kwargs.pop("take_screenshot", False)
+        extract = kwargs.pop("extract", None)
+        is_log = kwargs.pop("is_log", False)
+
+        try:
+            resolved = self._resolve_ui_click(ref_or_id, **kwargs)
+            if is_log:
+                self.logger.debug(
+                    _(f"ui_click_resolved id={resolved.id} type={resolved.find_type} target={resolved.target} trace={';'.join(resolved.trace)}",
+                      msgid="ui_click_resolved_id_type_target_trace")
+                )
+            return self.click_element(
+                target=resolved.target,
+                find_type=resolved.find_type,
+                threshold=resolved.threshold,
+                crop=resolved.roi,
+                take_screenshot=take_screenshot,
+                include=resolved.include,
+                need_ocr=resolved.need_ocr,
+                extract=extract,
+                action=action,
+                offset=offset,
+                n=n,
+                is_log=is_log,
+            )
+        except UIResolveError as exc:
+            self._log_error_throttled(
+                "ui_click_resolve_error",
+                _(f"[UI_RESOLVE_FAILED] code={exc.code} detail={exc} trace={exc.trace}", msgid="ui_resolve_failed_code_detail_trace"),
+            )
+            return False
+
+    def explain(self, ref_or_id, **kwargs):
+        def _layer_from_code(code: str) -> str:
+            if code.startswith("resolve/"):
+                return "resolve"
+            if code.startswith("match/"):
+                return "match"
+            if code.startswith("execute/"):
+                return "execute"
+            return "unknown"
+
+        try:
+            resolved = self._resolve_ui_click(ref_or_id, **kwargs)
+            return {
+                "ok": True,
+                "layer": "resolve",
+                "code": "resolve/success",
+                "id": resolved.id,
+                "module_name": resolved.module_name,
+                "locale": resolved.locale,
+                "target": resolved.target,
+                "text": resolved.text,
+                "image_path": resolved.image_path,
+                "roi": resolved.roi,
+                "threshold": resolved.threshold,
+                "find_type": resolved.find_type,
+                "trace": resolved.trace,
+                "resolution_trace": resolved.resolution_trace,
+                "explain_trace": resolved.explain_trace,
+            }
+        except UIResolveError as exc:
+            return {
+                "ok": False,
+                "layer": _layer_from_code(exc.code),
+                "code": exc.code,
+                "detail": str(exc),
+                "trace": exc.trace,
+            }
+        except Exception as exc:
+            self._log_error_throttled(
+                "ui_click_execute_error",
+                _(f"[UI_EXECUTE_FAILED] {exc}", msgid="ui_execute_failed_exc"),
+            )
+            return False
 
     def _log_error_throttled(self, key, message, interval=2.0, level="error"):
         now = time.time()
@@ -350,7 +535,7 @@ class Automation:
         return self.search_text_in_ocr_results(target_texts, include)
 
     @atoms
-    def find_element(self, target, find_type: str, threshold: float = 0.5, crop: tuple = (0, 0, 1, 1),
+    def find_element(self, target, find_type: str | None = None, threshold: float = 0.5, crop: tuple = (0, 0, 1, 1),
                      take_screenshot=False, include: bool = True, need_ocr: bool = True, extract: list = None,
                      match_method=cv2.TM_SQDIFF_NORMED, is_log=False):
         """
@@ -367,6 +552,31 @@ class Automation:
         :param extract: 是否使截图转换成白底黑字，只有find_type=="text"且需要ocr的时候才生效，[(文字rgb颜色),threshold数值]
         :return: 查找成功返回（top_left,bottom_right），失败返回None
         """
+        resolved = self._maybe_resolve_legacy_target(target, find_type, threshold, crop, include, need_ocr)
+        if resolved is None and (find_type is None or isinstance(target, (UIReference, UIDefinition))):
+            try:
+                resolved = self._resolve_ui_click(
+                    target,
+                    find_type=find_type,
+                    threshold=threshold,
+                    roi=crop,
+                    include=include,
+                    need_ocr=need_ocr,
+                )
+            except UIResolveError as exc:
+                self._log_error_throttled(
+                    "ui_find_resolve_error",
+                    _(f"[UI_RESOLVE_FAILED] code={exc.code} detail={exc} trace={exc.trace}", msgid="ui_resolve_failed_code_detail_trace"),
+                )
+                return None
+        if resolved is not None:
+            target = resolved.target
+            find_type = resolved.find_type
+            threshold = resolved.threshold
+            crop = resolved.roi
+            include = resolved.include
+            need_ocr = resolved.need_ocr
+
         top_left = bottom_right = image_threshold = None
         if take_screenshot:
             # 调用take_screenshot更新self.current_screenshot,self.scale_x,self.scale_y,self.relative_pos
@@ -384,6 +594,8 @@ class Automation:
             else:
                 self._log_error_throttled('find_element_no_current_screenshot', "当前没有current_screenshot,裁切失败")
                 return None
+        if find_type is None:
+            find_type = "text"
         if config.showScreenshot.value:
             signalBus.showScreenshot.emit(self.current_screenshot)
         if find_type in ['image', 'text', 'image_threshold']:
@@ -408,6 +620,37 @@ class Automation:
         else:
             raise ValueError(f"错误的类型{find_type}")
         return None
+
+    def find(self, target, **kwargs):
+        return self.find_element(target, **kwargs)
+
+    def wait_text(
+        self,
+        target,
+        *,
+        timeout: float = 5.0,
+        interval: float = 0.3,
+        crop: tuple = (0, 0, 1, 1),
+        include: bool = True,
+        need_ocr: bool = True,
+        is_log: bool = False,
+    ) -> bool:
+        deadline = time.time() + max(0.1, timeout)
+        while time.time() < deadline:
+            found = self.find_element(
+                target,
+                find_type=None,
+                threshold=0.5,
+                crop=crop,
+                take_screenshot=True,
+                include=include,
+                need_ocr=need_ocr,
+                is_log=is_log,
+            )
+            if found:
+                return True
+            time.sleep(max(0.05, interval))
+        return False
 
     def click_element_with_pos(self, pos, action="move_click", offset=(0, 0), n=3):
         """

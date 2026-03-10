@@ -1,5 +1,3 @@
-import os
-
 from PySide6.QtWidgets import QFrame, QGridLayout
 from qfluentwidgets import TextBrowser
 
