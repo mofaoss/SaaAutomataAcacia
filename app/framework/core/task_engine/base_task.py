@@ -71,6 +71,8 @@ class BaseTask:
                 self.auto = automation
             elif callable(automation_factory):
                 self.auto = automation_factory()
+            elif name is not None:
+                self.auto = self._build_default_automation()
             else:
                 raise ValueError("automation_factory is required when automation is not provided")
 
@@ -83,3 +85,10 @@ class BaseTask:
         except Exception as e:
             self.logger.error(_(f'Failed to initialize auto: {e}', msgid='failed_to_initialize_auto_e'))
             return False
+
+    def _build_default_automation(self):
+        from app.framework.infra.automation.automation import Automation
+        from app.framework.infra.config.app_config import config
+
+        game_name = "尘白禁区" if config.server_interface.value != 2 else "Snowbreak: Containment Zone"
+        return Automation(game_name, "UnrealWindow", self.logger)

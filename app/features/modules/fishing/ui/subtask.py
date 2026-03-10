@@ -7,6 +7,7 @@ from PySide6.QtWidgets import QDialog, QLabel, QVBoxLayout
 from app.framework.i18n import _, qt
 
 from app.framework.infra.config.app_config import config
+from app.framework.infra.automation.automation import Automation
 from app.framework.core.task_engine.threads import ModuleTaskThread
 from app.framework.core.task_engine.base_task import BaseTask
 
@@ -65,10 +66,20 @@ class AdjustColor(QThread, BaseTask):
         # 将弹窗信号绑定到当前实例的方法（因该实例在主线程被创建，故此槽函数在主线程执行）
         self._show_ui_signal.connect(self._show_dialog)
 
+    @staticmethod
+    def _build_default_automation():
+        game_name = "尘白禁区" if config.server_interface.value != 2 else "Snowbreak: Containment Zone"
+        return Automation(game_name, "UnrealWindow", logger)
+
     def run(self):
-        if not self.init_auto('game'):
+        if not self.init_auto(automation_factory=self._build_default_automation):
             self.logger.error(_("初始化自动化失败，无法打开颜色校准", msgid="init_automation_failed_unable_to_open_color_calibration"))
             return
+        if self.auto is not None:
+            if hasattr(self.auto, "start"):
+                self.auto.start()
+            if hasattr(self.auto, "resume"):
+                self.auto.resume()
         self.auto.take_screenshot()
         img_np = self.auto.get_crop_form_first_screenshot(crop=(1130 / 1920, 240 / 1080, 1500 / 1920, 570 / 1080), is_resize=False)
 
