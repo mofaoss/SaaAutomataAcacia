@@ -745,14 +745,14 @@
     "owner_scope": "framework",
     "owner_module": null,
     "file_path": "app/framework/core/task_engine/threads.py",
-    "line": 399,
+    "line": 410,
     "col": 32,
     "function_name": "stop",
     "class_name": "ModuleTaskThread",
     "context": "log",
     "source_language": "en",
     "template_hash": "9a68065526f07d6ca9629b8021ac5088ebaaf558",
-    "callsite_key": "app/framework/core/task_engine/threads.py:399:32",
+    "callsite_key": "app/framework/core/task_engine/threads.py:410:32",
     "is_runtime_visible": true,
     "mixed_source_template": false
   },
@@ -1541,6 +1541,34 @@
     "is_runtime_visible": true,
     "mixed_source_template": false
   },
+  "framework.log.subtask_cleanup_failed_while_restoring_window_state": {
+    "kind": "dynamic_template",
+    "template_id": "subtask_cleanup_failed_while_restoring_window_state",
+    "msgid": "subtask_cleanup_failed_while_restoring_window_state",
+    "source_template": "Subtask cleanup failed while restoring window state: {error}",
+    "fields": [
+      "error"
+    ],
+    "field_details": {
+      "error": {
+        "format_spec": "",
+        "conversion": ""
+      }
+    },
+    "owner_scope": "framework",
+    "owner_module": null,
+    "file_path": "app/framework/core/task_engine/threads.py",
+    "line": 447,
+    "col": 20,
+    "function_name": "run",
+    "class_name": "ModuleTaskThread",
+    "context": "log",
+    "source_language": "en",
+    "template_hash": "a8f9a8ea5d0561766743bd18fc0c89be39b9668f",
+    "callsite_key": "app/framework/core/task_engine/threads.py:447:20",
+    "is_runtime_visible": true,
+    "mixed_source_template": false
+  },
   "framework.log.subtask_e": {
     "kind": "dynamic_template",
     "template_id": "3edd0b79ee2e4337",
@@ -1810,6 +1838,39 @@
     "source_language": "en",
     "template_hash": "8bf35a1c8db1de501217cba13ee848a2af72c5dc",
     "callsite_key": "app/framework/core/task_engine/threads.py:290:28",
+    "is_runtime_visible": true,
+    "mixed_source_template": false
+  },
+  "framework.log.task_skipped_reason": {
+    "kind": "dynamic_template",
+    "template_id": "task_skipped_reason",
+    "msgid": "task_skipped_reason",
+    "source_template": "Task skipped: {task_name}, reason={reason}",
+    "fields": [
+      "task_name",
+      "reason"
+    ],
+    "field_details": {
+      "task_name": {
+        "format_spec": "",
+        "conversion": ""
+      },
+      "reason": {
+        "format_spec": "",
+        "conversion": ""
+      }
+    },
+    "owner_scope": "framework",
+    "owner_module": null,
+    "file_path": "app/framework/core/task_engine/threads.py",
+    "line": 426,
+    "col": 20,
+    "function_name": "run",
+    "class_name": "ModuleTaskThread",
+    "context": "log",
+    "source_language": "en",
+    "template_hash": "0aa69efa6c933bed2e66ab5fd05c00ba7fafdbd9",
+    "callsite_key": "app/framework/core/task_engine/threads.py:426:20",
     "is_runtime_visible": true,
     "mixed_source_template": false
   },
@@ -2592,39 +2653,6 @@
     "source_language": "en",
     "template_hash": "9a1c1f1e4af63ac005480c794a6ac20621b223ed",
     "callsite_key": "app/framework/core/task_engine/threads.py:325:30",
-    "is_runtime_visible": true,
-    "mixed_source_template": false
-  },
-  "framework.ui.task_skipped_reason": {
-    "kind": "dynamic_template",
-    "template_id": "task_skipped_reason",
-    "msgid": "task_skipped_reason",
-    "source_template": "Task skipped: {task_name}, reason={reason}",
-    "fields": [
-      "task_name",
-      "reason"
-    ],
-    "field_details": {
-      "task_name": {
-        "format_spec": "",
-        "conversion": ""
-      },
-      "reason": {
-        "format_spec": "",
-        "conversion": ""
-      }
-    },
-    "owner_scope": "framework",
-    "owner_module": null,
-    "file_path": "app/framework/core/task_engine/threads.py",
-    "line": 303,
-    "col": 28,
-    "function_name": "run",
-    "class_name": "TaskQueueThread",
-    "context": "ui",
-    "source_language": "en",
-    "template_hash": "0aa69efa6c933bed2e66ab5fd05c00ba7fafdbd9",
-    "callsite_key": "app/framework/core/task_engine/threads.py:303:28",
     "is_runtime_visible": true,
     "mixed_source_template": false
   },

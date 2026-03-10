@@ -235,7 +235,15 @@ class OnDemandTasksPage(QFrame, BaseInterface):
                 self._get_task_metadata().get(task_id, {}).get("module_class")
             ),
             get_logger=lambda task_id: self.task_loggers.get(task_id, self.logger),
-            build_thread=lambda module_class, logger: self.module_thread_cls(module_class, logger_instance=logger),
+            build_thread=lambda task_id, module_class, logger: self.module_thread_cls(
+                module_class,
+                logger_instance=logger,
+                task_id=task_id,
+                task_name=self._ui_text(
+                    self._get_task_metadata().get(task_id, {}).get("zh_name", task_id),
+                    self._get_task_metadata().get(task_id, {}).get("en_name", task_id),
+                ),
+            ),
             on_thread_state_changed=self._sync_all_ui_state,
         )
 

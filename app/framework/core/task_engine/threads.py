@@ -372,13 +372,24 @@ class ModuleTaskThread(QThread):
 
     is_running = Signal(bool)
 
-    def __init__(self, module, logger_instance, runtime_config=None):
+    def __init__(self, module, logger_instance, runtime_config=None, task_id: str | None = None, task_name: str | None = None):
         super().__init__()
         self.logger = logger_instance
         self.runtime_config = runtime_config or config
         self.session = RuntimeAutomationSession(self.logger)
+        self.task_id = task_id
+        self.task_name = task_name
         self.module = None
         self._prepare_module(module)
+
+    def _resolve_task_name(self) -> str:
+        if self.task_name:
+            return self.task_name
+        if self.task_id:
+            return self.task_id
+        if self.module is not None:
+            return self.module.__class__.__name__
+        return "on_demand_task"
 
     def _prepare_module(self, module):
         if not self.session.prepare():
@@ -408,11 +419,36 @@ class ModuleTaskThread(QThread):
             self.module.run()
         except Exception as e:
             self.session.stop_ocr()
-            self.logger.warning(_(f"SubTask：{e}"))
+            task_name = self._resolve_task_name()
+            reason = TaskQueueThread._normalize_reason(str(e))
+            if TaskQueueThread._is_controlled_stop_exception(e):
+                self.logger.info(
+                    _(
+                        "Task skipped: {task_name}, reason={reason}",
+                        msgid="task_skipped_reason",
+                        task_name=task_name,
+                        reason=reason or "stopped_by_user",
+                    )
+                )
+            else:
+                self.logger.error(
+                    _(
+                        "Task failed: {task_name}, reason={reason}",
+                        msgid="task_failed_reason",
+                        task_name=task_name,
+                        reason=reason or "unknown",
+                    )
+                )
         finally:
             try:
                 self.session.stop()
             except Exception as stop_error:
-                self.logger.warning(_(f"SubTask结束时恢复窗口位置失败：{stop_error}"))
+                self.logger.warning(
+                    _(
+                        "Subtask cleanup failed while restoring window state: {error}",
+                        msgid="subtask_cleanup_failed_while_restoring_window_state",
+                        error=str(stop_error),
+                    )
+                )
             self.is_running.emit(False)
 

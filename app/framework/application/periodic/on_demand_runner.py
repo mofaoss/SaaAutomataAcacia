@@ -49,7 +49,7 @@ class OnDemandRunner:
         request_global_stop: Callable[[], None],
         get_module_class: Callable[[str], Optional[type]],
         get_logger: Callable[[str], object],
-        build_thread: Callable[[type, object], object],
+        build_thread: Callable[[str, type, object], object],
         on_thread_state_changed: Callable[[bool], None],
     ):
         def _start_local(selected_task_id: str):
@@ -58,7 +58,7 @@ class OnDemandRunner:
                 return
 
             specific_logger = get_logger(selected_task_id)
-            thread = build_thread(module_class, specific_logger)
+            thread = build_thread(selected_task_id, module_class, specific_logger)
             thread.is_running.connect(on_thread_state_changed)
             thread.start()
 
