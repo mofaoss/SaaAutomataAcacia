@@ -3,8 +3,8 @@ from __future__ import annotations
 from PySide6.QtCore import Qt
 from qfluentwidgets import BodyLabel, InfoBar, InfoBarPosition, ProgressBar
 
-from app.framework.ui.shared.text import ui_text
 from app.features.utils.network import calculate_time_difference, get_date_from_api
+from app.framework.i18n import tr
 
 
 class EventTipsUseCase:
@@ -29,8 +29,8 @@ class EventTipsUseCase:
             return tips_dic
 
         InfoBar.error(
-            title=ui_text("活动日程更新失败", "Failed to update event schedule"),
-            content=ui_text("本地没有存储信息且未获取到url", "No local information stored and no URL fetched"),
+            title=tr("module.event_tips.legacy.5c1e67a3aca3", fallback="Failed to update event schedule"),
+            content=tr("module.event_tips.legacy.566bc31ba4f4", fallback="No local information stored and no URL fetched"),
             orient=Qt.Orientation.Horizontal,
             isClosable=True,
             position=InfoBarPosition.TOP_RIGHT,
@@ -45,8 +45,7 @@ class EventTipsUseCase:
             return
 
         if self.settings_usecase.is_log_enabled():
-            logger.info(ui_text("获取活动日程成功", "Successfully fetched event schedule"))
-
+            logger.info(tr("module.event_tips.legacy.1ba446845b7f", fallback="Successfully fetched event schedule"))
         normalized = {key: calculate_time_difference(value) for key, value in tips_dic.items()}
         max_total_days = max(
             (
@@ -119,4 +118,4 @@ class EventTipsActions:
                 url=url,
             )
         except Exception as e:
-            self._logger.error(ui_text(f"更新控件出错：{e}", f"Error occurred while updating controls: {e}"))
+            self._logger.error(tr("framework.legacy.b2f8257d8b77", fallback=f"Error occurred while updating controls: {e}"))

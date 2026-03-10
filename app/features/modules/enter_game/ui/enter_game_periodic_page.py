@@ -11,6 +11,7 @@ from qfluentwidgets import (
 
 from app.framework.infra.runtime.paths import PROJECT_ROOT
 from app.framework.ui.views.periodic_base import ModulePageBase
+from app.framework.i18n import tr
 
 
 class EnterGamePage(ModulePageBase):

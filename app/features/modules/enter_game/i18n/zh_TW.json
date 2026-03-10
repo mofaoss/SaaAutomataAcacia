@@ -1,0 +1,5 @@
+{
+  "module.enter_game.legacy.fc3cf53d556a": "failed to resolve launch arguments",
+  "module.enter_game.legacy.22bfd52ce240": "检测到已由程序启动的游戏进程仍在运行，跳过重复启动",
+  "module.enter_game.legacy.f80650f28a54": "游戏窗口已存在"
+}

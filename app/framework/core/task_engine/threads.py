@@ -8,7 +8,7 @@ from PySide6.QtCore import QThread, Signal
 
 from app.framework.infra.config.app_config import config, is_non_chinese_ui_language
 from app.framework.core.task_engine.runtime_session import RuntimeAutomationSession
-from app.framework.ui.shared.text import ui_text
+from app.framework.i18n import tr
 
 
 class TaskQueueThread(QThread):
@@ -45,12 +45,16 @@ class TaskQueueThread(QThread):
         self._is_running = False
         if reason:
             self._interrupted_reason = reason
-            self.logger.warning(ui_text(f"检测到中断，停止自动任务：{reason}", f"Interrupt detected, stopping automatic task: {reason}"))
+            self.logger.warning(
+                tr("framework.legacy.054ac2160959", fallback=f"Interrupt detected, stopping automatic task: {reason}")
+            )
         if self.session.auto is not None:
             try:
                 self.session.stop()
             except Exception as e:
-                self.logger.warning(ui_text(f"停止自动任务时发生异常，已忽略：{e}", f"Exception occurred while stopping automatic task, ignored: {e}"))
+                self.logger.warning(
+                    tr("framework.legacy.23dc6ab8ded3", fallback=f"Exception occurred while stopping automatic task, ignored: {e}")
+                )
 
     @staticmethod
     def _bind_runtime_config_to_module(module_class: type, runtime_config):
@@ -65,15 +69,12 @@ class TaskQueueThread(QThread):
         try:
             return module_class(**TaskQueueThread._build_ctor_kwargs(module_class, auto, logger, runtime_config))
         except Exception:
-            # Fallback to legacy positional init style.
             pass
         return module_class(auto, logger)
 
     @staticmethod
     def _read_config_value(runtime_config, key: str):
-        if runtime_config is None:
-            return None
-        if not hasattr(runtime_config, key):
+        if runtime_config is None or not hasattr(runtime_config, key):
             return None
         raw = getattr(runtime_config, key)
         return getattr(raw, "value", raw)
@@ -124,15 +125,22 @@ class TaskQueueThread(QThread):
                     continue
 
                 task_name = meta["en_name"] if is_non_chinese_ui_language() else meta["zh_name"]
-                self.logger.info(ui_text(f"当前任务：{task_name}", f"Current task: {task_name}"))
+                self.logger.info(tr("framework.legacy.550b7c49b8ff", fallback=f"Current task: {task_name}"))
                 self.task_started_signal.emit(task_id)
 
                 task_success = True
                 requires_home_sync = bool(meta.get("requires_home_sync", True))
                 if requires_home_sync:
-                    self.logger.info(ui_text(f"正在准备 {task_name}，尝试返回主界面...", f"Preparing {task_name}, returning to home..."))
+                    self.logger.info(
+                        tr("framework.legacy.8cee80e84fc8", fallback=f"Preparing {task_name}, returning to home...")
+                    )
                     if not self.home_sync(auto, self.logger):
-                        self.logger.error(ui_text(f"[{task_name}] 开始前返回主界面失败，跳过该任务", f"[{task_name}] Failed to return to home before start, skipping."))
+                        self.logger.error(
+                            tr(
+                                "framework.legacy.40df1ad8f76d",
+                                fallback=f"[{task_name}] Failed to return to home before start, skipping.",
+                            )
+                        )
                         task_success = False
 
                 if task_success:
@@ -141,7 +149,7 @@ class TaskQueueThread(QThread):
                     module.run()
 
                     if requires_home_sync and self._is_running:
-                        msg = ui_text(f"{task_name} 执行完毕，正在返回主界面...", f"{task_name} finished, returning to home...")
+                        msg = tr("framework.legacy.c87b23e00aba", fallback=f"{task_name} finished, returning to home...")
                         self.logger.info(msg)
                         self.home_sync(auto, self.logger)
 
@@ -168,11 +176,10 @@ class TaskQueueThread(QThread):
                 self.session.stop()
             if normal_stop_flag and self._is_running:
                 self.is_running_signal.emit("end")
+            elif self._interrupted_reason:
+                self.is_running_signal.emit("interrupted")
             else:
-                if self._interrupted_reason:
-                    self.is_running_signal.emit("interrupted")
-                else:
-                    self.is_running_signal.emit("no_auto")
+                self.is_running_signal.emit("no_auto")
 
 
 class ModuleTaskThread(QThread):
@@ -204,7 +211,7 @@ class ModuleTaskThread(QThread):
         try:
             self.session.stop()
         except Exception as e:
-            self.logger.warning(ui_text(f"停止子任务时发生异常，已忽略：{e}", f"Exception occurred while stopping sub task, ignored: {e}"))
+            self.logger.warning(tr("framework.legacy.4261c14a6166", fallback=f"Exception occurred while stopping sub task, ignored: {e}"))
 
     def run(self):
         if self.module is None or self.session.auto is None:
@@ -223,6 +230,3 @@ class ModuleTaskThread(QThread):
             except Exception as stop_error:
                 self.logger.warning(f"SubTask结束时恢复窗口位置失败：{stop_error}")
             self.is_running.emit(False)
-
-
-

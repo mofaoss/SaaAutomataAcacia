@@ -25,6 +25,9 @@ def _ensure_discovered():
 
 
 def register_module(meta: ModuleMeta):
+    existed = _MODULE_REGISTRY.get(meta.id)
+    if existed is not None and existed.runner is not meta.runner:
+        raise ValueError(f"Duplicate module id detected: '{meta.id}'")
     _MODULE_REGISTRY[meta.id] = meta
 
 

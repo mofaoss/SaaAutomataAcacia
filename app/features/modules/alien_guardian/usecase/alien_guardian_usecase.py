@@ -2,15 +2,10 @@ import time
 
 from app.framework.infra.automation.timer import Timer
 
-from app.framework.core.module_system import module
+from app.framework.core.module_system import on_demand_module, periodic_module
 
 
-@module(
-    id="alien_guardian",
-    name="异星守护",
-    en_name="Alien Guardian",
-    host="on_demand",
-)
+@on_demand_module("Alien Guardian", module_id="alien_guardian")
 class AlienGuardianModule:
     def __init__(self, auto, logger, ComboBox_mode=0):
         self.auto = auto

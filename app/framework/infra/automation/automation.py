@@ -19,7 +19,7 @@ from app.framework.infra.system.windows import get_hwnd
 from app.framework.infra.automation.input import Input
 from app.framework.infra.automation.screenshot import Screenshot
 from app.framework.infra.vision.ocr_service import run_ocr
-from app.framework.ui.shared.text import ui_text
+from app.framework.i18n import tr
 
 
 def atoms(func):
@@ -126,7 +126,10 @@ class Automation:
             return True
         hwnd = get_hwnd(self.window_title, self.window_class)
         if not hwnd:
-            self._log_error_throttled('refresh_hwnd_failed', ui_text(f"未找到窗口 {self.window_title} 的句柄", f"Handle for window {self.window_title} not found"))
+            self._log_error_throttled(
+                "refresh_hwnd_failed",
+                tr("framework.legacy.c627e679820a", fallback=f"Handle for window {self.window_title} not found"),
+            )
             return False
         self.hwnd = hwnd
         self.input_handler.hwnd = hwnd
@@ -163,12 +166,10 @@ class Automation:
         """根据传入的窗口名和类型确定可操作的句柄"""
         hwnd = get_hwnd(self.window_title, self.window_class)
         if hwnd:
-            self.logger.info(ui_text(f"找到窗口 {self.window_title} 的句柄为：{hwnd}", f"Found handle for window {self.window_title}: {hwnd}"))
+            self.logger.info(tr("framework.legacy.302d2c73bec4", fallback=f"Found handle for window {self.window_title}: {hwnd}"))
             return hwnd
         else:
-            raise ValueError(ui_text(f"未找到{self.window_title}的句柄", f"Handle for {self.window_title} not found"))
-
-    @atoms
+            raise ValueError(tr("framework.legacy.2419431adb62", fallback=f"Handle for {self.window_title} not found"))
     def take_screenshot(self, crop=(0, 0, 1, 1), is_interval=True):
         """
         捕获游戏窗口的截图。
@@ -190,7 +191,7 @@ class Automation:
             else:
                 self.current_screenshot = None
         except Exception as e:
-            self._log_error_throttled('take_screenshot_failed', ui_text(f"截图失败：{e}", f"Screenshot failed: {e}"))
+            self._log_error_throttled("take_screenshot_failed", tr("framework.legacy.2417d34f4f67", fallback=f"Screenshot failed: {e}"))
 
     def calculate_positions(self, max_loc):
         """
@@ -214,7 +215,10 @@ class Automation:
                            is_show=False):
         temp = self.current_screenshot
         if temp is None:
-            self._log_error_throttled('find_image_without_screenshot', ui_text("当前没有可用截图，跳过图像匹配", "No available screenshot currently, skipping image matching"))
+            self._log_error_throttled(
+                "find_image_without_screenshot",
+                tr("framework.legacy.1c250a959600", fallback="No available screenshot currently, skipping image matching"),
+            )
             return None, None, None
 
         if extract:
@@ -229,19 +233,16 @@ class Automation:
                     top_left, bottom_right = self.calculate_positions((x, y, w, h))
                     if is_log:
                         template_name = self._template_log_name(template)
-                        self.logger.debug(ui_text(f"目标图片：{template_name} 相似度：{conf:.2f}",
-                                                  f"Target image: {template_name} Similarity: {conf:.2f}"))
+                        self.logger.debug(tr("framework.legacy.e0dbd06a50e5", fallback=f"Target image: {template_name} Similarity: {conf:.2f}"))
                     return top_left, bottom_right, conf
                 else:
                     if is_log:
                         template_name = self._template_log_name(template)
-                        self.logger.debug(ui_text(f"目标图片：{template_name} 相似度：{conf:.2f}，低于{threshold}",
-                                                  f"Target image: {template_name} Similarity: {conf:.2f}, below {threshold}"))
+                        self.logger.debug(tr("framework.legacy.00c5486e65e4", fallback=f"Target image: {template_name} Similarity: {conf:.2f}, below {threshold}"))
             else:
                 if is_log:
                     template_name = self._template_log_name(template)
-                    self.logger.debug(ui_text(f"目标图片：{template_name} 未找到匹配项",
-                                              f"Target image: {template_name} No match found"))
+                    self.logger.debug(tr("framework.legacy.6b3f6d57bb1e", fallback=f"Target image: {template_name} No match found"))
             if is_show:
                 for idx, (x, y, w, h, conf) in enumerate(matches):
                     cv2.rectangle(temp,
@@ -255,8 +256,8 @@ class Automation:
                                 0.5, (0, 255, 0), 2)
                 ImageUtils.show_ndarray(temp)
         except Exception as e:
-            self._log_error_throttled('find_image_error', ui_text(f"寻找图片出错：{e}", f"Error finding image: {e}"))
-        return None, None, None
+            self._log_error_throttled("find_image_error", tr("framework.legacy.9d468742aa10", fallback=f"Error finding image: {e}"))
+            return None, None, None
 
     @atoms
     def perform_ocr(self, extract: list = None, image=None, is_log=False):
@@ -272,7 +273,7 @@ class Automation:
             if not self.ocr_result:
                 self.ocr_result = []
         except Exception as e:
-            self._log_error_throttled('perform_ocr_error', ui_text(f"OCR识别失败：{e}", f"OCR recognition failed: {e}"))
+            self._log_error_throttled("perform_ocr_error", tr("framework.legacy.7c2a0f3c9566", fallback=f"OCR recognition failed: {e}"))
             self.ocr_result = []  # 确保在异常情况下，ocr_result为列表类型
 
     def calculate_text_position(self, result):
@@ -454,8 +455,7 @@ class Automation:
             return True
 
         if is_log:
-            self.logger.debug(ui_text(f"目标{target}首次验收未确认生效，执行一次补点重试",
-                                      f"Target {target} initial verification unconfirmed, retrying click"))
+            self.logger.debug(tr("framework.legacy.312db94a2d2c", fallback=f"Target {target} initial verification unconfirmed, retrying click"))
 
         coordinates_retry = self.find_element(target, find_type, threshold, crop, take_screenshot=False,
                                               include=include, need_ocr=need_ocr, extract=extract,
@@ -575,9 +575,7 @@ class Automation:
         try:
             self.input_handler.restore_window_position()
         except Exception as e:
-            self._log_error_throttled('restore_window_failed', ui_text(f"恢复窗口位置失败：{e}", f"Failed to restore window position: {e}"))
-
-    def reset(self):
+            self._log_error_throttled('restore_window_failed', tr("framework.legacy.d07b729e03a7", fallback=f"Failed to restore window position: {e}")elf):
         self.running = True
 
     def pause(self):
@@ -595,8 +593,7 @@ class Automation:
         从完整图中裁剪出局部图
         """
         if self.first_screenshot is None:
-            self._log_error_throttled('crop_from_first_no_screenshot', ui_text("当前没有first_screenshot,裁切失败", "No first_screenshot currently, crop failed"))
-            return None
+            self._log_error_throttled('crop_from_first_no_screenshot', tr("framework.legacy.b4da6bfd6ba6", fallback="No first_screenshot currently, crop failed")turn None
 
         crop_image, _ = ImageUtils.crop_image(self.first_screenshot, crop, self.hwnd)
         if config.showScreenshot.value:
@@ -613,8 +610,7 @@ class Automation:
         if is_screenshot:
             self.take_screenshot()
         if self.first_screenshot is None:
-            self._log_error_throttled('read_text_no_screenshot', ui_text("当前没有截图，无法读取文本", "No screenshot currently, unable to read text"))
-            self.ocr_result = []
+            self._log_error_throttled('read_text_no_screenshot', tr("framework.legacy.8550a4b147db", fallback="No screenshot currently, unable to read text")ult = []
             return self.ocr_result
         crop_image, _ = ImageUtils.crop_image(self.first_screenshot, crop, self.hwnd)
         self.perform_ocr(image=crop_image, extract=extract, is_log=is_log)
@@ -626,8 +622,7 @@ class Automation:
             if isinstance(target, str):
                 target = cv2.imread(target)
             if target is None:
-                self._log_error_throttled('find_image_and_count_no_target', ui_text("目标图像为空，跳过匹配计数", "Target image is empty, skipping match counting"))
-                return None
+                self._log_error_throttled('find_image_and_count_no_target', tr("framework.legacy.7da4be68416d", fallback="Target image is empty, skipping match counting")one
             temp = target
             if extract:
                 letter = extract[0]
@@ -639,10 +634,8 @@ class Automation:
                 if len(matches) > 0:
                     for i in range(len(matches)):
                         x, y, w, h, conf = matches[i]
-                        self.logger.debug(ui_text(f"目标图片：{template_name} 相似度：{conf:.2f}",
-                                                  f"Target image: {template_name} Similarity: {conf:.2f}"))
-                self.logger.debug(ui_text(f"图片{template_name} 个数为 {len(matches)}",
-                                          f"Count of image {template_name} is {len(matches)}"))
+                        self.logger.debug(tr("framework.legacy.42c3d9b7b3bd", fallback=f"Target image: {template_name} Similarity: {conf:.2f}"))
+                self.logger.debug(tr("framework.legacy.d9f7334fe849", fallback=f"Count of image {template_name} is {len(matches)}"))
             if is_show:
                 for idx, (x, y, w, h, conf) in enumerate(matches):
                     cv2.rectangle(temp,
@@ -657,8 +650,7 @@ class Automation:
                 ImageUtils.show_ndarray(temp)
             return len(matches)
         except Exception as e:
-            self._log_error_throttled('find_image_and_count_error', ui_text(f"寻找图片并计数出错：{e}", f"Error finding image and counting: {e}"))
-            return None
+            self._log_error_throttled('find_image_and_count_error', tr("framework.legacy.3fade0143d76", fallback=f"Error finding image and counting: {e}") None
 
     def calculate_power_time(self):
         """
@@ -677,11 +669,9 @@ class Automation:
                 formatted_time = future_time.strftime('%m-%d %H:%M')
                 return formatted_time
             else:
-                self.logger.error(ui_text(f"识别结果出错：{text}", f"Recognition result error: {text}"))
-                return None
+                self.logger.error(tr("framework.legacy.b247edc1f2a6", fallback=f"Recognition result error: {text}")    return None
         except Exception as e:
-            self.logger.error(ui_text(f"未识别出体力：{e}", f"Failed to recognize stamina: {e}"))
-            return None
+            self.logger.error(tr("framework.legacy.a1463b4541cb", fallback=f"Failed to recognize stamina: {e}")return None
 
 
 if __name__ == '__main__':

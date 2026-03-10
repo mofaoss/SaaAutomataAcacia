@@ -1,6 +1,6 @@
 import cv2
 
-from app.framework.core.module_system import module
+from app.framework.core.module_system import on_demand_module, periodic_module
 from app.framework.core.task_engine.base_task import BaseTask
 
 
@@ -20,12 +20,7 @@ class AutoFModule(BaseTask):
                 self.auto.press_key("f")
 
 
-@module(
-    id="trigger",
-    name="自动辅助",
-    en_name="Trigger",
-    host="on_demand",
-)
+@on_demand_module("Trigger", module_id="trigger")
 class TriggerModule:
     def __init__(self, auto, logger):
         self.auto = auto

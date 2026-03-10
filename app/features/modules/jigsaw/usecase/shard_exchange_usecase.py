@@ -15,17 +15,12 @@ foundation of their MIT-licensed pipeline files.
 import time
 import cv2
 
-from app.framework.core.module_system import module
+from app.framework.core.module_system import on_demand_module, periodic_module
 from app.framework.infra.automation.timer import Timer
 from app.features.utils.home_navigation import back_to_home
 
 
-@module(
-    id="task_shard_exchange",
-    name="信源碎片",
-    en_name="Shard Exchange",
-    host="periodic",
-)
+@periodic_module("Shard Exchange", module_id="task_shard_exchange")
 class ShardExchangeModule:
     def __init__(
         self,

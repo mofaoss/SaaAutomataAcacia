@@ -11,7 +11,7 @@ from qfluentwidgets import InfoBar, InfoBarPosition
 
 from app.framework.infra.config.app_config import config
 from app.framework.infra.config.data_models import ApiResponse, parse_config_update_data
-from app.framework.ui.shared.text import ui_text
+from app.framework.i18n import tr
 
 
 DEFAULT_USER_AGENT = (
@@ -248,8 +248,7 @@ def _refresh_tips(parent, *, url=None):
 def handle_cloudflare_success(data, parent):
     try:
         if 'data' not in data:
-            parent.logger.error(ui_text('通过cloudflare在线更新出错: 返回数据格式不正确', 'Error occurred while updating through Cloudflare: Incorrect data format returned'))
-            _refresh_tips(parent)
+            parent.logger.error(tr("framework.legacy.8e0f80b3ac5a", fallback='Error occurred while updating through Cloudflare: Incorrect data format returned'))
             return
 
         online_data = data["data"]
@@ -258,7 +257,12 @@ def handle_cloudflare_success(data, parent):
 
         for field in required_fields:
             if field not in online_data:
-                parent.logger.error(ui_text(f'通过cloudflare在线更新出错: 缺少必要字段 {field}', f'Error occurred while updating through Cloudflare: Missing required field {field} in updateData'))
+                parent.logger.error(
+                    tr(
+                        "framework.legacy.94c67e5d88ed",
+                        fallback=f"Error occurred while updating through Cloudflare: Missing required field {field} in updateData",
+                    )
+                )
                 _refresh_tips(parent)
                 return
 
@@ -266,7 +270,11 @@ def handle_cloudflare_success(data, parent):
             for field in update_data_fields:
                 if field not in online_data['updateData']:
                     parent.logger.error(
-                        ui_text(f'通过cloudflare在线更新出错: updateData缺少必要字段 {field}', f'Error occurred while updating through Cloudflare: Missing required field {field} in updateData'))
+                        tr(
+                            "framework.legacy.7c8d1cc74bea",
+                            fallback=f"Error occurred while updating through Cloudflare: Missing required field {field} in updateData",
+                        )
+                    )
                     _refresh_tips(parent)
                     return
 
@@ -274,11 +282,15 @@ def handle_cloudflare_success(data, parent):
             response = ApiResponse.from_dict(data)
             handle_update_logic(data, online_data, response, parent)
         except Exception as e:
-            parent.logger.error(ui_text(f'解析API响应数据时出错: {str(e)}', f'Error occurred while parsing API response data: {str(e)}'))
+            parent.logger.error(
+                tr("framework.legacy.a20f1c9de24f", fallback=f"Error occurred while parsing API response data: {str(e)}")
+            )
             traceback.print_exc()
             handle_update_logic_fallback(data, online_data, parent)
     except Exception as e:
-        parent.logger.error(ui_text(f'处理Cloudflare数据时出错: {str(e)}', f'Error occurred while processing Cloudflare data: {str(e)}'))
+        parent.logger.error(
+            tr("framework.legacy.7f7b01f6e149", fallback=f"Error occurred while processing Cloudflare data: {str(e)}")
+        )
         _refresh_tips(parent)
 
 
@@ -288,17 +300,21 @@ def handle_update_logic(raw_data: Dict[str, Any], online_data: Dict[str, Any], r
     if not local_config_data:
         config.set(config.update_data, raw_data)
         if config.isLog.value:
-            parent.logger.info(ui_text(f'获取到更新信息：{online_data}', f'Obtained update information: {online_data}'))
-
-        url = f"https://www.cbjq.com/api.php?op=search_api&action=get_article_detail&catid={response.data.updateData.linkCatId}&id={response.data.updateData.linkId}"
+            parent.logger.info(tr("framework.legacy.fa29abd83616", fallback=f"Obtained update information: {online_data}"))
+        url = (
+            f"https://www.cbjq.com/api.php?op=search_api&action=get_article_detail"
+            f"&catid={response.data.updateData.linkCatId}&id={response.data.updateData.linkId}"
+        )
         _refresh_tips(parent, url=url)
-        InfoBar.success(title=ui_text('获取更新成功', 'Update Successful'),
-                        content=ui_text("检测到新的 兑换码 活动信息", "New redeem code event information detected"),
-                        orient=Qt.Orientation.Horizontal,
-                        isClosable=True,
-                        position=InfoBarPosition.TOP_RIGHT,
-                        duration=10000,
-                        parent=parent)
+        InfoBar.success(
+            title=tr("framework.legacy.8567828f9a6f", fallback="Update Successful"),
+            content=tr("framework.legacy.f47b94019072", fallback="New redeem code event information detected"),
+            orient=Qt.Orientation.Horizontal,
+            isClosable=True,
+            position=InfoBarPosition.TOP_RIGHT,
+            duration=10000,
+            parent=parent,
+        )
     else:
         if online_data != local_config_data.data.model_dump():
             content = ''
@@ -321,19 +337,21 @@ def handle_update_logic(raw_data: Dict[str, Any], online_data: Dict[str, Any], r
 
             if content:
                 if config.isLog.value:
-                    parent.logger.info(ui_text(f'获取到更新信息：{online_data}', f'Obtained update information: {online_data}'))
+                    parent.logger.info(tr("framework.legacy.b67b771d218f", fallback=f"Obtained update information: {online_data}"))
                 config.set(config.update_data, raw_data)
                 config.set(config.task_name,
                            response.data.updateData.questName)
                 url = f"https://www.cbjq.com/api.php?op=search_api&action=get_article_detail&catid={response.data.updateData.linkCatId}&id={response.data.updateData.linkId}"
                 _refresh_tips(parent, url=url)
-                InfoBar.success(title=ui_text('获取更新成功', 'Update Successful'),
-                                content=ui_text(f"检测到新的{content}", f"New {content} detected"),
-                                orient=Qt.Orientation.Horizontal,
-                                isClosable=True,
-                                position=InfoBarPosition.TOP_RIGHT,
-                                duration=10000,
-                                parent=parent)
+                InfoBar.success(
+                    title=tr("framework.legacy.8567828f9a6f", fallback="Update Successful"),
+                    content=tr("framework.legacy.1662a4d93a4b", fallback=f"New {content} detected"),
+                    orient=Qt.Orientation.Horizontal,
+                    isClosable=True,
+                    position=InfoBarPosition.TOP_RIGHT,
+                    duration=10000,
+                    parent=parent,
+                )
             else:
                 _refresh_tips(parent)
         else:
@@ -349,16 +367,20 @@ def handle_update_logic_fallback(data, online_data, parent):
         linkId = online_data["updateData"]["linkId"]
         url = f"https://www.cbjq.com/api.php?op=search_api&action=get_article_detail&catid={catId}&id={linkId}"
         _refresh_tips(parent, url=url)
-        InfoBar.success(title=ui_text('获取更新成功', 'Update Successful'),
-                        content=ui_text("检测到新的 兑换码 活动信息", "New redeem code event information detected"),
-                        orient=Qt.Orientation.Horizontal,
-                        isClosable=True,
-                        position=InfoBarPosition.TOP_RIGHT,
-                        duration=10000,
-                        parent=parent)
+        InfoBar.success(
+            title=tr("framework.legacy.8567828f9a6f", fallback="Update Successful"),
+            content=tr("framework.legacy.f47b94019072", fallback="New redeem code event information detected"),
+            orient=Qt.Orientation.Horizontal,
+            isClosable=True,
+            position=InfoBarPosition.TOP_RIGHT,
+            duration=10000,
+            parent=parent,
+        )
     else:
         if not isinstance(config.update_data.value, dict) or 'data' not in config.update_data.value:
-            parent.logger.error(ui_text('本地配置数据格式不正确，使用在线数据', 'Local configuration data format is incorrect, using online data'))
+            parent.logger.error(
+                tr("framework.legacy.f04deae1d035", fallback="Local configuration data format is incorrect, using online data")
+            )
             config.set(config.update_data, data)
             config.set(config.task_name, online_data["updateData"]["questName"])
             catId = online_data["updateData"]["linkCatId"]

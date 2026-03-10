@@ -4,6 +4,7 @@ from __future__ import annotations
 from app.framework.core.module_system import discover_modules
 from app.framework.core.interfaces.main_window_bridge import MainWindowFeatureBridge
 from app.framework.core.task_engine.threads import ModuleTaskThread
+from app.framework.i18n import load_i18n_catalogs
 from app.framework.infra.config.app_config import config
 from app.framework.ui.views.on_demand_tasks_page import OnDemandTasksPage
 from app.framework.ui.views.periodic_tasks_page import PeriodicTasksPage
@@ -28,6 +29,7 @@ from app.features.modules.trigger.usecase.nita_auto_e_usecase import NitaAutoEMo
 from app.features.utils.home_navigation import back_to_home
 from app.features.utils.network import start_cloudflare_update
 from app.framework.application.tasks.periodic_task_profile import get_periodic_task_profile
+from app.framework.i18n import tr
 
 
 class SnowbreakMainWindowBridge(MainWindowFeatureBridge):
@@ -35,6 +37,7 @@ class SnowbreakMainWindowBridge(MainWindowFeatureBridge):
 
     def configure_module_registry(self) -> None:
         discover_modules("app.features.modules")
+        load_i18n_catalogs()
 
     def create_home_interface(self, window):
         enter_game_service = EnterGameService(window._is_non_chinese_ui, app_config=config)

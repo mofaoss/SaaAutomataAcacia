@@ -4,18 +4,13 @@ import win32gui
 import win32con
 
 from app.framework.infra.events.signal_bus import signalBus
-from app.framework.ui.shared.text import ui_text
 from app.features.modules.enter_game.usecase.enter_game_usecase import is_snowbreak_running
 
-from app.framework.core.module_system import module
+from app.framework.core.module_system import on_demand_module, periodic_module
+from app.framework.i18n import tr
 
 
-@module(
-    id="task_close_game",
-    name="执行退出",
-    en_name="Execute Exit",
-    host="periodic",
-)
+@periodic_module("Execute Exit", module_id="task_close_game")
 class CloseGameModule:
     def __init__(
         self,
@@ -34,7 +29,7 @@ class CloseGameModule:
     def run(self):
         # 1. 退出游戏
         if self.close_game_enabled:
-            self.logger.info(ui_text("正在退出游戏...", "Exiting game..."))
+            self.logger.info(tr("module.close_game.legacy.d37a4e4fc0c2", fallback="Exiting game..."))
             hwnd = is_snowbreak_running()
             if hwnd:
                 win32gui.SendMessage(hwnd, win32con.WM_CLOSE, 0, 0)
@@ -42,12 +37,12 @@ class CloseGameModule:
 
         # 2. 关机
         if self.shutdown_enabled:
-            self.logger.info(ui_text("系统将于60秒后关机...", "System will shut down in 60s..."))
-            os.system('shutdown -s -t 60')
+            self.logger.info(tr("module.close_game.legacy.429e494e4e1c", fallback="System will shut down in 60s..."))
+            os.system("shutdown -s -t 60")
 
         # 3. 退出代理 (发送信号给主窗口处理)
         if self.close_proxy_enabled:
-            self.logger.info(ui_text("正在退出程序...", "Exiting Application..."))
+            self.logger.info(tr("module.close_game.legacy.fb1533f4f2b1", fallback="Exiting Application..."))
             signalBus.requestExitApp.emit()
 
 

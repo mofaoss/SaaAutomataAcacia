@@ -1,0 +1,10 @@
+{
+  "module.ocr.legacy.dd048bb5cb14": "OCR hit frame cache, skipping repeated recognition",
+  "module.ocr.legacy.e800193de899": "OCR hit no-text cooldown, skipping recognition",
+  "module.ocr.legacy.1c5f467f1be7": "OCR quick check: low text probability frame, skipping recognition",
+  "module.ocr.legacy.ecbbcbc53c31": "Starting to initialize OCR...",
+  "module.ocr.legacy.328dd4d1a4f3": "OCR input image is empty, skipping this recognition",
+  "module.ocr.legacy.b5025abbb9d2": "OCR recognized no text",
+  "module.ocr.legacy.5f7324113199": "OCR initialization completed",
+  "module.ocr.legacy.5367a13ccc69": "OCR initialization failed: This CPU does not support AVX2 instruction set"
+}

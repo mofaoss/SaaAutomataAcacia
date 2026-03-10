@@ -20,17 +20,12 @@ import time
 import cv2
 import numpy as np
 
-from app.framework.core.module_system import module
+from app.framework.core.module_system import on_demand_module, periodic_module
 from app.framework.infra.automation.timer import Timer
 from app.features.utils.home_navigation import back_to_home
 
 
-@module(
-    id="task_weapon",
-    name="武器升级",
-    en_name="Weapon Upgrade",
-    host="periodic",
-)
+@periodic_module("Weapon Upgrade", module_id="task_weapon")
 class WeaponUpgradeModule:
     def __init__(self, auto, logger, isLog=True, enable_weapon_upgrade=True):
         self.auto = auto

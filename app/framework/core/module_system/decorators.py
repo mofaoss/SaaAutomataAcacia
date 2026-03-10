@@ -1,12 +1,16 @@
 from __future__ import annotations
 
 import importlib
+from pathlib import Path
 from typing import Callable
 
 from app.framework.core.module_system.config_schema import build_config_schema
-from app.framework.core.module_system.models import ModuleHost, ModuleMeta
+from app.framework.core.module_system.models import Field, ModuleHost, ModuleMeta
+from app.framework.core.module_system.naming import infer_module_id
 from app.framework.core.module_system.registry import register_module
 
+DEFAULT_SOURCE_LANG = "en"
+SUPPORTED_LANGS = ["en", "zh_CN", "zh_TW"]
 
 _PENDING_PAGES: dict[str, type] = {}
 _DEFAULT_ORDER: dict[str, int] = {
@@ -194,94 +198,153 @@ _FRAMEWORK_DEFAULTS = {
 }
 
 
-def _resolve_module_defaults(module_id: str) -> dict:
-    return dict(_FRAMEWORK_DEFAULTS.get(module_id, {}))
-
-
 def _resolve_symbol(symbol_path: str):
     module_path, symbol_name = symbol_path.rsplit(":", 1)
     mod = importlib.import_module(module_path)
     return getattr(mod, symbol_name)
 
 
-def module(
+def _resolve_module_defaults(module_id: str) -> dict:
+    return dict(_FRAMEWORK_DEFAULTS.get(module_id, {}))
+
+
+def _build_meta(
     *,
-    id: str,
+    target,
+    host: ModuleHost,
     name: str,
-    host: str,
+    fields: dict[str, str | Field] | None,
+    module_id: str | None,
     order: int | None = None,
-    description: str = "",
     enabled: bool = True,
     passive: bool | None = None,
-    en_name: str = "",
+    description: str = "",
+) -> ModuleMeta:
+    resolved_id = module_id or infer_module_id(target)
+    defaults = _resolve_module_defaults(resolved_id)
+    resolved_order = int(_DEFAULT_ORDER.get(resolved_id, 100) if order is None else order)
+    resolved_page_class_path = defaults.get("page_class_path")
+    resolved_ui_bindings = defaults.get("ui_bindings")
+    if isinstance(resolved_ui_bindings, dict):
+        from app.framework.application.modules.contracts import ModuleUiBindings
+
+        resolved_ui_bindings = ModuleUiBindings(**resolved_ui_bindings)
+    resolved_passive = bool(defaults.get("passive", False) if passive is None else passive)
+    resolved_periodic_enabled_by_default = bool(defaults.get("periodic_enabled_by_default", False))
+    resolved_periodic_mandatory = bool(defaults.get("periodic_mandatory", False))
+    resolved_periodic_force_first = bool(defaults.get("periodic_force_first", False))
+    resolved_periodic_requires_home_sync = bool(defaults.get("periodic_requires_home_sync", True))
+    resolved_periodic_ui_page_index = defaults.get("periodic_ui_page_index")
+    resolved_periodic_option_key = defaults.get("periodic_option_key")
+    resolved_activation_config = list(defaults.get("periodic_default_activation_config", []))
+
+    module_class = target if isinstance(target, type) else None
+    schema_target = target
+    runner = target
+    if isinstance(target, type):
+        run_method = getattr(target, "run", None)
+        if callable(run_method):
+            runner = run_method
+            schema_target = run_method
+        else:
+            runner = lambda *args, **kwargs: None
+
+    i18n_owner_dir = str(Path(target.__module__.replace(".", "/")))
+    meta = ModuleMeta(
+        id=resolved_id,
+        name=name,
+        en_name=name,
+        host=host,
+        runner=runner,
+        order=resolved_order,
+        description=description,
+        enabled=enabled,
+        passive=resolved_passive,
+        module_class=module_class,
+        periodic_enabled_by_default=resolved_periodic_enabled_by_default,
+        periodic_mandatory=resolved_periodic_mandatory,
+        periodic_force_first=resolved_periodic_force_first,
+        periodic_default_hour=4,
+        periodic_default_minute=0,
+        periodic_max_runs=1,
+        periodic_requires_home_sync=resolved_periodic_requires_home_sync,
+        periodic_ui_page_index=resolved_periodic_ui_page_index,
+        periodic_option_key=resolved_periodic_option_key,
+        periodic_default_activation_config=resolved_activation_config,
+        source_lang=DEFAULT_SOURCE_LANG,
+        i18n_owner_dir=i18n_owner_dir,
+        config_schema=build_config_schema(
+            schema_target,
+            module_id=resolved_id,
+            fields=fields,
+        ),
+    )
+    meta.ui_bindings = resolved_ui_bindings
+    if resolved_page_class_path:
+        meta.ui_factory = (
+            lambda parent, _host, _path=resolved_page_class_path: _resolve_symbol(_path)(parent)
+        )
+
+    if resolved_id in _PENDING_PAGES:
+        meta.page_cls = _PENDING_PAGES.pop(resolved_id)
+    return meta
+
+
+def _register_with_host(
+    *,
+    host: ModuleHost,
+    name: str,
+    fields: dict[str, str | Field] | None = None,
+    module_id: str | None = None,
+    order: int | None = None,
+    enabled: bool = True,
+    passive: bool | None = None,
+    description: str = "",
 ):
     def decorator(target):
-        defaults = _resolve_module_defaults(id)
-        resolved_order = int(_DEFAULT_ORDER.get(id, 100) if order is None else order)
-        resolved_page_class_path = defaults.get("page_class_path")
-        resolved_ui_bindings = defaults.get("ui_bindings")
-        if isinstance(resolved_ui_bindings, dict):
-            from app.framework.application.modules.contracts import ModuleUiBindings
-
-            resolved_ui_bindings = ModuleUiBindings(**resolved_ui_bindings)
-        resolved_passive = bool(defaults.get("passive", False) if passive is None else passive)
-        resolved_periodic_enabled_by_default = bool(defaults.get("periodic_enabled_by_default", False))
-        resolved_periodic_mandatory = bool(defaults.get("periodic_mandatory", False))
-        resolved_periodic_force_first = bool(defaults.get("periodic_force_first", False))
-        resolved_periodic_requires_home_sync = bool(defaults.get("periodic_requires_home_sync", True))
-        resolved_periodic_ui_page_index = defaults.get("periodic_ui_page_index")
-        resolved_periodic_option_key = defaults.get("periodic_option_key")
-        resolved_activation_config = list(
-            defaults.get("periodic_default_activation_config", [])
-        )
-
-        module_class = target if isinstance(target, type) else None
-        schema_target = target
-        runner = target
-        if isinstance(target, type):
-            run_method = getattr(target, "run", None)
-            if callable(run_method):
-                runner = run_method
-                schema_target = run_method
-            else:
-                runner = lambda *args, **kwargs: None
-
-        meta = ModuleMeta(
-            id=id,
+        meta = _build_meta(
+            target=target,
+            host=host,
             name=name,
-            en_name=en_name,
-            host=ModuleHost(host),
-            runner=runner,
-            order=resolved_order,
-            description=description,
+            fields=fields,
+            module_id=module_id,
+            order=order,
             enabled=enabled,
-            passive=resolved_passive,
-            module_class=module_class,
-            periodic_enabled_by_default=resolved_periodic_enabled_by_default,
-            periodic_mandatory=resolved_periodic_mandatory,
-            periodic_force_first=resolved_periodic_force_first,
-            periodic_default_hour=4,
-            periodic_default_minute=0,
-            periodic_max_runs=1,
-            periodic_requires_home_sync=resolved_periodic_requires_home_sync,
-            periodic_ui_page_index=resolved_periodic_ui_page_index,
-            periodic_option_key=resolved_periodic_option_key,
-            periodic_default_activation_config=resolved_activation_config,
-            config_schema=build_config_schema(schema_target),
+            passive=passive,
+            description=description,
         )
-        meta.ui_bindings = resolved_ui_bindings
-        if resolved_page_class_path:
-            meta.ui_factory = (
-                lambda parent, _host, _page_class_path=resolved_page_class_path: _resolve_symbol(_page_class_path)(parent)
-            )
-
-        if id in _PENDING_PAGES:
-            meta.page_cls = _PENDING_PAGES.pop(id)
-
         register_module(meta)
         return target
 
     return decorator
+
+
+def on_demand_module(
+    name: str,
+    *,
+    fields: dict[str, str | Field] | None = None,
+    module_id: str | None = None,
+):
+    return _register_with_host(
+        host=ModuleHost.ON_DEMAND,
+        name=name,
+        fields=fields,
+        module_id=module_id,
+    )
+
+
+def periodic_module(
+    name: str,
+    *,
+    fields: dict[str, str | Field] | None = None,
+    module_id: str | None = None,
+):
+    return _register_with_host(
+        host=ModuleHost.PERIODIC,
+        name=name,
+        fields=fields,
+        module_id=module_id,
+    )
 
 
 def module_page(module_id: str):

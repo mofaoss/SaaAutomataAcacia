@@ -2,15 +2,10 @@ import time
 
 from app.framework.infra.automation.timer import Timer
 
-from app.framework.core.module_system import module
+from app.framework.core.module_system import on_demand_module, periodic_module
 
 
-@module(
-    id="maze",
-    name="验证战场",
-    en_name="Maze",
-    host="on_demand",
-)
+@on_demand_module("Maze", module_id="maze")
 class MazeModule:
     def __init__(self, auto, logger, isLog=False, ComboBox_mode_maze=0):
         self.auto = auto

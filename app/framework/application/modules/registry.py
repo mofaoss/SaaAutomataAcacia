@@ -1,12 +1,25 @@
 from __future__ import annotations
 
-from app.framework.application.modules.contracts import ModuleSpec
+from app.framework.application.modules.contracts import ModuleSpec, ModuleUiBindings
 from app.framework.core.module_system import ModuleHost, get_modules_by_host, make_module_class
 
 
 def _meta_to_spec(meta, host: ModuleHost) -> ModuleSpec:
-    if meta.ui_factory is None and meta.page_cls is not None:
-        meta.ui_factory = lambda parent, _host: meta.page_cls(parent)
+    if meta.ui_factory is None:
+        if meta.page_cls is not None:
+            meta.ui_factory = lambda parent, _host: meta.page_cls(parent)
+        else:
+            from app.framework.ui.views.auto_page import AutoPage
+
+            meta.ui_factory = lambda parent, host_ctx, _meta=meta: AutoPage(parent, module_meta=_meta, host_context=host_ctx)
+
+    if meta.ui_bindings is None:
+        meta.ui_bindings = ModuleUiBindings(
+            page_attr=f"page_{meta.id}",
+            start_button_attr="PushButton_start",
+            card_widget_attr="SimpleCardWidget_option",
+            log_widget_attr="textBrowser_log",
+        )
 
     module_class = meta.module_class or make_module_class(meta)
     return ModuleSpec(

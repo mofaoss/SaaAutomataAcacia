@@ -3,6 +3,7 @@ from PySide6.QtWidgets import QHBoxLayout, QVBoxLayout, QWidget
 from qfluentwidgets import (BodyLabel, ComboBox, PushButton, SimpleCardWidget, SpinBox, TitleLabel)
 from app.framework.infra.config.app_config import config
 from app.framework.ui.views.periodic_base import ModulePageBase
+from app.framework.i18n import tr
 
 class OperationInterface(ModulePageBase):
     def __init__(self, parent=None):

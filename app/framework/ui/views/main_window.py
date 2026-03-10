@@ -37,6 +37,7 @@ from app.framework.infra.update.updater import (
 )
 from app.framework.ui.widgets.custom_message_box import CustomMessageBox
 from resources import resource_qrc  # don't delete
+from app.framework.i18n import tr
 
 
 logger = logging.getLogger(__name__)

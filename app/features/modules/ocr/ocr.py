@@ -5,10 +5,10 @@ import gc
 
 from app.framework.infra.config.app_config import config
 from app.framework.infra.vision.image import ImageUtils
-from app.framework.ui.shared.text import ui_text
 from app.features.utils.text_normalizer import normalize_chinese_text
 from app.framework.infra.system.cpu import cpu_support_avx2
 from app.features.modules.onnxocr.onnx_paddleocr import ONNXPaddleOcr
+from app.framework.i18n import tr
 
 
 class OCR:
@@ -108,7 +108,9 @@ class OCR:
 
         if distance <= 1.8 and now - self._last_signature_time <= self._frame_cache_ttl:
             if is_log:
-                self.logger.debug(ui_text("OCR命中帧缓存，跳过重复识别", "OCR hit frame cache, skipping repeated recognition"))
+                self.logger.debug(
+                    tr("module.ocr.legacy.dd048bb5cb14", fallback="OCR hit frame cache, skipping repeated recognition")
+                )
             return True, self._last_result, signature
 
         if (
@@ -119,12 +121,16 @@ class OCR:
             and now - self._last_signature_time <= self._no_text_cooldown
         ):
             if is_log:
-                self.logger.debug(ui_text("OCR命中无文本冷却，跳过识别", "OCR hit no-text cooldown, skipping recognition"))
+                self.logger.debug(
+                    tr("module.ocr.legacy.e800193de899", fallback="OCR hit no-text cooldown, skipping recognition")
+                )
             return True, None, signature
 
         if (not is_small) and (not has_text_candidate) and self._low_text_likelihood(image):
             if is_log:
-                self.logger.debug(ui_text("OCR快速判定为低文本概率帧，跳过识别", "OCR quick check: low text probability frame, skipping recognition"))
+                self.logger.debug(
+                    tr("module.ocr.legacy.1c5f467f1be7", fallback="OCR quick check: low text probability frame, skipping recognition")
+                )
             return True, None, signature
 
         return False, None, signature
@@ -153,8 +159,7 @@ class OCR:
             image = cv2.resize(image, (new_w, new_h), interpolation=cv2.INTER_CUBIC)
             image = self._enhance_low_res_text(image)
             if is_log:
-                self.logger.debug(ui_text(f"OCR低分辨率增强：{w}x{h} -> {new_w}x{new_h} (x{scale:.2f})",
-                                          f"OCR low-res enhance: {w}x{h} -> {new_w}x{new_h} (x{scale:.2f})"))
+                self.logger.debug(tr("framework.legacy.283283d9f41d", fallback=f"OCR low-res enhance: {w}x{h} -> {new_w}x{new_h} (x{scale:.2f})"))
             return image, (scale, scale)
 
         return image, (1.0, 1.0)
@@ -237,16 +242,14 @@ class OCR:
         try:
             if image is None:
                 if is_log:
-                    self.logger.debug(ui_text("OCR输入图像为空，跳过本次识别", "OCR input image is empty, skipping this recognition"))
-                return None
+                    self.logger.debug(tr("module.ocr.legacy.328dd4d1a4f3", fallback="OCR input image is empty, skipping this recognition")one
 
             if isinstance(image, str):
                 image_path = image
                 image = cv2.imread(image_path, cv2.IMREAD_UNCHANGED)
                 if image is None:
                     if is_log:
-                        self.logger.debug(ui_text(f"OCR读取图像失败，路径无效或文件不可读：{image_path}",
-                                                  f"OCR failed to read image, invalid path or unreadable file: {image_path}"))
+                        self.logger.debug(tr("framework.legacy.5678b1bd9312", fallback=f"OCR failed to read image, invalid path or unreadable file: {image_path}"))
                     return None
                 if len(image.shape) == 3 and image.shape[2] == 4:
                     image = image[:, :, :3]
@@ -273,19 +276,16 @@ class OCR:
 
             if not candidates:
                 if is_log:
-                    self.logger.debug(ui_text("OCR未识别出任何文字", "OCR recognized no text"))
-                self._update_cache(signature, None)
+                    self.logger.debug(tr("module.ocr.legacy.b5025abbb9d2", fallback="OCR recognized no text")  self._update_cache(signature, None)
                 return None
 
             best_name, best_result = max(candidates, key=lambda x: self._score_formatted_result(x[1]))
             if is_log:
-                self.logger.debug(ui_text(f"OCR采用策略: {best_name}", f"OCR adopted strategy: {best_name}"))
-                self.log_result(best_result)
+                self.logger.debug(tr("framework.legacy.e553f2750f9a", fallback=f"OCR adopted strategy: {best_name}")          self.log_result(best_result)
             self._update_cache(signature, best_result)
             return best_result
         except Exception as e:
-            error_message = ui_text(f"执行ocr出错：{e}", f"Error executing ocr: {e}")
-            now = time.time()
+            error_message = tr("framework.legacy.85dc5a050c0f", fallback=f"Error executing ocr: {e}")   now = time.time()
             if error_message != self._last_error_message or now - self._last_error_time > 2:
                 self.logger.error(error_message)
                 self._last_error_message = error_message
@@ -331,9 +331,7 @@ class OCR:
         log_content = []
         for result in results:
             log_content.append(f'{result[0]}:{result[1]}')
-        self.logger.debug(ui_text(f"OCR识别结果: {log_content}", f"OCR recognition result: {log_content}"))
-
-    def instance_ocr(self):
+        self.logger.debug(tr("framework.legacy.c404ba289053", fallback=f"OCR recognition result: {log_content}")ef instance_ocr(self):
         """实例化OCR引擎。采用单例机制，防止重复初始化导致显存泄漏。"""
         if self._is_initialized and self.ocr is not None:
             return
@@ -342,16 +340,12 @@ class OCR:
             if config.cpu_support_avx2.value is None:
                 cpu_support_avx2(config)
             try:
-                self.logger.debug(ui_text("开始初始化OCR...", "Starting to initialize OCR..."))
-                if config.cpu_support_avx2.value:
+                self.logger.debug(tr("module.ocr.legacy.ecbbcbc53c31", fallback="Starting to initialize OCR...")        if config.cpu_support_avx2.value:
                     self.ocr = ONNXPaddleOcr(use_angle_cls=True, use_gpu=False)
-                    self.logger.info(ui_text("初始化OCR完成", "OCR initialization completed"))
-                    self._is_initialized = True
+                    self.logger.info(tr("module.ocr.legacy.5f7324113199", fallback="OCR initialization completed")            self._is_initialized = True
                 else:
-                    self.logger.error(ui_text("初始化OCR失败：此CPU不支持AVX2指令集", "OCR initialization failed: This CPU does not support AVX2 instruction set"))
-            except Exception as e:
-                self.logger.error(ui_text(f"初始化OCR失败：{e}", f"OCR initialization failed: {e}"))
-                raise Exception("初始化OCR失败")
+                    self.logger.error(tr("module.ocr.legacy.5367a13ccc69", fallback="OCR initialization failed: This CPU does not support AVX2 instruction set")tion as e:
+                self.logger.error(tr("framework.legacy.64791083260d", fallback=f"OCR initialization failed: {e}")      raise Exception("初始化OCR失败")
 
     def stop_ocr(self):
         """清理识别缓存与内部状态，强制执行垃圾回收。不销毁模型实例以支持高频复用。"""

@@ -1,24 +1,19 @@
-﻿import time
+import time
 from datetime import datetime
 
 from PySide6.QtCore import Qt
 from qfluentwidgets import InfoBar, InfoBarPosition
 
-from app.framework.ui.shared.text import ui_text
 from app.framework.infra.config.data_models import parse_config_update_data
 from app.features.utils.network import get_cloudflare_data
 from app.framework.infra.automation.timer import Timer
 from app.features.utils.home_navigation import back_to_home
 
-from app.framework.core.module_system import module
+from app.framework.core.module_system import on_demand_module, periodic_module
+from app.framework.i18n import tr
 
 
-@module(
-    id="task_supplies",
-    name="领取福利",
-    en_name="Collect Supplies",
-    host="periodic",
-)
+@periodic_module("Collect Supplies", module_id="task_supplies")
 class CollectSuppliesModule:
     def __init__(
         self,
@@ -73,8 +68,8 @@ class CollectSuppliesModule:
             raise RuntimeError("redeem_codes_usecase is not configured")
         content = self.redeem_codes_usecase.reset_codes(text_edit)
         InfoBar.success(
-            title=ui_text("重置成功", "Reset Successful"),
-            content=ui_text(f"已重置 导入展示 {content}", f"Successfully reset import and display {content}"),
+            title=tr("module.collect_supplies.legacy.3fd0e9e4395f", fallback="Reset Successful"),
+            content=tr("framework.legacy.d27e72351f53", fallback=f"Successfully reset import and display {content}"),
             orient=Qt.Orientation.Horizontal,
             isClosable=True,
             position=InfoBarPosition.TOP_RIGHT,

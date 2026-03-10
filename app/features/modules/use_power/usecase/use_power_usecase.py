@@ -9,15 +9,10 @@ from app.features.utils.randoms import random_rectangle_point
 from app.framework.infra.automation.timer import Timer
 from app.features.utils.home_navigation import back_to_home
 
-from app.framework.core.module_system import module
+from app.framework.core.module_system import on_demand_module, periodic_module
 
 
-@module(
-    id="task_stamina",
-    name="体力扫荡",
-    en_name="Use Stamina",
-    host="periodic",
-)
+@periodic_module("Use Stamina", module_id="task_stamina")
 class UsePowerModule:
     def __init__(
         self,

@@ -3,21 +3,11 @@ import time
 from app.framework.infra.automation.timer import Timer
 from app.features.utils.home_navigation import back_to_home
 
-from app.framework.core.module_system import module
+from app.framework.core.module_system import on_demand_module, periodic_module
 
 
-@module(
-    id="action",
-    name="常规训练",
-    en_name="Operation",
-    host="on_demand",
-)
-@module(
-    id="task_operation",
-    name="常规训练",
-    en_name="Operation",
-    host="periodic",
-)
+@on_demand_module("Operation", module_id="action")
+@periodic_module("Operation", module_id="task_operation")
 class OperationModule:
     def __init__(self, auto, logger, isLog=False, SpinBox_action_times=1, ComboBox_run=0):
         self.auto = auto

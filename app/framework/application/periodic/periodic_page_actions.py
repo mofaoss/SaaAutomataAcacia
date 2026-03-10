@@ -7,7 +7,6 @@ from PySide6.QtGui import QIcon
 from PySide6.QtWidgets import QApplication, QSystemTrayIcon
 from qfluentwidgets import CheckBox, InfoBar, InfoBarPosition
 
-from app.framework.ui.shared.text import ui_text
 from app.framework.application.periodic.periodic_orchestration import (
     collect_checked_tasks,
     collect_checked_tasks_from,
@@ -15,6 +14,7 @@ from app.framework.application.periodic.periodic_orchestration import (
     upsert_rule_to_tasks,
     withdraw_rule_from_tasks,
 )
+from app.framework.i18n import tr
 
 
 class PeriodicPresetActions:
@@ -62,8 +62,8 @@ class PeriodicPresetActions:
         host.ui.ComboBox_presets.setCurrentIndex(host.ui.ComboBox_presets.findText(preset_name))
 
         InfoBar.success(
-            title=ui_text("保存成功", "Saved"),
-            content=ui_text(f"预设 '{preset_name}' 已保存", f"Preset '{preset_name}' saved"),
+            title=tr("framework.legacy.c0ae8f6ea841", fallback="Saved"),
+            content=tr("framework.legacy.42f6cd65c5ca", fallback=f"Preset '{preset_name}' saved"),
             parent=host,
         )
 
@@ -75,8 +75,8 @@ class PeriodicPresetActions:
             return
         if not deleted and reason == "min_one_required":
             InfoBar.warning(
-                title=ui_text("无法删除", "Cannot Delete"),
-                content=ui_text("至少保留一个预设", "At least one preset must remain"),
+                title=tr("framework.legacy.9635fe8cd43e", fallback="Cannot Delete"),
+                content=tr("framework.legacy.ae9985813275", fallback="At least one preset must remain"),
                 parent=host,
             )
             return
@@ -87,8 +87,8 @@ class PeriodicPresetActions:
         host.ui.ComboBox_presets.setCurrentIndex(0)
 
         InfoBar.success(
-            title=ui_text("删除成功", "Deleted"),
-            content=ui_text(f"预设 '{preset_name}' 已删除", f"Preset '{preset_name}' deleted"),
+            title=tr("framework.legacy.441bda6cd856", fallback="Deleted"),
+            content=tr("framework.legacy.168499bbdb96", fallback=f"Preset '{preset_name}' deleted"),
             parent=host,
         )
 
@@ -111,8 +111,8 @@ class PeriodicRuleActions:
 
         if not checked_task_ids:
             InfoBar.warning(
-                title=ui_text("无生效目标", "No Target Selected"),
-                content=ui_text("请先在左侧列表中勾选需要应用此规则的任务", "Please check tasks in the left list first"),
+                title=tr("framework.legacy.1b371d6fb221", fallback="No Target Selected"),
+                content=tr("framework.legacy.cc351cec08d8", fallback="Please check tasks in the left list first"),
                 orient=Qt.Orientation.Horizontal,
                 isClosable=True,
                 position=InfoBarPosition.TOP_RIGHT,
@@ -138,11 +138,8 @@ class PeriodicRuleActions:
 
         host._auto_adjust_after_use_action()
         InfoBar.success(
-            title=ui_text("规则下发成功", "Rule Copied Successfully"),
-            content=ui_text(
-                f"已追加给 {len(checked_task_ids)} 个已勾选任务\n并启用了它们的计划",
-                f"Rule added to {len(checked_task_ids)} checked tasks\nand enabled their scheduling",
-            ),
+            title=tr("framework.legacy.e3ae5bcbf5de", fallback="Rule Copied Successfully"),
+            content=tr("framework.legacy.f30a6af3358a", fallback=f"Rule added to {len(checked_task_ids)} checked tasks\nand enabled their scheduling"),
             orient=Qt.Orientation.Horizontal,
             isClosable=True,
             position=InfoBarPosition.TOP_RIGHT,
@@ -168,8 +165,8 @@ class PeriodicRuleActions:
 
         if not checked_task_ids:
             InfoBar.warning(
-                title=ui_text("无生效目标", "No Target Selected"),
-                content=ui_text("请先在左侧列表中勾选需要撤回规则的任务", "Please check tasks in the left list first"),
+                title=tr("framework.legacy.1b371d6fb221", fallback="No Target Selected"),
+                content=tr("framework.legacy.cc351cec08d8", fallback="Please check tasks in the left list first"),
                 orient=Qt.Orientation.Horizontal,
                 isClosable=True,
                 position=InfoBarPosition.TOP_RIGHT,
@@ -194,11 +191,8 @@ class PeriodicRuleActions:
 
         host._auto_adjust_after_use_action()
         InfoBar.success(
-            title=ui_text("撤回成功", "Withdraw Successful"),
-            content=ui_text(
-                f"已从 {modified_count} 个任务中移除该时间节点",
-                f"Removed trigger from {modified_count} tasks",
-            ),
+            title=tr("framework.legacy.015f96fc84cf", fallback="Withdraw Successful"),
+            content=tr("framework.legacy.2aa8a383db15", fallback=f"Removed trigger from {modified_count} tasks"),
             orient=Qt.Orientation.Horizontal,
             isClosable=True,
             position=InfoBarPosition.TOP_RIGHT,
@@ -558,10 +552,7 @@ class PeriodicRuntimeActions:
         pending_tasks = host.periodic_controller.consume_pending_queue_on_external_release()
         if pending_tasks:
             host.logger.info(
-                ui_text(
-                    "外部任务已结束，正在唤醒积压的日常排队任务...",
-                    "External task finished, waking up queued daily tasks...",
-                )
+                tr("framework.legacy.839d28ef6808", fallback="External task finished, waking up queued daily tasks...")
             )
             host.after_start_button_click(pending_tasks)
 

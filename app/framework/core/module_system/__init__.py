@@ -1,6 +1,13 @@
-from app.framework.core.module_system.decorators import module, module_page
+from app.framework.core.module_system.decorators import (
+    DEFAULT_SOURCE_LANG,
+    SUPPORTED_LANGS,
+    module_page,
+    on_demand_module,
+    periodic_module,
+)
 from app.framework.core.module_system.discovery import discover_modules
-from app.framework.core.module_system.models import ModuleHost, ModuleMeta
+from app.framework.core.module_system.models import Field, ModuleHost, ModuleMeta, SchemaField
+from app.framework.core.module_system.naming import infer_module_id
 from app.framework.core.module_system.registry import (
     build_periodic_profiles,
     clear_registry,
@@ -19,8 +26,14 @@ from app.framework.core.module_system.runner import (
 __all__ = [
     "ModuleHost",
     "ModuleMeta",
-    "module",
+    "SchemaField",
+    "Field",
+    "on_demand_module",
+    "periodic_module",
     "module_page",
+    "infer_module_id",
+    "DEFAULT_SOURCE_LANG",
+    "SUPPORTED_LANGS",
     "discover_modules",
     "register_module",
     "get_module",

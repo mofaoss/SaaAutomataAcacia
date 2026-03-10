@@ -10,15 +10,11 @@ from app.features.modules.shopping.item_constants import (
 )
 from app.framework.infra.automation.timer import Timer
 from app.features.utils.home_navigation import back_to_home
-from app.framework.core.module_system import module
+from app.framework.core.module_system import on_demand_module, periodic_module
+from app.framework.i18n import tr
 
 
-@module(
-    id="task_shop",
-    name="商店购买",
-    en_name="Shop",
-    host="periodic",
-)
+@periodic_module("Shop", module_id="task_shop")
 class ShoppingModule:
     def __init__(
         self,

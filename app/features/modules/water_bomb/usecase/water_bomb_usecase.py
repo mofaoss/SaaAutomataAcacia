@@ -5,15 +5,10 @@ import cv2
 from app.framework.infra.automation.timer import Timer
 from app.features.modules.water_bomb.decision import Round, Status
 
-from app.framework.core.module_system import module
+from app.framework.core.module_system import on_demand_module, periodic_module
 
 
-@module(
-    id="water_bomb",
-    name="心动水弹",
-    en_name="Water Bomb",
-    host="on_demand",
-)
+@on_demand_module("Water Bomb", module_id="water_bomb")
 class WaterBombModule:
     def __init__(
         self,

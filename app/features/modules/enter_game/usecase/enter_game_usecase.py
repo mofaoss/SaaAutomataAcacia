@@ -15,10 +15,10 @@ from qfluentwidgets import Flyout, FlyoutView, InfoBar, InfoBarPosition
 from app.framework.core.interfaces.game_environment import IGameEnvironment
 from app.framework.infra.automation.timer import Timer
 from app.framework.infra.system.windows import get_hwnd
-from app.framework.ui.shared.text import ui_text
-from app.framework.core.module_system import module
+from app.framework.core.module_system import on_demand_module, periodic_module
 
 from app.features.utils.home_navigation import back_to_home
+from app.framework.i18n import tr
 
 
 _launch_lock = threading.Lock()
@@ -26,12 +26,7 @@ _last_game_process = None
 _last_launch_ts = 0.0
 
 
-@module(
-    id="task_login",
-    name="自动登录",
-    en_name="Auto Login",
-    host="periodic",
-)
+@periodic_module("Auto Login", module_id="task_login")
 class EnterGameModule:
     def __init__(self, auto, logger, isLog=False):
         self.auto = auto
@@ -259,10 +254,7 @@ def launch_game_with_guard(
         if _last_game_process is not None and _last_game_process.poll() is None:
             if logger:
                 logger.info(
-                    ui_text(
-                        "检测到已由程序启动的游戏进程仍在运行，跳过重复启动",
-                        "Detected that the game process started by the program is still running, skipping duplicate startup",
-                    )
+                    tr("module.enter_game.legacy.22bfd52ce240", fallback="Detected that the game process started by the program is still running, skipping duplicate startup")
                 )
             return {
                 "ok": True,
@@ -279,7 +271,7 @@ def launch_game_with_guard(
 
         if is_game_running():
             if logger:
-                logger.info(ui_text("游戏窗口已存在", "Game window already exists"))
+                logger.info(tr("module.enter_game.legacy.f80650f28a54", fallback="Game window already exists"))
             return {
                 "ok": True,
                 "already_running": True,
@@ -291,39 +283,29 @@ def launch_game_with_guard(
         if not exe_path or not os.path.exists(exe_path):
             if logger:
                 logger.error(
-                    ui_text(
-                        f"未找到游戏主程序 Game.exe，请检查路径: {start_path}",
-                        f"Game.exe not found, please check the path: {start_path}",
-                    )
+                    tr("framework.legacy.df889f0ebf82", fallback=f"Game.exe not found, please check the path: {start_path}")
                 )
             return {
                 "ok": False,
-                "error": ui_text(
-                    f"game exe not found under: {start_path}",
-                    f"Game executable not found under: {start_path}",
-                ),
+                "error": tr("framework.legacy.1abfcb8e6130", fallback=f"Game executable not found under: {start_path}"),
             }
 
         launch_args = get_start_arguments(start_path, game_channel, exe_path=exe_path)
         if launch_args is None:
             if logger:
                 logger.error(
-                    ui_text(
-                        f"游戏启动失败未找到对应参数，start_path：{start_path}，game_channel:{game_channel}",
-                        f"Failed to resolve launch arguments, start_path: {start_path}, game_channel: {game_channel}",
-                    )
+                    tr("framework.legacy.528f0473f979", fallback=f"Failed to resolve launch arguments, start_path: {start_path}, game_channel: {game_channel}")
                 )
-            return {"ok": False, "error": ui_text("failed to resolve launch arguments", "Failed to resolve launch arguments")}
+            return {"ok": False, "error": tr("module.enter_game.legacy.fc3cf53d556a", fallback="Failed to resolve launch arguments")}
 
         if logger:
-            logger.debug(ui_text(f"正在启动 {exe_path} {launch_args}", f"Starting {exe_path} {launch_args}"))
-
+            logger.debug(tr("framework.legacy.8bb7e083549c", fallback=f"Starting {exe_path} {launch_args}"))
         try:
             process = subprocess.Popen([exe_path] + launch_args)
         except Exception as exc:
             if logger:
-                logger.error(ui_text(f"启动进程失败: {exc}", f"Failed to spawn process: {exc}"))
-            return {"ok": False, "error": ui_text(f"failed to spawn process: {exc}", f"Failed to spawn process: {exc}")}
+                logger.error(tr("framework.legacy.9eddf8040deb", fallback=f"Failed to spawn process: {exc}"))
+            return {"ok": False, "error": tr("framework.legacy.71ae3513d20a", fallback=f"Failed to spawn process: {exc}")}
 
         _last_game_process = process
         _last_launch_ts = time.time()
@@ -393,10 +375,7 @@ class EnterGameService(IGameEnvironment):
         action = "将" if state == 2 else "不会"
         InfoBar.success(
             title=status,
-            content=ui_text(
-                f"点击“开始”按钮时{action}自动启动游戏",
-                f"Clicking the 'Start' button will {action}automatically launch the game",
-            ),
+            content=tr("framework.legacy.4f4b7745f8d0", fallback=f"Clicking the 'Start' button will {action}automatically launch the game"),
             orient=Qt.Orientation.Horizontal,
             isClosable=True,
             position=InfoBarPosition.TOP_RIGHT,

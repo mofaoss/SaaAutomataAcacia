@@ -1,5 +1,5 @@
 from app.framework.ui.widgets.custom_message_box import CustomMessageBox
-from app.framework.ui.shared.text import ui_text
+from app.framework.i18n import tr
 
 
 class RedeemCodesView:
@@ -15,7 +15,7 @@ class RedeemCodesView:
             dialog = CustomMessageBox(parent, "导入兑换码", "text_edit")
             dialog.content.setEnabled(True)
             dialog.content.setPlaceholderText(
-                ui_text("一行一个兑换码", "One code per line")
+                tr("module.redeem_codes.legacy.8271d40248dc", fallback="One code per line")
             )
             if dialog.exec():
                 return dialog.content.toPlainText()

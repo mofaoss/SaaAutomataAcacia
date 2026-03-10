@@ -3,6 +3,7 @@ from PySide6.QtWidgets import QHBoxLayout, QVBoxLayout, QWidget, QTextBrowser
 from qfluentwidgets import (BodyLabel, PushButton, SimpleCardWidget, Slider, SpinBox, TitleLabel)
 from app.framework.infra.config.app_config import config
 from app.framework.ui.views.periodic_base import ModulePageBase
+from app.framework.i18n import tr
 
 class WaterBombInterface(ModulePageBase):
     def __init__(self, parent=None):

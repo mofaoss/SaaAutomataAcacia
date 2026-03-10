@@ -3,15 +3,10 @@ import time
 from app.framework.infra.automation.timer import Timer
 from app.features.utils.home_navigation import back_to_home
 
-from app.framework.core.module_system import module
+from app.framework.core.module_system import on_demand_module, periodic_module
 
 
-@module(
-    id="task_reward",
-    name="收取奖励",
-    en_name="Claim Rewards",
-    host="periodic",
-)
+@periodic_module("Claim Rewards", module_id="task_reward")
 class GetRewardModule:
     def __init__(self, auto, logger, isLog=False):
         self.auto = auto

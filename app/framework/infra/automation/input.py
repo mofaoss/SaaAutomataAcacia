@@ -11,7 +11,7 @@ import win32gui  # 不能删
 
 from app.framework.infra.config.app_config import config
 from app.framework.infra.automation.window_tracker import WindowTracker
-from app.framework.ui.shared.text import ui_text
+from app.framework.i18n import tr
 
 logger = logging.getLogger(__name__)
 
@@ -134,7 +134,12 @@ class Input:
         now = time.time()
         if now - self._last_shell_guard_log_time >= self._shell_guard_log_interval:
             if config.isInputLog.value:
-                self.logger.info(ui_text("检测到用户正在与桌面/任务栏等交互，窗口追踪保持隐藏并等待", "Detected user interacting with desktop/taskbar, keeping tracking hidden and waiting"))
+                self.logger.info(
+                    tr(
+                        "framework.legacy.a03262985b45",
+                        fallback="Detected user interacting with desktop/taskbar, keeping tracking hidden and waiting",
+                    )
+                )
             self._last_shell_guard_log_time = now
 
     def _sleep_for_shell_guard(self):
@@ -231,11 +236,15 @@ class Input:
         deferred_time = 0.0
         lock_timeout = max(0.1, min(time_out, 1.0))
         if not self._mouse_action_lock.acquire(timeout=lock_timeout):
-            self.logger.error(ui_text(f"无法执行鼠标点击({x}, {y})，因为鼠标操作正在进行中", f"Failed to perform mouse click ({x}, {y}) because mouse operation is in progress"))
+            self.logger.error(
+                tr(
+                    "framework.legacy.caa657222e69",
+                    fallback=f"Failed to perform mouse click ({x}, {y}) because mouse operation is in progress",
+                )
+            )
             return
-
+        self._sync_tracker_hwnd()
         try:
-            self._sync_tracker_hwnd()
             if not self._window_tracking_enabled:
                 self.window_tracker.restore_window_position()
             else:
@@ -317,7 +326,9 @@ class Input:
                         if click_done:
                             self.window_tracker.hide_window_offscreen()
                             if config.isInputLog.value:
-                                self.logger.info(ui_text(f"窗口追踪点击完成({x}, {y})", f"Tracking click completed ({x}, {y})"))
+                                self.logger.info(
+                                    tr("framework.legacy.3f8cb64f8a22", fallback=f"Tracking click completed ({x}, {y})")
+                                )
                             return
                         time.sleep(0.003)
                         continue
@@ -341,7 +352,7 @@ class Input:
 
                     time.sleep(0.02)
                     if config.isInputLog.value:
-                        self.logger.info(ui_text(f"鼠标移动后点击({x}, {y})", f"Mouse move and click ({x}, {y})"))
+                        self.logger.info(tr("framework.legacy.bb776acba1c2", fallback=f"Mouse move and click ({x}, {y})"))
                     return
                 finally:
                     if current_pos is not None:
@@ -352,12 +363,17 @@ class Input:
 
             active_elapsed = time.time() - start_time - (deferred_time if self._window_tracking_enabled else 0.0)
             if active_elapsed > time_out:
-                raise RuntimeError(ui_text("等待点击超时", "Click timeout"))
+                raise RuntimeError(tr("framework.legacy.9f046fba4a42", fallback="Click timeout"))
         except Exception as e:
-            self.logger.error(ui_text(f"鼠标移动点击({x}, {y})出错：{repr(e)}", f"Error occurred while performing mouse move click ({x}, {y}): {repr(e)}"))
-        finally:
+            self.logger.error(
+                tr(
+                    "framework.legacy.232e9dc79724",
+                    fallback=f"Error occurred while performing mouse move click ({x}, {y}): {repr(e)}",
+                )
+            )
             if self._window_tracking_enabled:
                 self.window_tracker.hide_window_offscreen()
+        finally:
             self._mouse_action_lock.release()
 
     def mouse_click(self, x: int, y: int, mouse_key='left', press_time: float = 0.002):
@@ -367,9 +383,14 @@ class Input:
             time.sleep(press_time)
             self.mouse_up(x, y, mouse_key)
             if config.isInputLog.value:
-                self.logger.info(ui_text(f"鼠标移动后点击({x}, {y})", f"Mouse move and click ({x}, {y})"))
+                self.logger.info(tr("framework.legacy.81f445316f32", fallback=f"Mouse move and click ({x}, {y})"))
         except Exception as e:
-            self.logger.error(ui_text(f"鼠标移动点击({x}, {y})出错：{repr(e)}", f"Error occurred while performing mouse move click ({x}, {y}): {repr(e)}"))
+            self.logger.error(
+                tr(
+                    "framework.legacy.af21f8ed0e4e",
+                    fallback=f"Error occurred while performing mouse move click ({x}, {y}): {repr(e)}",
+                )
+            )
 
     def move_to(self, x: int, y: int):
         wparam = 0
@@ -402,8 +423,13 @@ class Input:
             active_elapsed = time.time() - start_time - deferred_time
             if active_elapsed >= effective_timeout:
                 self.logger.warning(
-                    ui_text(f"窗口追踪滚轮超时，放弃本次滚轮输入: ({x}, {y}, {delta})", f"Tracking wheel timeout, abandoning this wheel input: ({x}, {y}, {delta})"),
-                    f"batches={total_batches}, finished={finished_batches}, timeout={effective_timeout:.2f}s"
+                    tr(
+                        "framework.legacy.27ab5f2d7bf1",
+                        fallback=(
+                            f"Tracking wheel timeout, abandoning this wheel input: ({x}, {y}, {delta}), "
+                            f"total_batches={total_batches}, finished={finished_batches}, timeout={effective_timeout:.2f}s"
+                        ),
+                    )
                 )
                 return False
 
@@ -425,7 +451,12 @@ class Input:
                 time.sleep(0.001)
 
             if not aligned:
-                self.logger.warning(ui_text(f"窗口追踪滚轮对齐失败，放弃本次滚轮输入: ({x}, {y}, {delta})", f"Tracking wheel alignment failed, abandoning this wheel input: ({x}, {y}, {delta})"))
+                self.logger.warning(
+                    tr(
+                        "framework.legacy.4dcf931755cd",
+                        fallback=f"Tracking wheel alignment failed, abandoning this wheel input: ({x}, {y}, {delta})",
+                    )
+                )
                 return False
 
             self.activate()
@@ -444,8 +475,13 @@ class Input:
                 active_elapsed = time.time() - start_time - deferred_time
                 if active_elapsed >= effective_timeout:
                     self.logger.warning(
-                        ui_text(f"窗口追踪滚轮超时(尾量)，放弃本次滚轮输入: ({x}, {y}, {delta})", f"Tracking wheel timeout (remainder), abandoning this wheel input: ({x}, {y}, {delta})"),
-                        f"batches={total_batches}, finished={finished_batches}, timeout={effective_timeout:.2f}s"
+                        tr(
+                            "framework.legacy.33a98f72903f",
+                            fallback=(
+                                f"Tracking wheel timeout (remainder), abandoning this wheel input: ({x}, {y}, {delta}), "
+                                f"total_batches={total_batches}, finished={finished_batches}, timeout={effective_timeout:.2f}s"
+                            ),
+                        )
                     )
                     return False
 
@@ -467,16 +503,20 @@ class Input:
                     time.sleep(0.001)
 
                 if not aligned:
-                    self.logger.warning(ui_text(f"窗口追踪滚轮尾量对齐失败，放弃本次滚轮输入: ({x}, {y}, {delta})", f"Tracking wheel remainder alignment failed, abandoning this wheel input: ({x}, {y}, {delta})"))
+                    self.logger.warning(
+                        tr(
+                            "framework.legacy.23150d6d9a26",
+                            fallback=f"Tracking wheel remainder alignment failed, abandoning this wheel input: ({x}, {y}, {delta})",
+                        )
+                    )
                     return False
-
                 self.activate()
                 win32gui.SendMessage(self.hwnd, self.WmCode['mouse_move'], 0, lparam)
                 win32gui.SendMessage(self.hwnd, self.WmCode['mouse_wheel'], (direction * remainder) << 16, lparam)
                 break
 
         if config.isInputLog.value:
-            self.logger.info(ui_text(f"窗口追踪模式滚动完成 ({x},{y}) delta={delta}", f"Tracking mode scrolling completed ({x},{y}) delta={delta}"))
+            self.logger.info(tr("framework.legacy.7e075a1d25e4", fallback=f"Tracking mode scrolling completed ({x},{y}) delta={delta}"))
         return True
 
     def mouse_scroll(self, x: int, y: int, delta: int = 120, time_out: float = 10.):
@@ -527,8 +567,7 @@ class Input:
                         win32gui.PostMessage(self.hwnd, message, wparam, lparam)
 
                         if config.isInputLog.value:
-                            self.logger.info(ui_text(f"鼠标移动至({x},{y})滚动滚轮 {delta}", f"Mouse moved to ({x},{y}) and scrolled wheel {delta}"))
-                        return True
+                            self.logger.info(tr("framework.legacy.64cf452636e6", fallback=f"Mouse moved to ({x},{y}) and scrolled wheel {delta}")        return True
                     finally:
                         if current_pos is not None:
                             try:
@@ -538,11 +577,8 @@ class Input:
                 last_position = win32api.GetCursorPos()
                 time.sleep(0.02)
 
-            self.logger.warning(ui_text(f"等待滚动滚轮超时，放弃本次滚轮输入: ({x}, {y}, {delta})", f"Waiting for wheel scrolling timeout, abandoning this wheel input: ({x}, {y}, {delta})"))
-            return False
-        except Exception as e:
-            self.logger.error(ui_text(f"鼠标移动({x}, {y})后滚动出错：{repr(e)}", f"Error occurred while scrolling after mouse move ({x}, {y}): {repr(e)}"))
-            return False
+            self.logger.warning(tr("framework.legacy.4e66efce731d", fallback=f"Waiting for wheel scrolling timeout, abandoning this wheel input: ({x}, {y}, {delta})") except Exception as e:
+            self.logger.error(tr("framework.legacy.2837c39f5660", fallback=f"Error occurred while scrolling after mouse move ({x}, {y}): {repr(e)}") False
 
     def press_key(self, key, press_time=0.2):
         try:
@@ -550,27 +586,21 @@ class Input:
             time.sleep(press_time)
             self.key_up(key)
         except Exception as e:
-            self.logger.error(ui_text(f"键盘模拟{key}出错：{repr(e)}", f"Error occurred while simulating key {key}: {repr(e)}"))
-
-    def key_down(self, key):
+            self.logger.error(tr("framework.legacy.6d24eb9e59c4", fallback=f"Error occurred while simulating key {key}: {repr(e)}")_down(self, key):
         vk_code = self.get_virtual_keycode(key)
         scan_code = windll.user32.MapVirtualKeyW(vk_code, 0)
         wparam = vk_code
         lparam = (scan_code << 16) | 1
         win32gui.PostMessage(self.hwnd, self.WmCode["key_down"], wparam, lparam)
         if config.isInputLog.value:
-            self.logger.debug(ui_text(f"键盘按下{key}", f"Key pressed: {key}"))
-
-    def key_up(self, key):
+            self.logger.debug(tr("framework.legacy.e88c659ac469", fallback=f"Key pressed: {key}")ef key_up(self, key):
         vk_code = self.get_virtual_keycode(key)
         scan_code = windll.user32.MapVirtualKeyW(vk_code, 0)
         wparam = vk_code
         lparam = (scan_code << 16) | 1
         win32gui.PostMessage(self.hwnd, self.WmCode["key_up"], wparam, lparam)
         if config.isInputLog.value:
-            self.logger.debug(ui_text(f"键盘松开{key}", f"Key released: {key}"))
-
-if __name__ == '__main__':
+            self.logger.debug(tr("framework.legacy.98cebd476766", fallback=f"Key released: {key}")name__ == '__main__':
     import win32gui
 
     def get_hwnd_by_title(window_title):

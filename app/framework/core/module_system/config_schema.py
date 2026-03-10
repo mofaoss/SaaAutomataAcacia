@@ -1,6 +1,10 @@
 from __future__ import annotations
 
 import inspect
+from typing import Any
+
+from app.framework.core.module_system.models import Field, SchemaField
+from app.framework.core.module_system.naming import humanize_name
 
 
 RUNTIME_PARAMS = {
@@ -16,18 +20,59 @@ RUNTIME_PARAMS = {
 }
 
 
-def build_config_schema(func):
+def _resolve_field_meta(
+    *,
+    module_id: str,
+    param_name: str,
+    field_decl: str | Field | None,
+) -> tuple[str, str, str | None]:
+    if isinstance(field_decl, Field):
+        field_id = field_decl.id or param_name
+        label_default = field_decl.label or humanize_name(param_name)
+        help_default = field_decl.help
+    elif isinstance(field_decl, str):
+        field_id = param_name
+        label_default = field_decl
+        help_default = None
+    else:
+        field_id = param_name
+        label_default = humanize_name(param_name)
+        help_default = None
+
+    label_key = f"module.{module_id}.field.{field_id}.label"
+    help_key = f"module.{module_id}.field.{field_id}.help"
+    return field_id, label_default, help_default if help_default else None, label_key, help_key
+
+
+def build_config_schema(
+    func,
+    *,
+    module_id: str,
+    fields: dict[str, str | Field] | None = None,
+) -> list[SchemaField]:
     sig = inspect.signature(func)
-    schema = []
+    schema: list[SchemaField] = []
+    field_defs: dict[str, str | Field] = fields or {}
+
     for name, param in sig.parameters.items():
         if name in RUNTIME_PARAMS:
             continue
+        field_id, label_default, help_default, label_key, help_key = _resolve_field_meta(
+            module_id=module_id,
+            param_name=name,
+            field_decl=field_defs.get(name),
+        )
         schema.append(
-            {
-                "name": name,
-                "type": param.annotation,
-                "default": None if param.default is inspect._empty else param.default,
-                "required": param.default is inspect._empty,
-            }
+            SchemaField(
+                param_name=name,
+                field_id=field_id,
+                type_hint=param.annotation,
+                default=None if param.default is inspect._empty else param.default,
+                required=param.default is inspect._empty,
+                label_key=label_key,
+                help_key=help_key,
+                label_default=label_default,
+                help_default=help_default,
+            )
         )
     return schema

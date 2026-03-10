@@ -10,15 +10,10 @@ from app.framework.infra.events.signal_bus import signalBus
 from app.framework.infra.vision.vision import count_color_blocks
 from app.framework.infra.automation.timer import Timer
 
-from app.framework.core.module_system import module
+from app.framework.core.module_system import on_demand_module, periodic_module
 
 
-@module(
-    id="fishing",
-    name="钓鱼",
-    en_name="Fishing",
-    host="on_demand",
-)
+@on_demand_module("Fishing", module_id="fishing")
 def run_fishing(
     LineEdit_fish_upper: str = "25,255,255",
     LineEdit_fish_lower: str = "20,220,245",

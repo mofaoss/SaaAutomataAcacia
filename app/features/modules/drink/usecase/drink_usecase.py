@@ -3,15 +3,10 @@ import time
 from app.features.utils.randoms import random_rectangle_point
 from app.framework.infra.automation.timer import Timer
 
-from app.framework.core.module_system import module
+from app.framework.core.module_system import on_demand_module, periodic_module
 
 
-@module(
-    id="drink",
-    name="猜心对局",
-    en_name="Card Match",
-    host="on_demand",
-)
+@on_demand_module("Card Match", module_id="drink")
 class DrinkModule:
     def __init__(
         self,

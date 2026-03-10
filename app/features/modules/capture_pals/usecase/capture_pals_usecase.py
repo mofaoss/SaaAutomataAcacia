@@ -4,7 +4,7 @@ from dataclasses import dataclass
 import cv2
 from app.framework.infra.automation.timer import Timer
 
-from app.framework.core.module_system import module
+from app.framework.core.module_system import on_demand_module, periodic_module
 
 
 @dataclass
@@ -28,12 +28,7 @@ class _SyncState:
         return float(self.profile.patrol_refresh_interval_sec if self.mode == 1 else self.profile.fixed_interval_sec)
 
 
-@module(
-    id="capture_pals",
-    name="抓帕鲁",
-    en_name="Capture Pals",
-    host="on_demand",
-)
+@on_demand_module("Capture Pals", module_id="capture_pals")
 class CapturePalsModule:
     """
     尘白抓帕鲁模块

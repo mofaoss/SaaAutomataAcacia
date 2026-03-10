@@ -1,0 +1,6 @@
+{
+  "module.task_login.title": "Auto Login",
+  "module.enter_game.legacy.fc3cf53d556a": "Failed to resolve launch arguments",
+  "module.enter_game.legacy.22bfd52ce240": "Detected that the game process started by the program is still running, skipping duplicate startup",
+  "module.enter_game.legacy.f80650f28a54": "Game window already exists"
+}

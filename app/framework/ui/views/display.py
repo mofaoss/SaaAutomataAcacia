@@ -21,6 +21,7 @@ from app.framework.ui.shared.style_sheet import StyleSheet
 from .periodic_base import BaseInterface
 
 from app.framework.ui.widgets.samplecardview import SampleCardView
+from app.framework.i18n import tr
 
 
 def _resolve_display_image_dir() -> Path:

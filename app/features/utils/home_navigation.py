@@ -1,7 +1,7 @@
 import time
 
 from app.framework.infra.automation.timer import Timer
-from app.framework.ui.shared.text import ui_text
+from app.framework.i18n import tr
 
 
 def back_to_home(auto, logger, timeout_seconds=10):
@@ -43,5 +43,5 @@ def back_to_home(auto, logger, timeout_seconds=10):
         time.sleep(0.5)
 
         if timeout.reached():
-            logger.error(ui_text("返回主页面超时", "Timeout returning to home page"))
+            logger.error(tr("framework.legacy.25d4af2c5071", fallback="Timeout returning to home page"))
             return False

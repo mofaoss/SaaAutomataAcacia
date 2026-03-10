@@ -4,15 +4,10 @@ from datetime import datetime, timedelta
 from app.framework.infra.automation.timer import Timer
 from app.features.utils.home_navigation import back_to_home
 
-from app.framework.core.module_system import module
+from app.framework.core.module_system import on_demand_module, periodic_module
 
 
-@module(
-    id="task_chasm",
-    name="精神拟境",
-    en_name="Neural Sim",
-    host="periodic",
-)
+@periodic_module("Neural Sim", module_id="task_chasm")
 class ChasmModule:
     def __init__(self, auto, logger, isLog=False):
         self.auto = auto

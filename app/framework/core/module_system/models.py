@@ -10,6 +10,28 @@ class ModuleHost(str, Enum):
     ON_DEMAND = "on_demand"
 
 
+@dataclass(frozen=True, slots=True)
+class Field:
+    """Decorator-time field metadata for stable i18n field IDs."""
+
+    id: str | None = None
+    label: str | None = None
+    help: str | None = None
+
+
+@dataclass(slots=True)
+class SchemaField:
+    param_name: str
+    field_id: str
+    type_hint: Any
+    default: Any
+    required: bool
+    label_key: str
+    help_key: str
+    label_default: str
+    help_default: str | None = None
+
+
 @dataclass(slots=True)
 class ModuleMeta:
     id: str
@@ -40,7 +62,9 @@ class ModuleMeta:
     periodic_option_key: str | None = None
     periodic_default_activation_config: list[dict[str, Any]] = field(default_factory=list)
 
-    config_schema: list[dict[str, Any]] = field(default_factory=list)
+    config_schema: list[SchemaField] = field(default_factory=list)
+    source_lang: str = "en"
+    i18n_owner_dir: str | None = None
     generated_module_class: type | None = None
 
     def display_name(self, is_non_chinese_ui: bool) -> str:
