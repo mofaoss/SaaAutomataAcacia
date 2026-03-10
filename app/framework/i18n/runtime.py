@@ -347,17 +347,6 @@ def _(
     )
 
 
-def qt(value: Any) -> str | None:
-    """Qt boundary adapter: convert translatable/lazy values to concrete strings."""
-    if value is None:
-        return None
-    if isinstance(value, TranslatableMessage):
-        return str(value)
-    if isinstance(value, str):
-        return value
-    return str(value)
-
-
 def _owner_prefix(message: TranslatableMessage) -> str:
     if message.owner_scope == "module" and message.owner_module:
         return f"module.{message.owner_module}"

@@ -8,7 +8,7 @@ from PySide6.QtCore import Qt
 from qfluentwidgets import BodyLabel, InfoBar, InfoBarPosition, ProgressBar
 
 from app.features.utils.network import calculate_time_difference, get_date_from_api
-from app.framework.i18n import _, qt, tr
+from app.framework.i18n import _, tr
 from app.framework.i18n import runtime as i18n_runtime
 
 _REMAINING_DAYS_RE = re.compile(r"^\s*(\d+)\s*(?:d\(s\)|d|day|days|ds)\s*left\s*$", re.IGNORECASE)

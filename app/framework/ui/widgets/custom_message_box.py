@@ -2,7 +2,7 @@ import sys
 from PySide6.QtCore import Qt, QUrl
 from PySide6.QtGui import QIcon, QColor
 from PySide6.QtWidgets import QApplication, QWidget, QHBoxLayout, QTextBrowser
-from app.framework.i18n import _, qt
+from app.framework.i18n import _
 
 from qfluentwidgets import MessageBoxBase, SubtitleLabel, LineEdit, PushButton, CaptionLabel, setTheme, Theme, \
     PixmapLabel, BodyLabel, TextEdit
@@ -23,8 +23,8 @@ class CustomMessageBox(MessageBoxBase):
         self.viewLayout.addWidget(self.content)
 
         # change the text of button
-        self.yesButton.setText(qt(_('确定')))
-        self.cancelButton.setText(qt(_('关闭')))
+        self.yesButton.setText(_('确定'))
+        self.cancelButton.setText(_('关闭'))
         self.setClosableOnMaskClicked(True)
 
         # self.widget.setMinimumWidth(50)
@@ -43,6 +43,6 @@ class CustomMessageBox(MessageBoxBase):
             widget = TextEdit(self)
         else:
             widget = BodyLabel(self)
-            widget.setText(qt(_("content")))
+            widget.setText(_("content"))
         widget.setObjectName("content")
         return widget

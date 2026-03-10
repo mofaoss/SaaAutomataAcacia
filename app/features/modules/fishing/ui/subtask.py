@@ -4,7 +4,7 @@ import numpy as np
 from PySide6.QtCore import QThread, Signal, Qt
 from PySide6.QtGui import QImage, QPixmap
 from PySide6.QtWidgets import QDialog, QLabel, QVBoxLayout
-from app.framework.i18n import _, qt
+from app.framework.i18n import _
 
 from app.framework.infra.config.app_config import config
 from app.framework.infra.automation.automation import Automation
@@ -22,7 +22,7 @@ class SubTask(ModuleTaskThread):
 class ColorPickDialog(QDialog):
     def __init__(self, img_np, parent=None):
         super().__init__(parent)
-        self.setWindowTitle(qt(_("请点击图像上的黄色完美收杆区域 (提取颜色)")))
+        self.setWindowTitle(_("请点击图像上的黄色完美收杆区域 (提取颜色)"))
 
         # 【核心修复】：强制转换图像内存为连续的 C 风格内存块
         if not img_np.flags['C_CONTIGUOUS']:
@@ -105,5 +105,3 @@ class AdjustColor(QThread, BaseTask):
         config.set(config.LineEdit_fish_base, base)
         config.set(config.LineEdit_fish_upper, upper)
         config.set(config.LineEdit_fish_lower, lower)
-
-

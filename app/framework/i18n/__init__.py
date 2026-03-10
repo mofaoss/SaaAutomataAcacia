@@ -4,14 +4,28 @@ import builtins
 import inspect
 from pathlib import Path
 
-from app.framework.i18n.runtime import _, qt, tr, TranslatableMessage, get_catalog, load_i18n_catalogs
+from app.framework.i18n.runtime import _ as _runtime_translate, tr, TranslatableMessage, get_catalog, load_i18n_catalogs
+
+
+def _first_external_callsite_frame():
+    """Return the first frame outside app.framework.i18n package."""
+    frame = inspect.currentframe()
+    if frame is None:
+        return None
+    frame = frame.f_back
+    while frame is not None:
+        file_name = getattr(getattr(frame, "f_code", None), "co_filename", "")
+        normalized = str(file_name).replace("\\", "/").lower()
+        if "/app/framework/i18n/" not in normalized:
+            return frame
+        frame = frame.f_back
+    return None
 
 
 def _is_ui_callsite() -> bool:
     """Detect common UI callsites to auto-materialize TranslatableMessage -> str."""
     try:
-        frame = inspect.currentframe()
-        caller = frame.f_back.f_back if frame and frame.f_back else None
+        caller = _first_external_callsite_frame()
         file_path = Path(getattr(getattr(caller, "f_code", None), "co_filename", ""))
         parts = [p.lower() for p in file_path.parts]
         if "ui" in parts:
@@ -27,8 +41,7 @@ def _infer_owner_hints_from_callsite() -> dict:
     """Best-effort owner/callsite inference when AST rewrite metadata is unavailable."""
     hints: dict = {}
     try:
-        frame = inspect.currentframe()
-        caller = frame.f_back.f_back if frame and frame.f_back else None
+        caller = _first_external_callsite_frame()
         code = getattr(caller, "f_code", None)
         file_name = Path(getattr(code, "co_filename", ""))
         parts = [p.lower() for p in file_name.parts]
@@ -70,10 +83,15 @@ def _builtin_translate(text, *, msgid=None, **kwargs):
     # in module catalogs instead of incorrectly falling back to framework.*.
     if "__i18n_owner_scope__" not in kwargs:
         kwargs.update(_infer_owner_hints_from_callsite())
-    value = _(text, msgid=msgid, **kwargs)
+    value = _runtime_translate(text, msgid=msgid, **kwargs)
     if _is_ui_callsite():
-        return qt(value)
+        return str(value) if value is not None else ""
     return value
+
+
+def _(text, *, msgid=None, **kwargs):
+    """Public `_` export with automatic Qt-safe adaptation on UI callsites."""
+    return _builtin_translate(text, msgid=msgid, **kwargs)
 
 
 def install_global_translate_symbol() -> None:
@@ -87,4 +105,4 @@ def install_global_translate_symbol() -> None:
 
 install_global_translate_symbol()
 
-__all__ = ["_", "qt", "tr", "TranslatableMessage", "load_i18n_catalogs", "get_catalog"]
+__all__ = ["_", "tr", "TranslatableMessage", "load_i18n_catalogs", "get_catalog"]

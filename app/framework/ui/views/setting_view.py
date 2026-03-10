@@ -3,7 +3,7 @@ import logging
 import os.path
 import subprocess
 import sys
-from app.framework.i18n import _, qt
+from app.framework.i18n import _
 
 from PySide6.QtCore import Qt, QUrl, QThread, Signal
 from PySide6.QtGui import QDesktopServices, QFont, QPixmap
@@ -92,7 +92,7 @@ class AboutHeaderWidget(QWidget, BaseInterface):
         if not pixmap.isNull():
             self.logoLabel.setPixmap(pixmap.scaled(80, 80, Qt.AspectRatioMode.KeepAspectRatio, Qt.TransformationMode.SmoothTransformation))
         else:
-            self.logoLabel.setText(qt(_("LOGO")))
+            self.logoLabel.setText(_("LOGO"))
             self.logoLabel.setStyleSheet("background-color: #333; color: white; border-radius: 10px;")
         self.mainLayout.addWidget(self.logoLabel, 0, Qt.AlignmentFlag.AlignVCenter)
 
@@ -519,7 +519,7 @@ class SettingInterface(ScrollArea, BaseInterface):
             )
 
     def _copy_qq_group_number(self):
-        QApplication.clipboard().setText(qt(_("996710620")))
+        QApplication.clipboard().setText(_("996710620"))
         InfoBar.success(
             self._ui_text('已复制QQ群号', 'QQ group number copied'),
             "996710620",

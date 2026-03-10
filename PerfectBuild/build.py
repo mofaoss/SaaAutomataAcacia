@@ -119,6 +119,29 @@ class PerfectBuild:
         ]
         """
         output_dir = Path.joinpath(self.app_dir, "build", f"{self.system}-{self.arch}")
+        optional_data_mappings = [
+            ("PerfectBuild/assets/shapely.libs/.load-order-shapely-2.0.7", "shapely.libs/.load-order-shapely-2.0.7", "file"),
+            ("resources", "resources", "dir"),
+            ("docs/help.md", "docs/help.md", "file"),
+            ("docs/help_en.md", "docs/help_en.md", "file"),
+            ("update_data.txt", "update_data.txt", "file"),
+            ("asset", "asset", "dir"),
+            ("app/features/modules", "app/features/modules", "dir"),
+            ("app/framework/infra/vision/onnxocr/models/ppocrv5", "app/framework/infra/vision/onnxocr/models/ppocrv5", "dir"),
+        ]
+
+        def _include_arg(src: str, dst: str, kind: str) -> str | None:
+            src_path = Path(self.app_dir, src)
+            if kind == "dir":
+                if src_path.is_dir():
+                    return f"--include-data-dir={src}={dst}"
+                print(f"[build] warning: skip missing data dir: {src}")
+                return None
+            if src_path.is_file():
+                return f"--include-data-file={src}={dst}"
+            print(f"[build] warning: skip missing data file: {src}")
+            return None
+
         cmd_args = [
             "python",
             "-m",
@@ -133,15 +156,11 @@ class PerfectBuild:
             "--windows-console-mode=disable",
             # 添加文件
             "--noinclude-qt-plugins=qml,webengine,network,multimedia,sql,test,sensorkit,position,location,bluetooth,nfc,serialport,websockets,printsupport,dbus,xml,pdf",
-            "--include-data-file=PerfectBuild/assets/shapely.libs/.load-order-shapely-2.0.7=shapely.libs/.load-order-shapely-2.0.7",
-            "--include-data-dir=resources=resources",
-            "--include-data-file=docs/help.md=docs/help.md",
-            "--include-data-file=docs/help_en.md=docs/help_en.md",
-            "--include-data-file=update_data.txt=update_data.txt",
-            "--include-data-dir=asset=asset",
-            "--include-data-dir=app/features/modules=app/features/modules",
-            "--include-data-dir=app/framework/infra/vision/onnxocr/models/ppocrv5=app/framework/infra/vision/onnxocr/models/ppocrv5",
         ]
+        for src, dst, kind in optional_data_mappings:
+            include = _include_arg(src, dst, kind)
+            if include:
+                cmd_args.append(include)
         if platform.system() == "Windows":
             cmd_args.extend((f"--windows-icon-from-ico={self.app_icon}", "--msvc=latest"))
         # '--windows-console-mode=disable',

@@ -30,7 +30,7 @@ from qfluentwidgets import (
     isDarkTheme,
 )
 from app.framework.application.modules import HostContext, get_periodic_module_specs
-from app.framework.i18n import _, qt
+from app.framework.i18n import _
 
 
 class TaskListView(ListWidget):
@@ -103,13 +103,13 @@ class ExecutionRuleWidget(QWidget):
         self.month_combo.setFixedWidth(68)
 
         self.time_edit = LineEdit(self)
-        self.time_edit.setText(qt(_("00:00")))
+        self.time_edit.setText(_("00:00"))
         self.time_edit.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.time_edit.setFixedWidth(58)
 
         self.runs_edit = LineEdit(self)
         self.runs_edit.setValidator(QIntValidator(1, 99, self))
-        self.runs_edit.setText(qt(_("1")))
+        self.runs_edit.setText(_("1"))
         self.runs_edit.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.runs_edit.setMinimumWidth(35)
         self.runs_edit.setMaximumWidth(55)
@@ -530,7 +530,7 @@ class SharedSchedulingPanel(QWidget):
     def _add_activation_rule(self, data):
         w = ExecutionRuleWidget(self.is_non_chinese_ui, self)
         w.set_runs_visible(False) # 隐藏次数和复制按钮
-        w.runs_edit.setText(qt(_("1")))
+        w.runs_edit.setText(_("1"))
         w.delete_btn.setVisible(False)
         w.delete_btn.setEnabled(False)
         w.deleted.connect(self._remove_activation_rule)
