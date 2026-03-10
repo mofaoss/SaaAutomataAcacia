@@ -6,12 +6,12 @@ from app.framework.infra.automation.timer import Timer
 from app.framework.core.module_system import module
 
 
-@module(
-    id="massaging",
-    name="按摩调理",
-    en_name="Massaging",
-    host="on_demand",
-)
+# @module(
+#     id="massaging",
+#     name="按摩调理",
+#     en_name="Massaging",
+#     host="on_demand",
+# )
 class MassagingModule:
     def __init__(self, auto, logger):
         super().__init__()
@@ -98,5 +98,3 @@ class MassagingModule:
             if timeout.reached():
                 self.logger.error("按摩超时")
                 break
-
-
