@@ -7,7 +7,7 @@ from app.framework.ui.views.periodic_base import ModulePageBase
 class OperationInterface(ModulePageBase):
     def __init__(self, parent=None):
         super().__init__(parent)
-        self.setObjectName("page_action")
+        self.setObjectName("page_operation")
 
         self.main_layout = QHBoxLayout(self)
         self.main_layout.setContentsMargins(0, 0, 0, 0)
@@ -23,6 +23,7 @@ class OperationInterface(ModulePageBase):
 
         self._init_ui()
         self.apply_i18n()
+        self._apply_host_context_ui()
 
     def _init_ui(self):
         self.SimpleCardWidget_action = SimpleCardWidget(self)
@@ -83,4 +84,22 @@ class OperationInterface(ModulePageBase):
         self.BodyLabel_4.setText(self._ui_text("刷取次数", "Run count"))
         self.BodyLabel_22.setText(self._ui_text("疾跑方式", "Sprint mode"))
         self.TitleLabel_2.setText(self._ui_text("日志", "Log"))
+
+    def bind_host_context(self, host_context):
+        super().bind_host_context(host_context)
+        self._apply_host_context_ui()
+
+    def _apply_host_context_ui(self):
+        context_value = str(self.property("hostContext") or "")
+        is_periodic = context_value == "periodic"
+
+        if hasattr(self, "PushButton_start_action"):
+            self.PushButton_start_action.setVisible(not is_periodic)
+
+        if hasattr(self, "SimpleCardWidget_log"):
+            self.SimpleCardWidget_log.setVisible(not is_periodic)
+
+        if getattr(self, "main_layout", None) is not None:
+            self.main_layout.setStretch(0, 1)
+            self.main_layout.setStretch(1, 0 if is_periodic else 1)
 

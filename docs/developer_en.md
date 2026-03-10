@@ -1,240 +1,89 @@
-# SAA Developer Guide (English)
+# SAA Developer Guide (Current Architecture)
 
-> 中文版: `docs/developer.md`  
-> Goal: help any contributor understand the current architecture quickly and ship a complete module PR end-to-end.
+> The Chinese document `docs/developer.md` takes precedence in representing the current state of the code.
 
-## 1. Architecture Overview
+## 0. First Step (One-Shot, Lowest Barrier to Entry)
 
-The project now uses a two-root + composition-root model:
+If you just want to "get a module done as quickly as possible," this section is all you need.
+Directly use AI_develop_guidance.md and follow these 3 steps:
 
-- `app/framework`: reusable framework layer
-- `app/features`: game/business layer
+1. Fill out the "User Input Section" (try to use natural language; you can leave items blank).
+2. Select the entire page (`Ctrl+A`) and copy it to your AI/Agent.
+3. Let the AI apply the file changes from the output directly, then run:
+   - `python -m compileall app`
+   - `python scripts/smoke_modules.py`
 
-Core principles:
+If you are using a web-based Chat (where the AI cannot directly manipulate local files), follow this manual process:
 
-1. `framework` should not hardcode game-specific business logic.
-2. `features` wires concrete business implementations into framework via `bootstrap`.
-3. `periodic` and `on_demand` share one module protocol; only scheduling strategy differs.
-4. Each module owns its own `ui + usecase`; host pages focus on registration, layout, intent emission, and state rendering.
+1. Ask the AI to first output a "file list" in a format that must include:
+   - New files (full path)
+   - Modified files (full path)
+   - Deleted files (if any)
+2. Create the directories and files locally according to the list:
+   - Module code usually goes in `app/features/modules/<module_english_name>/usecase/<module_english_name>_usecase.py`
+   - Module UI usually goes in `app/features/modules/<module_english_name>/ui/<module_english_name>_interface.py`
+   - Module assets (image templates/features for recognition) usually go in `app/features/assets/<module_english_name>/`
+   - Naming convention: Please use lowercase English snake_case for directory and file names (e.g., `collect_supplies`). Do not use Chinese, spaces, or special characters.
+3. Ask the AI to output the "paste-ready" full content for each file (don't just provide snippets).
+4. Save each file after pasting, and finally, run the compilation and smoke checks all at once.
+5. If the AI provides "move/rename" instructions, perform the same operations in your local file manager or IDE.
 
----
-
-## 2. Startup and Dependency Injection Flow
-
-1. `SAA.py` bootstraps Qt and runs `StartupController`.
-2. `_create_main_window()` builds a feature bridge through `build_main_window_bridge()`.
-3. `MainWindow(feature_bridge=...)` asks the bridge to:
-   - configure module registry
-   - create periodic page
-   - create on-demand page
-   - initialize OCR
-4. Host pages load module specs dynamically from registry and mount module UIs.
-
-This keeps `framework` interface-driven and `features` implementation-driven.
-
----
-
-## 3. Directory and Key File Responsibilities
-
-### 3.1 Entry and Build
-
-| File | Responsibility |
-|---|---|
-| `SAA.py` | App entry, startup task pipeline, main window creation, translators. |
-| `requirements.txt` | Python dependencies. |
-| `PerfectBuild/build.py` | Build scripts (Nuitka/PyInstaller/installer flow). |
-| `PerfectBuild/perfect_build.py` | Build metadata (version/name/icon). |
-| `PerfectBuild/assets/shapely.libs/.load-order-shapely-2.0.7` | Shapely load-order patch included at build time. |
-
-### 3.2 `app/framework/application`
-
-#### modules
-
-| File | Responsibility |
-|---|---|
-| `framework/application/modules/contracts.py` | Module contracts (`ModuleSpec`, `HostContext`, `ModuleUiBindings`). |
-| `framework/application/modules/registry.py` | Provider registration and dynamic module-spec retrieval. |
-
-#### periodic (application-level scheduling)
-
-| File | Responsibility |
-|---|---|
-| `framework/application/periodic/periodic_controller.py` | Periodic run state machine and thread lifecycle. |
-| `framework/application/periodic/periodic_orchestration.py` | Pure orchestration helpers (task selection/rule copy/formatting). |
-| `framework/application/periodic/periodic_dispatcher.py` | Schedule/runtime message dispatching helpers. |
-| `framework/application/periodic/periodic_page_actions.py` | Page-level actions use cases (presets/rules/runtime). |
-| `framework/application/periodic/periodic_settings_usecase.py` | Periodic settings read/write behavior. |
-| `framework/application/periodic/periodic_ui_binding_usecase.py` | UI-control to config binding wiring. |
-| `framework/application/periodic/on_demand_runner.py` | Single-task runner strategy for on-demand host. |
-
-#### tasks (compatibility + bridge)
-
-| File | Responsibility |
-|---|---|
-| `framework/application/tasks/periodic_task_specs.py` | Bridge to feature-side periodic specs provider. |
-| `framework/application/tasks/periodic_defaults.py` | Bridge to feature-side periodic default sequence builder. |
-| `framework/application/tasks/periodic_task_profile.py` | Merges periodic specs and module registry into runtime profile. |
-| `framework/application/tasks/task_definition.py` | Legacy-compatible task definition model. |
-| `framework/application/tasks/task_registry.py` | Legacy registry generated from unified module registry. |
-| `framework/application/tasks/task_policy.py` | Task policy constants (for example primary task id). |
-| `framework/application/tasks/sequence_serializer.py` | Sequence serialization helper. |
-
-#### other application domains
-
-| File | Responsibility |
-|---|---|
-| `framework/application/hotkey/routing.py` | Global F8 action routing by context. |
-| `framework/application/startup/interface_plan.py` | Startup/deferred interface creation planning. |
-
-### 3.3 `app/framework/core`
-
-#### interfaces
-
-| File | Responsibility |
-|---|---|
-| `framework/core/interfaces/main_window_bridge.py` | Main-window feature bridge protocol. |
-| `framework/core/interfaces/game_environment.py` | Runtime game environment interface. |
-| `framework/core/interfaces/periodic_ports.py` | Ports consumed by periodic page (enter game/supplies/tips/etc.). |
-
-#### task_engine
-
-| File | Responsibility |
-|---|---|
-| `framework/core/task_engine/base_task.py` | Base task context (`auto` init and ratio checks). |
-| `framework/core/task_engine/runtime_session.py` | Automation session lifecycle (`prepare/reset/stop`). |
-| `framework/core/task_engine/threads.py` | Queue thread and single-module thread implementations. |
-| `framework/core/task_engine/scheduler.py` | Periodic rule polling and task triggering. |
-| `framework/core/task_engine/hotkey_poller.py` | Global hotkey polling utility. |
-
-#### other core domains
-
-| File | Responsibility |
-|---|---|
-| `framework/core/event_bus/global_task_bus.py` | Cross-page run-state and stop-request bus. |
-| `framework/core/config/daily_sequence.py` | Task sequence normalization. |
-| `framework/core/config/migration.py` | Sequence schema migration. |
-| `framework/core/observability/error_codes.py` | App error code definitions. |
-| `framework/core/observability/reporting.py` | Exception capture/wrapping. |
-
-### 3.4 `app/framework/infra`
-
-| Path | Responsibility |
-|---|---|
-| `framework/infra/automation/*` | Low-level automation (input/screenshot/window tracking/timers). |
-| `framework/infra/vision/*` | Image matching and OCR services. |
-| `framework/infra/config/app_config.py` | Global config schema/defaults/serialization. |
-| `framework/infra/config/setting.py` | App constants and config file path. |
-| `framework/infra/config/json_parser.py` | JSON parser helpers. |
-| `framework/infra/logging/gui_logger.py` | UI logger pipe. |
-| `framework/infra/events/signal_bus.py` | Qt signal bus. |
-| `framework/infra/runtime/paths.py` | Runtime paths (`runtime/appdata/log/temp`). |
-| `framework/infra/system/windows.py` | Windows handle/window primitives. |
-| `framework/infra/system/cpu.py` | CPU capability checks. |
-| `framework/infra/update/updater.py` | Update checks and update helpers. |
-
-### 3.5 `app/framework/ui`
-
-#### shared
-
-| File | Responsibility |
-|---|---|
-| `framework/ui/shared/text.py` | language-aware text helper. |
-| `framework/ui/shared/style_sheet.py` | QSS entry points. |
-| `framework/ui/shared/icon.py` | icon wrappers. |
-| `framework/ui/shared/localizer.py` | Traditional Chinese localization patching. |
-| `framework/ui/shared/widget_tree.py` | widget-tree traversal helper. |
-
-#### views
-
-| File | Responsibility |
-|---|---|
-| `framework/ui/views/main_window.py` | Main shell, navigation, tray, global F8 dispatch. |
-| `framework/ui/views/periodic_tasks_page.py` | Periodic host page (render + intent + scheduler integration). |
-| `framework/ui/views/periodic_tasks_view.py` | Periodic pure view container. |
-| `framework/ui/views/on_demand_tasks_page.py` | On-demand host page (single-run strategy + shared log). |
-| `framework/ui/views/on_demand_tasks_view.py` | On-demand pure view container. |
-| `framework/ui/views/periodic_base.py` | `BaseInterface` and `ModulePageBase` unified base. |
-| `framework/ui/views/display.py` | Display page. |
-| `framework/ui/views/help.py` | Help page. |
-| `framework/ui/views/setting_view.py` | Settings page. |
-| `framework/ui/views/ocr_replacement_table*.py` | OCR replacement table UI. |
-
-#### widgets
-
-`framework/ui/widgets/*` contains reusable widgets (message box, cards, tree, slider cards, etc.).
-
-### 3.6 `app/features`
-
-#### bootstrap (feature composition roots)
-
-| File | Responsibility |
-|---|---|
-| `features/bootstrap/main_window_wiring.py` | Wires business implementations into framework interfaces. |
-| `features/bootstrap/periodic_task_wiring.py` | Feature-side periodic scheduling metadata/default sequence source. |
-
-#### modules
-
-- Standard module layout: `features/modules/<module>/ui` + `features/modules/<module>/usecase`
-- Unified registration source: `features/modules/module_specs.py`
-- Module starter template: `features/modules/_template/README.md`
-
-Current module IDs from registry:
-
-| id | host | UI example | Usecase example |
-|---|---|---|---|
-| `task_login` | periodic | `enter_game/ui/enter_game_periodic_page.py` | `enter_game/usecase/enter_game_usecase.py` |
-| `task_supplies` | periodic | `collect_supplies/ui/collect_supplies_periodic_page.py` | `collect_supplies/usecase/collect_supplies_usecase.py` |
-| `task_shop` | periodic | `shopping/ui/shop_periodic_page.py` | `shopping/usecase/shopping_usecase.py` |
-| `task_stamina` | periodic | `use_power/ui/use_power_periodic_page.py` | `use_power/usecase/use_power_usecase.py` |
-| `task_shards` | periodic | `person/ui/person_periodic_page.py` | `person/usecase/person_usecase.py` |
-| `task_chasm` | periodic | `chasm/ui/chasm_periodic_page.py` | `chasm/usecase/chasm_usecase.py` |
-| `task_reward` | periodic | `get_reward/ui/reward_periodic_page.py` | `get_reward/usecase/get_reward_usecase.py` |
-| `task_operation` | periodic | `operation_action/ui/operation_periodic_page.py` | `operation_action/usecase/operation_usecase.py` |
-| `task_weapon` | periodic | `upgrade/ui/weapon_upgrade_periodic_page.py` | `upgrade/usecase/weapon_upgrade_usecase.py` |
-| `task_shard_exchange` | periodic | `jigsaw/ui/shard_exchange_periodic_page.py` | `jigsaw/usecase/shard_exchange_usecase.py` |
-| `task_close_game` | periodic | `close_game/ui/close_game_periodic_page.py` | `close_game/usecase/close_game_usecase.py` |
-| `trigger` | on_demand | `trigger/ui/trigger_interface.py` | `trigger/usecase/auto_f_usecase.py` |
-| `fishing` | on_demand | `fishing/ui/fishing_interface.py` | `fishing/usecase/fishing_usecase.py` |
-| `action` | on_demand | `operation_action/ui/operation_interface.py` | `operation_action/usecase/operation_usecase.py` |
-| `water_bomb` | on_demand | `water_bomb/ui/water_bomb_interface.py` | `water_bomb/usecase/water_bomb_usecase.py` |
-| `alien_guardian` | on_demand | `alien_guardian/ui/alien_guardian_interface.py` | `alien_guardian/usecase/alien_guardian_usecase.py` |
-| `maze` | on_demand | `maze/ui/maze_interface.py` | `maze/usecase/maze_usecase.py` |
-| `drink` | on_demand | `drink/ui/drink_interface.py` | `drink/usecase/drink_usecase.py` |
-| `capture_pals` | on_demand | `capture_pals/ui/capture_pals_interface.py` | `capture_pals/usecase/capture_pals_usecase.py` |
-
-#### assets and utils
-
-| Path | Responsibility |
-|---|---|
-| `features/assets/<module>/*` | business image assets (template matching/tutorial assets). |
-| `features/utils/home_navigation.py` | business home-navigation flow. |
-| `features/utils/network.py` | feature-side update/event data fetchers. |
-| `features/utils/updater.py` | update helper logic. |
-| `features/utils/randoms.py` | feature random helpers. |
-| `features/utils/text_normalizer.py` | feature text normalization helper. |
+By this point, you should have a runnable module.
+The following "Code Development Chapters" are advanced content for those with the capacity to do deep customization, debugging, or optimization.
 
 ---
 
-## 4. Build a New Module Quickly
+## 1. Understanding the Architecture in One Sentence
 
-## 4.1 Pick module type
+Imagine the project as a "chassis + plugins":
 
-- Periodic module: schedulable, appears in periodic task queue.
-- On-demand module: single-run start/stop flow.
-- Passive module: helper UI/capability not included in normal queue (`passive=True`).
+- `app/framework`: The chassis (general capabilities, scheduling, threads, UI shell).
+- `app/features`: The plugins (Snowbreak business modules, assets, composition root).
+- Modules are registered via a declarative `@module(...)`.
 
-## 4.2 Create structure
+The current top-level directory has only two main structures:
 
-```text
-app/features/modules/<your_module>/
-  ui/
-  usecase/
-```
+- `app/framework`
+- `app/features`
 
-## 4.3 Implement usecase class (minimum contract)
+---
+
+## 2. Periodic vs. On-Demand Tasks
+
+### Periodic
+
+- Schedulable, can be executed serially in a queue.
+- Typical examples: Login, Supplies, Shop, Stamina, Rewards, Exit.
+- The UI page is more of a "configuration panel" and usually doesn't require a "Start Button" within the module.
+
+### On-Demand
+
+- Manually triggered to run once, common for scenario-based features.
+- Typical examples: Fishing, Water Bomb, Maze, Capture Pals.
+- The UI page usually includes a "Start Button".
+
+### Passive
+
+- Still hosted on the on-demand page but does not follow the normal single-task execution flow.
+- Typical examples: Trigger-like helper functionalities.
+
+---
+
+## 3. Current Module Protocol (Must Be Followed)
+
+### 3.1 Minimal Declaration
+
+Write this directly in the `usecase` file:
 
 ```python
-class YourModule:
+from app.framework.core.module_system import module
+
+@module(
+    id="task_example",
+    name="Example Task",
+    host="periodic",  # or on_demand
+)
+class ExampleTask:
     def __init__(self, auto, logger):
         self.auto = auto
         self.logger = logger
@@ -243,95 +92,145 @@ class YourModule:
         ...
 ```
 
-Best practices:
+### 3.2 Current Implementation
 
-1. Start each loop with screenshot refresh.
-2. Always include timeout/escape conditions.
-3. Use logger for key transitions only.
-4. Avoid hardcoded absolute resolution assumptions.
+1. Modules are declared with `@module(...)` directly on the `usecase` class.
+2. Module information is aggregated and automatically discovered by the `module_system`.
+3. The unified entry point for execution is the class's `run(self)` method.
 
-## 4.4 Implement UI with unified base
+### 3.3 Auto-Discovery
 
-```python
-from app.framework.ui.views.periodic_base import ModulePageBase
+Modules will be discovered automatically, but there are constraints on file paths:
 
-class YourPage(ModulePageBase):
-    def __init__(self, parent=None):
-        super().__init__("page_your_module", parent=parent, host_context="periodic", use_default_layout=True)
-        ...
-        self.finalize()
+- Must be in `app/features/modules/<module>/usecase/`
+- The filename must be `*_usecase.py`
+
+The discovery logic is in:
+
+- discovery.py
+
+---
+
+## 4. Developing a New Module (Implementation Steps)
+
+## 4.1 Create Directories
+
+The recommended minimal structure is:
+
+```text
+app/features/modules/<module_name>/
+  ├─ usecase/<module_name>_usecase.py
+  └─ ui/<module_name>_interface.py   # Create only if UI is needed
 ```
 
-`bind_host_context()` automatically applies sizing strategy for periodic vs on-demand context.
+Place resources in:
 
-## 4.5 Register in module specs
+- `app/features/assets/<module_name>/`
 
-Add a `ModuleSpec` in `features/modules/module_specs.py`:
+## 4.2 Write the Usecase (Core)
 
-- `id`
-- `hosts`
-- `ui_factory`
-- `module_class`
-- `ui_bindings`
+Must satisfy:
 
-## 4.6 For periodic modules, add scheduling metadata
+1. `__init__(self, auto, logger)`
+2. `run(self)` as the entry point
+3. Loops must have a `Timer` for timeouts
+4. Logging must use the injected `logger`
 
-Update `features/bootstrap/periodic_task_wiring.py` with:
+## 4.3 Write the UI (As Needed)
 
-- `id`
-- `ui_page_index`
-- `option_key`
-- `default_activation_config`
-- optional flags: `requires_home_sync`, `is_mandatory`, `force_first`
+It is recommended to inherit from `ModulePageBase` (which automatically adapts to periodic/on-demand hosts):
 
-This file is for scheduling metadata only, not for UI display text.
+- periodic_base.py
 
-## 4.7 If special business actions are needed, use ports
+## 4.4 Page Integration and Sorting (Current Single Entry Point)
 
-Define/extend ports in `framework/core/interfaces/periodic_ports.py`, implement in `features`, and inject through `features/bootstrap/main_window_wiring.py`.  
-Do not hardwire concrete business imports into low-level framework modules.
+Currently, UI mapping, default order, and periodic metadata are centrally maintained by the framework in:
 
-## 4.8 Asset path rules
+- decorators.py
 
-1. Business assets live in `app/features/assets/...`
-2. Shared UI icons/qss/i18n live in root `resources/`
-3. Never reintroduce old paths like `app/presentation/resources/*` or `app/framework/ui/resources/*`
+When adding a new module, you usually need to add to:
+
+1. `_DEFAULT_ORDER`: For module display and execution sorting.
+2. `_FRAMEWORK_DEFAULTS`: For page class paths, `ui_bindings`, and periodic default policies.
+
+This is the "single source of truth" in the current codebase.
 
 ---
 
-## 5. Infrastructure Quick Reference
+## 5. auto / Config / Logs (Must-Read for Development)
 
-| Need | Use |
-|---|---|
-| execute automation in module | `self.auto` from runtime session |
-| read config | `app.framework.infra.config.app_config.config` |
-| write UI logs | injected `logger` |
-| queue periodic tasks | `TaskQueueThread` via `PeriodicController` |
-| run one module | `ModuleTaskThread` via `OnDemandRunner` |
-| publish cross-page state | `global_task_bus.publish_state(...)` |
-| trigger global stop | `global_task_bus.request_stop()` |
-| i18n text | `BaseInterface._ui_text()` / `framework/ui/shared/text.py` |
+## 5.1 `auto` Common Capabilities
+
+The entry point for capabilities is in:
+
+- automation.py
+
+Recommended calling order:
+
+1. `auto.take_screenshot()`
+2. `auto.find_element(...)` to determine the state
+3. `auto.move_click(...)` / `auto.press_key(...)` to perform an action
+4. `Timer` for timeout fallback
+
+## 5.2 Click Limitation (Very Important)
+
+In the current Snowbreak environment, all mouse clicks must use:
+
+- `auto.move_click(...)`
+
+Do not rely on `auto.click_element(...)` as the final click action.
+
+## 5.3 Config Reading
+
+Read uniformly from:
+
+- `config.xxx.value`
+
+Do not read UI control values directly for business logic within a module.
+
+## 5.4 Logs
+
+Use the injected `logger` uniformly; do not use `print`.
 
 ---
 
-## 6. PR Standards and Engineering Process
+## 6. Resolution and Coordinate Rules
 
-## 6.1 Architecture gates
+The current default baseline is 16:9.
+`BaseTask` will check the ratio and set scaling parameters, see:
 
-1. No direct business-module dependency in `framework/core` or `framework/infra`.
-2. No game-specific business logic hardcoded in generic framework UI shell.
-3. Module registration must go through `features/modules/module_specs.py`.
-4. Periodic default/schedule metadata must be centralized in `features/bootstrap/periodic_task_wiring.py`.
-5. New business images must be under `features/assets` with updated code references.
+- base_task.py
 
-## 6.2 Required local checks
+Recommendations:
+
+1. Use ratio-based crop (0-1) instead of absolute pixels whenever possible.
+2. Scale click coordinates according to the current window size before calling `move_click`.
+3. For non-16:9 scenarios, explicitly log the risks.
+
+---
+
+## 7. Startup and Composition Root
+
+The entry point for business injection is:
+
+- main_window_wiring.py
+
+It is responsible for:
+
+1. Triggering module discovery `discover_modules(...)`
+2. Creating the periodic / on-demand page hosts
+3. Injecting OCR, navigation, and business usecase dependencies
+
+---
+
+## 8. Pre-Commit Checks (Minimum Standard)
+
+Run at least:
 
 ```bash
 python -m compileall app
-python -m py_compile SAA.py
 python scripts/smoke_modules.py
 python scripts/smoke_release.py
-python scripts/release_cleanup_pack.py --startup-seconds 8
 ```
 
 Must satisfy:

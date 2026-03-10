@@ -163,7 +163,7 @@ _FRAMEWORK_DEFAULTS = {
         "periodic_option_key": "CheckBox_reward_7",
     },
     "task_operation": {
-        "page_class_path": "app.features.modules.operation_action.ui.operation_periodic_page:OperationPage",
+        "page_class_path": "app.features.modules.operation_action.ui.operation_interface:OperationInterface",
         "ui_bindings": dict(page_attr="page_operation"),
         "periodic_default_activation_config": [{"type": "daily", "day": 0, "time": "00:00", "max_runs": 1}],
         "periodic_ui_page_index": 7,
