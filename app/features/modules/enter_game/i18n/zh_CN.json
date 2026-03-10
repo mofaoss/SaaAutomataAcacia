@@ -46,7 +46,7 @@
   "module.enter_game.log.txt_ce08b8b145bb": "启动器开始游戏超时",
   "module.enter_game.ui.auto_open_game": "自动打开游戏",
   "module.enter_game.ui.browse": "选择",
-  "module.enter_game.ui.failed_to_resolve_launch_arguments": "????????",
+  "module.enter_game.ui.failed_to_resolve_launch_arguments": "无法解析启动参数",
   "module.enter_game.ui.find_game_path_in_launcher": "启动器中查看游戏路径",
   "module.enter_game.ui.tutorial": "查看教程",
   "module.task_login.title": "自动登录"

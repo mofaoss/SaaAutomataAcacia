@@ -33,15 +33,12 @@ class ShoppingModule:
         self.person_dic = home_interface_shopping_person or {}
         self.weapon_dic = home_interface_shopping_weapon or {}
 
-        # ??? constants ??????????
         person_map, weapon_map = get_item_key_to_name_map(is_non_chinese=False)
         self.person_dic_re_zh = person_map
         self.weapon_dic_re_zh = weapon_map
 
-        # ??????? constants ??
         self.name_dic_zh = get_shop_item_key_to_name_map(is_non_chinese=False)
 
-        # ??UI????????
         self.target_to_display = get_shop_item_zh_name_to_display_name_map(self.is_non_chinese_ui)
 
         self.scroll_fallback_points = [
@@ -276,7 +273,3 @@ class ShoppingSelectionUseCase:
     @staticmethod
     def save_weapon_item(*, settings_usecase, index: int, check_state: int):
         settings_usecase.persist_indexed_item("item_weapon_", index, check_state)
-
-
-
-

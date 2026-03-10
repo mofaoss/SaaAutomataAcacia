@@ -8,5 +8,5 @@
   "module.event_tips.ui.event_status_starts_in_days": "{days} 天后开始",
   "module.event_tips.ui.failed_to_update_event_schedule": "活动日程更新失败",
   "module.event_tips.ui.no_local_information_stored_and_no_url_fetched": "本地没有存储信息且未获取到 URL",
-  "module.event_tips.ui.status_finished": "???"
+  "module.event_tips.ui.status_finished": "已结束"
 }

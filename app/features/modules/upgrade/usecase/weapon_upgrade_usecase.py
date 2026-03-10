@@ -33,11 +33,9 @@ class WeaponUpgradeModule:
         self.logger = logger
         self.is_log = bool(isLog)
 
-        # ?????
         self.base_w = 1280
         self.base_h = 720
 
-        # ?????????
         self.enable_weapon_upgrade = bool(enable_weapon_upgrade)
 
     def _roi(self, x, y, w, h):
@@ -184,7 +182,3 @@ class WeaponUpgradeModule:
             if timeout.reached():
                 self.logger.error(_("武器升级流程达到最长执行时间 (超时)。"))
                 break
-
-
-
-

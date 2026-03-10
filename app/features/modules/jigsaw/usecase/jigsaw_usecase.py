@@ -252,12 +252,12 @@ class JigsawModule:
             "10": 0,
             "11": 0,
         }
-        self.piece_solution = []  # ??????????
-        self.used_pieces = []  # ????????????????????????????
+        self.piece_solution = []
+        self.used_pieces = []
         self.piece_priority = []
-        self.solutions_score = [0] * self.max_solutions  # ?????????
-        self.board_top_left = []  # ????????
-        self.board_bottom_right = []  # ????????
+        self.solutions_score = [0] * self.max_solutions
+        self.board_top_left = []
+        self.board_bottom_right = []
 
     def run(self):
         for i in range(3):
@@ -643,5 +643,3 @@ class JigsawModule:
     #             auto.press_key("esc")
     #             return True
     #     return False
-
-

@@ -13,7 +13,7 @@
   "module.event_tips.ui.left_days": "{key}: {days}d(s) left",
   "module.event_tips.ui.no_local_information_stored_and_no_url_fetched": "No local information stored and no URL fetched",
   "module.event_tips.ui.starts_in": "{key} in {days}d(s)",
-  "module.event_tips.ui.status_finished": "???",
-  "module.event_tips.ui.status_remaining_days": "?? {days} ?",
-  "module.event_tips.ui.status_starts_in_days": "{days} ????"
+  "module.event_tips.ui.status_finished": "Finished",
+  "module.event_tips.ui.status_remaining_days": "{days} days remaining",
+  "module.event_tips.ui.status_starts_in_days": "{days} days until start"
 }

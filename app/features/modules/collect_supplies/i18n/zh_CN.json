@@ -104,7 +104,7 @@
   "module.collect_supplies.ui.import": "导入",
   "module.collect_supplies.ui.redeem_codes": "领取兑换码",
   "module.collect_supplies.ui.reset": "重置",
-  "module.collect_supplies.ui.reset_successful": "????",
+  "module.collect_supplies.ui.reset_successful": "重置成功",
   "module.dummy.title": "领取补给",
   "module.task_supplies.title": "领取补给"
 }
