@@ -193,7 +193,7 @@ class PersonModule:
 
             # 3. 容错处理：如果不小心点到了物品详情（而不是右上角的加号）
             if self.auto.find_element("记忆嵌片", "text", crop=(803 / 1920, 275 / 1080, 991 / 1920, 346 / 1080), is_log=self.is_log):
-                self.logger.debug("未点到加号（点成了物品详情），按 ESC 退出重试")
+                self.logger.debug("Plus button missed (item details opened). Press ESC and retry.")
                 self.auto.press_key('esc')
                 time.sleep(0.5)
                 continue

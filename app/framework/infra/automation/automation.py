@@ -35,7 +35,7 @@ def atoms(func):
     def wrapper(*args, **kwargs):
         # 检查self.running是否为false
         if not args[0].running:
-            raise Exception("已停止")
+            raise Exception("stopped_by_user")
         else:
             # 判断是否暂停
             if args[0].is_paused:

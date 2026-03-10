@@ -55,8 +55,8 @@ class TaskQueueThread(QThread):
         self._is_running = False
         if reason:
             self._interrupted_reason = reason
-            self.logger.warning(
-                _(f'Interrupt detected, stopping automatic task: {reason}', msgid='interrupt_detected_stopping_automatic_task_reaso')
+            self.logger.debug(
+                _(f'Interrupt detected, stopping automatic task: {self._normalize_reason(str(reason))}', msgid='interrupt_detected_stopping_automatic_task_reaso')
             )
         if self.session.auto is not None:
             try:
@@ -119,35 +119,43 @@ class TaskQueueThread(QThread):
     def _telemetry_periodic(self, event: str, task_id: str, task_name: str, detail: str = "") -> None:
         try:
             event_label_map = {
-                "task_execution_return_observed": "执行返回观察",
-                "task_execution_return_none": "执行返回为空",
-                "task_execution_unpacked_guarded": "执行解包保护",
-                "task_execution_result_normalized": "执行结果已规范化",
-                "task_execution_result_invalid": "执行结果异常",
-                "task_execution_stopped": "受控停止",
+                "task_execution_return_observed": "execution_return_observed",
+                "task_execution_return_none": "execution_return_none",
+                "task_execution_unpacked_guarded": "execution_unpacked_guarded",
+                "task_execution_result_normalized": "execution_result_normalized",
+                "task_execution_result_invalid": "execution_result_invalid",
+                "task_execution_stopped": "execution_stopped",
             }
-            if is_non_chinese_ui_language():
-                self.logger.debug(f"periodic_event={event} task_id={task_id} task_name={task_name} detail={detail}")
-            else:
-                event_label = event_label_map.get(event, event)
-                self.logger.debug(
-                    _(
-                        "Periodic diagnostic: event={event} ({event_code}) task_id={task_id} task_name={task_name} detail={detail}",
-                        msgid="periodic_diagnostic_event_event_code_task_id_task_name_detail",
-                        event=event_label,
-                        event_code=event,
-                        task_id=task_id,
-                        task_name=task_name,
-                        detail=detail or "无",
-                    )
+            event_label = event_label_map.get(event, event)
+            self.logger.debug(
+                _(
+                    "Periodic diagnostic: event={event} ({event_code}) task_id={task_id} task_name={task_name} detail={detail}",
+                    msgid="periodic_diagnostic_event_event_code_task_id_task_name_detail",
+                    event=event_label,
+                    event_code=event,
+                    task_id=task_id,
+                    task_name=task_name,
+                    detail=detail or "none",
                 )
+            )
         except Exception:
             pass
 
     @staticmethod
     def _is_controlled_stop_exception(exc: Exception) -> bool:
-        text = str(exc).strip()
-        return text in {"已停止", "stopped", "stopped_by_user"}
+        text = TaskQueueThread._normalize_reason(str(exc).strip())
+        return text in {"stopped", "stopped_by_user"}
+
+    @staticmethod
+    def _normalize_reason(reason: str) -> str:
+        reason_text = str(reason or "").strip()
+        reason_map = {
+            "stopped_by_user": "stopped_by_user",
+            "stopped": "stopped",
+            "User Stop": "stopped_by_user",
+            "home_sync_failed": "home_sync_failed",
+        }
+        return reason_map.get(reason_text, reason_text)
 
     def _normalize_task_result(
         self,
@@ -213,7 +221,12 @@ class TaskQueueThread(QThread):
             return self._normalize_task_result(task_id, task_name, raw_result)
         except Exception as exc:
             if self._is_controlled_stop_exception(exc):
-                self._telemetry_periodic("task_execution_stopped", task_id, task_name, f"reason={str(exc) or '已停止'}")
+                self._telemetry_periodic(
+                    "task_execution_stopped",
+                    task_id,
+                    task_name,
+                    f"reason={self._normalize_reason(str(exc) or 'stopped')}",
+                )
                 return TaskExecutionResult(ok=False, skipped=True, message="stopped_by_user", detail=str(exc), error=exc)
             self._telemetry_periodic("task_execution_result_invalid", task_id, task_name, f"exception={exc!r}")
             return TaskExecutionResult(ok=False, message="exception", detail=str(exc), error=exc)
@@ -245,7 +258,7 @@ class TaskQueueThread(QThread):
             for task_id in self.tasks_to_run:
                 if not self._is_running:
                     normal_stop_flag = False
-                    self.logger.warning(_('Execution interrupted before task start', msgid='execution_interrupted_before_task_start'))
+                    self.logger.debug(_('Execution interrupted before task start', msgid='execution_interrupted_before_task_start'))
                     break
 
                 meta = self.task_registry.get(task_id)
@@ -287,7 +300,7 @@ class TaskQueueThread(QThread):
                                 "Task skipped: {task_name}, reason={reason}",
                                 msgid="task_skipped_reason",
                                 task_name=task_name,
-                                reason=skip_reason,
+                                reason=self._normalize_reason(skip_reason),
                             )
                         )
                     elif not execution_result.ok:
@@ -335,7 +348,7 @@ class TaskQueueThread(QThread):
                         )
 
         except Exception as e:
-            if str(e) != '已停止':
+            if not self._is_controlled_stop_exception(e):
                 self.logger.exception(
                     _("Unhandled queue runtime exception: {error}", msgid="unhandled_queue_runtime_exception", error=str(e))
                 )

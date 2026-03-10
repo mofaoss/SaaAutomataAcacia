@@ -20,13 +20,15 @@ from app.framework.i18n.template_render import (
 DEFAULT_SOURCE_LANG = "en"
 SUPPORTED_LANGS = ["en", "zh_CN", "zh_HK"]
 
-DEBUG_LOG_I18N_MODE = "bilingual"
+DEBUG_LOG_I18N_MODE = "source"
 INFO_LOG_I18N_MODE = "current"
 WARNING_LOG_I18N_MODE = "current"
 ERROR_LOG_I18N_MODE = "current"
 
 _CATALOGS: dict[str, dict[str, str]] = {lang: {} for lang in SUPPORTED_LANGS}
 _LOADED = False
+_TEMPLATE_META: dict[str, dict[str, Any]] = {}
+_TEMPLATE_META_LOADED = False
 _MSGID_SEMANTIC_RE = re.compile(r"^[a-z][a-z0-9]*(?:_[a-z0-9]+)*$")
 _MSGID_HASHLIKE_RE = re.compile(r"^(?:[0-9a-f]{8,}|h[0-9a-f]{6,})$")
 
@@ -408,6 +410,121 @@ def load_i18n_catalogs() -> None:
     _LOADED = True
 
 
+def _load_template_meta() -> None:
+    global _TEMPLATE_META_LOADED
+    if _TEMPLATE_META_LOADED:
+        return
+    root = Path(__file__).resolve().parents[3]
+    meta_path = root / "app" / "framework" / "i18n" / "template_meta.json"
+    if not meta_path.exists():
+        _TEMPLATE_META_LOADED = True
+        return
+    try:
+        data = json.loads(meta_path.read_text(encoding="utf-8-sig"))
+    except Exception:
+        try:
+            data = json.loads(meta_path.read_text(encoding="utf-8"))
+        except Exception:
+            _TEMPLATE_META_LOADED = True
+            return
+    if isinstance(data, dict):
+        for key, meta in data.items():
+            if isinstance(key, str) and isinstance(meta, dict):
+                _TEMPLATE_META[key] = meta
+    _TEMPLATE_META_LOADED = True
+
+
+def _extract_dynamic_payload(
+    source_template: str,
+    rendered_text: str,
+    field_details: dict[str, dict[str, str]] | None,
+) -> dict[str, Any] | None:
+    import string
+
+    pattern_parts: list[str] = []
+    field_order: list[tuple[str, str]] = []
+    for literal_text, field_name, format_spec, _conversion in string.Formatter().parse(source_template):
+        pattern_parts.append(re.escape(literal_text or ""))
+        if not field_name:
+            continue
+        base = field_name.split("[", 1)[0].split(".", 1)[0]
+        if not base:
+            continue
+        pattern_parts.append(f"(?P<{base}>.*?)")
+        field_order.append((base, format_spec or ""))
+    pattern = "".join(pattern_parts)
+    match = re.fullmatch(pattern, rendered_text, flags=re.DOTALL)
+    if not match:
+        return None
+
+    payload: dict[str, Any] = {}
+    for name, fallback_spec in field_order:
+        raw = match.group(name)
+        spec = fallback_spec
+        if field_details and name in field_details:
+            spec = str(field_details[name].get("format_spec") or fallback_spec or "")
+        raw_text = str(raw)
+        if spec:
+            end_ch = spec[-1]
+            if end_ch in {"f", "F", "e", "E", "g", "G", "%"}:
+                try:
+                    payload[name] = float(raw_text)
+                    continue
+                except Exception:
+                    pass
+            if end_ch in {"d", "i", "u"}:
+                try:
+                    payload[name] = int(raw_text)
+                    continue
+                except Exception:
+                    pass
+        payload[name] = raw_text
+    return payload
+
+
+def _render_dynamic_candidate_message(message: TranslatableMessage, *, key: str, target_lang: str) -> str | None:
+    _load_template_meta()
+    meta = _TEMPLATE_META.get(key)
+    source_template = ""
+    if isinstance(meta, dict):
+        source_template = str(meta.get("source_template") or "")
+    if not source_template:
+        source_template = str(_CATALOGS.get(DEFAULT_SOURCE_LANG, {}).get(key) or "")
+    if not source_template:
+        source_template = str(_CATALOGS.get(target_lang, {}).get(key) or "")
+    if not source_template:
+        return None
+
+    field_details = meta.get("field_details") if isinstance(meta, dict) else None
+    parsed_payload = _extract_dynamic_payload(
+        source_template=source_template,
+        rendered_text=message.source_text,
+        field_details=field_details if isinstance(field_details, dict) else None,
+    )
+    if not parsed_payload:
+        return None
+
+    translated_template = _CATALOGS.get(target_lang, {}).get(key)
+    if translated_template is None:
+        translated_template = _CATALOGS.get(DEFAULT_SOURCE_LANG, {}).get(key)
+    if translated_template is None:
+        translated_template = source_template
+
+    try:
+        expected_fields = extract_template_fields(source_template)
+        expected_field_details = extract_template_field_details(source_template)
+        return render_localized_template(
+            translated_template,
+            parsed_payload,
+            expected_fields=expected_fields,
+            expected_field_details=expected_field_details,
+            strict_fields=False,
+        )
+    except Exception as exc:
+        _telemetry_warn("dynamic_candidate_render_failed", f"{key}:{_coerce_text(exc)}")
+        return None
+
+
 def _resolve_lang() -> str:
     try:
         from app.framework.infra.config.app_config import (
@@ -521,6 +638,9 @@ def translate_message(message: TranslatableMessage, *, context: str, target_lang
     if message.dynamic:
         return _render_dynamic_message(message, key=key, target_lang=target_lang)
     if message.dynamic_candidate:
+        rendered = _render_dynamic_candidate_message(message, key=key, target_lang=target_lang)
+        if rendered is not None:
+            return rendered
         return message.source_text
 
     translated = _CATALOGS.get(target_lang, {}).get(key)
@@ -558,7 +678,7 @@ def render_message(value: Any, *, context: str = "ui", levelno: int | None = Non
         current_lang = _resolve_lang()
         if context == "log":
             mode = _log_mode(levelno or logging.INFO)
-            source_text = value.source_text
+            source_text = translate_message(value, context="log", target_lang=DEFAULT_SOURCE_LANG)
             current_text = translate_message(value, context="log", target_lang=current_lang)
             if mode == "source":
                 return source_text
@@ -600,3 +720,4 @@ def tr(key: str, fallback: str | None = None, **kwargs: Any) -> str:
         or key
     )
     return _safe_format(value, kwargs)
+

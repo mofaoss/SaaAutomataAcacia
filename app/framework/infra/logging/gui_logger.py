@@ -2,6 +2,7 @@ import logging
 from PySide6.QtCore import QObject, Signal, Slot, Qt
 from PySide6.QtWidgets import QTextBrowser
 
+from app.framework.infra.config.app_config import config
 from app.framework.i18n.runtime import render_message
 
 
@@ -47,6 +48,9 @@ class UITextBrowserHandler(logging.Handler):
 
     def emit(self, record):
         try:
+            # Hide debug logs from users unless developer detailed logging is enabled.
+            if record.levelno <= logging.DEBUG and not bool(getattr(config.isLog, "value", False)):
+                return
             msg = self.format(record)
             self.signals.textWritten.emit(msg)
         except Exception:
