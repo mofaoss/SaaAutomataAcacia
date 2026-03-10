@@ -8,6 +8,15 @@ from app.framework.infra.events.signal_bus import signalBus
 from app.framework.ui.shared.text import ui_text
 from app.features.modules.enter_game.usecase.enter_game_usecase import is_snowbreak_running
 
+from app.framework.core.module_system import module
+
+
+@module(
+    id="task_close_game",
+    name="执行退出",
+    en_name="Execute Exit",
+    host="periodic",
+)
 class CloseGameModule:
     def __init__(self, auto, logger):
         self.auto = auto

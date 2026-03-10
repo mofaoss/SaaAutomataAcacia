@@ -11,7 +11,15 @@ from app.framework.infra.events.signal_bus import signalBus
 from app.framework.infra.vision.vision import count_color_blocks
 from app.framework.infra.automation.timer import Timer
 
+from app.framework.core.module_system import module
 
+
+@module(
+    id="fishing",
+    name="钓鱼",
+    en_name="Fishing",
+    host="on_demand",
+)
 class FishingModule:
     def __init__(self, auto, logger):
         self.auto = auto
@@ -278,6 +286,5 @@ class FishingModule:
             self.logger.error(f"未识别出按键文字，请手动设置{e}")
             return False
         return True
-
 
 

@@ -42,6 +42,13 @@ class Scheduler(QObject):
     def _init_and_normalize_sequence(self):
         sequence = migrate_daily_sequence_schema(config.daily_task_sequence.value)
         defaults = copy.deepcopy(config.daily_task_sequence.defaultValue)
+        if not defaults:
+            from app.framework.application.tasks.periodic_defaults import (
+                build_default_periodic_task_sequence,
+            )
+
+            defaults = build_default_periodic_task_sequence()
+            config.daily_task_sequence.defaultValue = copy.deepcopy(defaults)
         self._task_sequence_cache = normalize_daily_task_sequence(
             sequence=sequence,
             defaults=defaults,
@@ -122,6 +129,13 @@ class Scheduler(QObject):
 
     def normalize_task_sequence(self, sequence: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
         defaults = copy.deepcopy(config.daily_task_sequence.defaultValue)
+        if not defaults:
+            from app.framework.application.tasks.periodic_defaults import (
+                build_default_periodic_task_sequence,
+            )
+
+            defaults = build_default_periodic_task_sequence()
+            config.daily_task_sequence.defaultValue = copy.deepcopy(defaults)
         return normalize_daily_task_sequence(
             sequence=sequence,
             defaults=defaults,

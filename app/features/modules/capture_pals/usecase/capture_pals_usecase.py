@@ -5,6 +5,8 @@ import cv2
 from app.framework.infra.config.app_config import config
 from app.framework.infra.automation.timer import Timer
 
+from app.framework.core.module_system import module
+
 
 @dataclass
 class IslandProfile:
@@ -27,6 +29,12 @@ class _SyncState:
         return float(self.profile.patrol_refresh_interval_sec if self.mode == 1 else self.profile.fixed_interval_sec)
 
 
+@module(
+    id="capture_pals",
+    name="抓帕鲁",
+    en_name="Capture Pals",
+    host="on_demand",
+)
 class CapturePalsModule:
     """
     尘白抓帕鲁模块
@@ -658,5 +666,4 @@ class CapturePalsModule:
                 return
 
             time.sleep(min(float(tick), remaining))
-
 

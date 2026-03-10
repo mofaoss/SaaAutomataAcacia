@@ -3,7 +3,15 @@ import time
 from app.framework.infra.config.app_config import config
 from app.framework.infra.automation.timer import Timer
 
+from app.framework.core.module_system import module
 
+
+@module(
+    id="alien_guardian",
+    name="异星守护",
+    en_name="Alien Guardian",
+    host="on_demand",
+)
 class AlienGuardianModule:
     def __init__(self, auto, logger):
         self.auto = auto

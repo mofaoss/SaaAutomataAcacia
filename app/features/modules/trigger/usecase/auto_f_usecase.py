@@ -1,5 +1,6 @@
 import cv2
 
+from app.framework.core.module_system import module
 from app.framework.infra.config.app_config import config
 from app.framework.core.task_engine.base_task import BaseTask
 
@@ -20,4 +21,19 @@ class AutoFModule(BaseTask):
                                       crop=(1506 / 1920, 684 / 1080, 1547 / 1920, 731 / 1080), is_log=self.is_log,
                                       match_method=cv2.TM_CCOEFF_NORMED):
                 self.auto.press_key("f")
+
+
+@module(
+    id="trigger",
+    name="自动辅助",
+    en_name="Trigger",
+    host="on_demand",
+)
+class TriggerModule:
+    def __init__(self, auto, logger):
+        self.auto = auto
+        self.logger = logger
+
+    def run(self):
+        return None
 

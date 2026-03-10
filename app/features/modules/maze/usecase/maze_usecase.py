@@ -3,7 +3,15 @@ import time
 from app.framework.infra.config.app_config import config
 from app.framework.infra.automation.timer import Timer
 
+from app.framework.core.module_system import module
 
+
+@module(
+    id="maze",
+    name="验证战场",
+    en_name="Maze",
+    host="on_demand",
+)
 class MazeModule:
     def __init__(self, auto, logger):
         self.auto = auto

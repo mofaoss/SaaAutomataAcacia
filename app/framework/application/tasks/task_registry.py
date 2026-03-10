@@ -1,9 +1,5 @@
 # coding:utf-8
-"""Legacy task registry compatibility layer.
-
-This module intentionally keeps legacy export names, but data now comes from
-the unified module registry to avoid duplicated sources.
-"""
+"""Task registry assembled from the unified module system."""
 
 from app.framework.application.modules import (
     get_on_demand_module_specs,

@@ -4,7 +4,15 @@ from app.framework.infra.config.app_config import config
 from app.features.utils.randoms import random_rectangle_point
 from app.framework.infra.automation.timer import Timer
 
+from app.framework.core.module_system import module
 
+
+@module(
+    id="drink",
+    name="猜心对局",
+    en_name="Card Match",
+    host="on_demand",
+)
 class DrinkModule:
     def __init__(self, auto, logger):
         super().__init__()
@@ -258,6 +266,5 @@ class DrinkModule:
             if timeout.reached():
                 self.logger.error("重进对局超时")
                 break
-
 
 

@@ -8,9 +8,6 @@ from PySide6.QtCore import QLocale
 from qfluentwidgets import (qconfig, QConfig, ConfigItem, OptionsConfigItem, BoolValidator,
                             OptionsValidator, Theme, ConfigSerializer)
 
-from app.framework.application.tasks.periodic_defaults import (
-    build_default_periodic_task_sequence,
-)
 from app.framework.infra.config.sequence_serializer import TaskSequenceSerializer
 from .setting import CONFIG_FILE
 
@@ -245,7 +242,7 @@ class Config(QConfig):
     # =========================================================
     daily_task_sequence = ConfigItem(
         "DailyTasks", "TaskSequence",
-        build_default_periodic_task_sequence(),
+        [],
         serializer=TaskSequenceSerializer()
     )
 

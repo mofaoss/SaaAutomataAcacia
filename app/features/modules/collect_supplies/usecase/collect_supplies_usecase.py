@@ -11,7 +11,15 @@ from app.features.utils.network import get_cloudflare_data
 from app.framework.infra.automation.timer import Timer
 from app.features.utils.home_navigation import back_to_home
 
+from app.framework.core.module_system import module
 
+
+@module(
+    id="task_supplies",
+    name="领取福利",
+    en_name="Collect Supplies",
+    host="periodic",
+)
 class CollectSuppliesModule:
     def __init__(self, auto=None, logger=None, *, redeem_codes_usecase=None, redeem_codes_view=None):
         self.auto = auto

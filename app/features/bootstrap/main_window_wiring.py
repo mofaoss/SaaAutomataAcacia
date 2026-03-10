@@ -1,7 +1,7 @@
 # coding:utf-8
 from __future__ import annotations
 
-from app.framework.application.modules import configure_module_spec_providers
+from app.framework.core.module_system import discover_modules
 from app.framework.core.interfaces.main_window_bridge import MainWindowFeatureBridge
 from app.framework.core.task_engine.threads import ModuleTaskThread
 from app.framework.ui.views.on_demand_tasks_page import OnDemandTasksPage
@@ -16,12 +16,6 @@ from app.features.modules.enter_game.usecase.enter_game_usecase import (
 from app.features.modules.event_tips.usecase.event_tips_usecase import (
     EventTipsActions,
     EventTipsUseCase,
-)
-from app.features.modules.module_specs import (
-    get_on_demand_module_specs as get_feature_on_demand_specs,
-)
-from app.features.modules.module_specs import (
-    get_periodic_module_specs as get_feature_periodic_specs,
 )
 from app.features.modules.redeem_codes.ui.ui_view import RedeemCodesView
 from app.features.modules.redeem_codes.usecase.redeem_codes_usecase import (
@@ -39,10 +33,7 @@ class SnowbreakMainWindowBridge(MainWindowFeatureBridge):
     """Feature-side composition root that wires Snowbreak business modules into framework shell."""
 
     def configure_module_registry(self) -> None:
-        configure_module_spec_providers(
-            periodic_provider=get_feature_periodic_specs,
-            on_demand_provider=lambda: get_feature_on_demand_specs(include_passive=True),
-        )
+        discover_modules("app.features.modules")
 
     def create_home_interface(self, window):
         enter_game_service = EnterGameService(window._is_non_chinese_ui)

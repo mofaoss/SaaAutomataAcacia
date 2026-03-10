@@ -10,7 +10,15 @@ from app.features.utils.randoms import random_rectangle_point
 from app.framework.infra.automation.timer import Timer
 from app.features.utils.home_navigation import back_to_home
 
+from app.framework.core.module_system import module
 
+
+@module(
+    id="task_stamina",
+    name="体力扫荡",
+    en_name="Use Stamina",
+    host="periodic",
+)
 class UsePowerModule:
     def __init__(self, auto, logger):
         self.auto = auto
@@ -617,6 +625,5 @@ class UsePowerModule:
             return True, False
 
         return False, False
-
 
 

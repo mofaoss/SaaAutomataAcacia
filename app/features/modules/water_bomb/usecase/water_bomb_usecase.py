@@ -6,7 +6,15 @@ from app.framework.infra.config.app_config import config
 from app.framework.infra.automation.timer import Timer
 from app.features.modules.water_bomb.decision import Round, Status
 
+from app.framework.core.module_system import module
 
+
+@module(
+    id="water_bomb",
+    name="心动水弹",
+    en_name="Water Bomb",
+    host="on_demand",
+)
 class WaterBombModule:
     def __init__(self, auto, logger):
         self.auto = auto

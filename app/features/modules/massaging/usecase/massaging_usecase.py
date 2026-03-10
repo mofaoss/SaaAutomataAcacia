@@ -3,7 +3,15 @@ import time
 from app.framework.infra.config.app_config import config
 from app.framework.infra.automation.timer import Timer
 
+from app.framework.core.module_system import module
 
+
+@module(
+    id="massaging",
+    name="按摩调理",
+    en_name="Massaging",
+    host="on_demand",
+)
 class MassagingModule:
     def __init__(self, auto, logger):
         super().__init__()

@@ -8,16 +8,25 @@ work, reverse-engineering efforts, and contribution to the community.
 Original Repository: https://github.com/overflow65537/MAA_SnowBreak/
 License: MIT License
 
-# This script respects the original author's copyright and is built upon the foundation of their MIT-licensed pipeline files.
+This script respects the original author's copyright and is built upon the
+foundation of their MIT-licensed pipeline files.
 """
 
 import time
 import cv2
+
+from app.framework.core.module_system import module
 from app.framework.infra.automation.timer import Timer
 from app.framework.infra.config.app_config import config
 from app.features.utils.home_navigation import back_to_home
 
 
+@module(
+    id="task_shard_exchange",
+    name="信源碎片",
+    en_name="Shard Exchange",
+    host="periodic",
+)
 class ShardExchangeModule:
     def __init__(self, auto, logger):
         self.auto = auto
@@ -265,5 +274,6 @@ class ShardExchangeModule:
             remaining -= take
 
         return new_recyclable
+
 
 

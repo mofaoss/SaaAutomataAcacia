@@ -6,7 +6,15 @@ from app.framework.infra.config.app_config import config
 from app.framework.infra.automation.timer import Timer
 from app.features.utils.home_navigation import back_to_home
 
+from app.framework.core.module_system import module
 
+
+@module(
+    id="task_shards",
+    name="角色碎片",
+    en_name="Character Shards",
+    host="periodic",
+)
 class PersonModule:
     def __init__(self, auto, logger):
         self.auto = auto

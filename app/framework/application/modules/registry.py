@@ -1,53 +1,34 @@
 from __future__ import annotations
 
-import importlib
-from collections.abc import Callable
-
 from app.framework.application.modules.contracts import ModuleSpec
+from app.framework.core.module_system import ModuleHost, get_modules_by_host, make_module_class
 
 
-_periodic_specs_provider: Callable[[], list[ModuleSpec]] | None = None
-_on_demand_specs_provider: Callable[[], list[ModuleSpec]] | None = None
+def _meta_to_spec(meta, host: ModuleHost) -> ModuleSpec:
+    if meta.ui_factory is None and meta.page_cls is not None:
+        meta.ui_factory = lambda parent, _host: meta.page_cls(parent)
 
-
-def configure_module_spec_providers(
-    *,
-    periodic_provider: Callable[[], list[ModuleSpec]] | None = None,
-    on_demand_provider: Callable[[], list[ModuleSpec]] | None = None,
-) -> None:
-    global _periodic_specs_provider
-    global _on_demand_specs_provider
-    if periodic_provider is not None:
-        _periodic_specs_provider = periodic_provider
-    if on_demand_provider is not None:
-        _on_demand_specs_provider = on_demand_provider
-
-
-def _default_periodic_provider() -> list[ModuleSpec]:
-    module = importlib.import_module("app.features.modules.module_specs")
-    provider = getattr(module, "get_periodic_module_specs", None)
-    if callable(provider):
-        return list(provider())
-    return []
-
-
-def _default_on_demand_provider() -> list[ModuleSpec]:
-    module = importlib.import_module("app.features.modules.module_specs")
-    provider = getattr(module, "get_on_demand_module_specs", None)
-    if callable(provider):
-        return list(provider(include_passive=True))
-    return []
+    module_class = meta.module_class or make_module_class(meta)
+    return ModuleSpec(
+        id=meta.id,
+        zh_name=meta.name,
+        en_name=meta.en_name or meta.name,
+        order=meta.order,
+        hosts=(host,),
+        ui_factory=meta.ui_factory,
+        module_class=module_class,
+        ui_bindings=meta.ui_bindings,
+        passive=meta.passive,
+    )
 
 
 def get_periodic_module_specs() -> list[ModuleSpec]:
-    provider = _periodic_specs_provider or _default_periodic_provider
-    return sorted(list(provider()), key=lambda item: item.order)
+    metas = get_modules_by_host(ModuleHost.PERIODIC)
+    return [_meta_to_spec(meta, ModuleHost.PERIODIC) for meta in metas]
 
 
 def get_on_demand_module_specs(*, include_passive: bool = True) -> list[ModuleSpec]:
-    provider = _on_demand_specs_provider or _default_on_demand_provider
-    specs = sorted(list(provider()), key=lambda item: item.order)
-    if include_passive:
-        return specs
-    return [spec for spec in specs if not spec.passive]
-
+    metas = get_modules_by_host(ModuleHost.ON_DEMAND)
+    if not include_passive:
+        metas = [meta for meta in metas if not meta.passive]
+    return [_meta_to_spec(meta, ModuleHost.ON_DEMAND) for meta in metas]

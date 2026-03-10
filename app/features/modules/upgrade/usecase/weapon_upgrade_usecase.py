@@ -19,10 +19,19 @@ foundation of their MIT-licensed pipeline files.
 import time
 import cv2
 import numpy as np
+
+from app.framework.core.module_system import module
 from app.framework.infra.config.app_config import config
 from app.framework.infra.automation.timer import Timer
 from app.features.utils.home_navigation import back_to_home
 
+
+@module(
+    id="task_weapon",
+    name="武器升级",
+    en_name="Weapon Upgrade",
+    host="periodic",
+)
 class WeaponUpgradeModule:
     def __init__(self, auto, logger):
         self.auto = auto
@@ -181,3 +190,6 @@ class WeaponUpgradeModule:
             if timeout.reached():
                 self.logger.error("武器升级流程达到最长执行时间 (超时)。")
                 break
+
+
+
