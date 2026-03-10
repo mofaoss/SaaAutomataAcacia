@@ -2,22 +2,16 @@
 
 from app.framework.application.modules.contracts import ModuleSpec, ModuleUiBindings
 from app.framework.core.module_system import ModuleHost, get_modules_by_host, make_module_class
+from app.framework.core.module_system.naming import humanize_name
 from app.framework.i18n.runtime import get_catalog
 
 
-_DEFAULT_ZH_TITLE_FALLBACK: dict[str, str] = {
-    "task_login": "自动登录",
-    "task_supplies": "领取补给",
-    "task_shop": "商店购买",
-    "task_stamina": "体力扫荡",
-    "task_shards": "角色碎片",
-    "task_chasm": "精神拟境",
-    "task_reward": "领取奖励",
-    "task_operation": "常规训练",
-    "task_weapon": "武器升级",
-    "task_shard_exchange": "信源碎片",
-    "task_close_game": "执行关闭",
-}
+def _fallback_title_from_module_id(module_id: str) -> str:
+    normalized = str(module_id or "").strip()
+    if normalized.startswith("task_"):
+        normalized = normalized[len("task_"):]
+    readable = humanize_name(normalized)
+    return readable or (module_id or "")
 
 
 def _resolve_localized_titles(meta) -> tuple[str, str]:
@@ -26,16 +20,13 @@ def _resolve_localized_titles(meta) -> tuple[str, str]:
     zh_cn_catalog = get_catalog("zh_CN")
     zh_hk_catalog = get_catalog("zh_HK")
 
-    en_name = (en_catalog.get(key) or meta.en_name or meta.name or meta.id).strip()
+    fallback_title = _fallback_title_from_module_id(meta.id)
+    en_name = (en_catalog.get(key) or meta.en_name or meta.name or fallback_title).strip()
     zh_name = (
         zh_cn_catalog.get(key)
         or zh_hk_catalog.get(key)
         or en_name
     ).strip()
-
-    # i18n tooling may keep zh catalogs in English; preserve localized runtime UX for core periodic tasks.
-    if zh_name == en_name:
-        zh_name = _DEFAULT_ZH_TITLE_FALLBACK.get(meta.id, zh_name)
 
     return zh_name, en_name
 
