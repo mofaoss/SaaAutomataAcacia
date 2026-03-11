@@ -1,4 +1,4 @@
-﻿import logging
+import logging
 from typing import Callable, Dict, List
 
 from PySide6.QtCore import QEasingCurve, QParallelAnimationGroup, QPropertyAnimation, QTimer, QPoint
@@ -664,9 +664,18 @@ class PeriodicTasksPage(QFrame, BaseInterface):
             self._on_task_order_changed)
         self.ui.shared_scheduling_panel.config_changed.connect(
             self._on_shared_config_changed)
-        if auto_open_checkbox is not None and hasattr(auto_open_checkbox, "stateChanged"):
-            auto_open_checkbox.stateChanged.connect(
-                lambda state: self.enter_game_actions.on_auto_open_toggled(host=self, state=state))
+        if auto_open_checkbox is not None:
+            if hasattr(auto_open_checkbox, "checkedChanged"):
+                auto_open_checkbox.checkedChanged.connect(
+                    lambda checked: self.enter_game_actions.on_auto_open_toggled(
+                        host=self,
+                        state=2 if bool(checked) else 0,
+                    )
+                )
+            elif hasattr(auto_open_checkbox, "stateChanged"):
+                auto_open_checkbox.stateChanged.connect(
+                    lambda state: self.enter_game_actions.on_auto_open_toggled(host=self, state=state)
+                )
 
         self.ui.shared_scheduling_panel.copy_single_rule_clicked.connect(
             self._on_copy_single_rule_to_checked)
@@ -794,11 +803,3 @@ class PeriodicTasksPage(QFrame, BaseInterface):
     def showEvent(self, event):
         super().showEvent(event)
         self._load_config()
-
-
-
-
-
-
-
-

@@ -4,7 +4,7 @@
   "module.dummy.field.nita_auto_e.help": "Automatically press E during QTE stage",
   "module.dummy.field.nita_auto_e.label": "Checkbox Trigger Auto E",
   "module.dummy.title": "Trigger",
-  "module.trigger.description": "### 提示\n* 自动辅助以后台模式运行，不会阻塞其他按需任务\n* 开启“自动 F”可自动处理交互拾取提示\n* 开启“妮塔自动 E”可在 QTE 时机自动按 E",
+  "module.trigger.description": "### Tips\n* The auto assist runs in background mode and does not block other on-demand tasks.\n* Enable 'Auto F' to automatically handle interaction pickup prompts.\n* Enable 'Nita Auto E' to automatically press E during QTE stages.",
   "module.trigger.log.error": "Error",
   "module.trigger.log.game_task_is_not_running": "Game/Task is not running",
   "module.trigger.log.trigger_skipped_all_options_disabled": "Trigger skipped: all options are disabled",

@@ -1,10 +1,12 @@
 # coding:utf-8
 import copy
+import json
+import re
 from typing import Any, Dict, Iterable, List, Optional, Tuple
 
 from PySide6.QtCore import Qt
-from PySide6.QtWidgets import QTreeWidget
-from qfluentwidgets import CheckBox, ComboBox, LineEdit, SpinBox
+from PySide6.QtWidgets import QPlainTextEdit, QTreeWidget
+from qfluentwidgets import CheckBox, ComboBox, DoubleSpinBox, LineEdit, Slider, SpinBox, SwitchButton
 
 from app.framework.infra.config.app_config import config
 
@@ -25,6 +27,120 @@ class PeriodicSettingsUseCase:
         return str(config.LineEdit_game_directory.value) == str(folder)
 
     @staticmethod
+    def _value_matches(left: Any, right: Any) -> bool:
+        if left == right:
+            return True
+        try:
+            return str(left) == str(right)
+        except Exception:
+            return False
+
+    @staticmethod
+    def _combo_set_value(widget: ComboBox, value: Any) -> None:
+        values = widget.property("_auto_option_values")
+        if isinstance(values, list) and values:
+            for idx, option in enumerate(values):
+                if PeriodicSettingsUseCase._value_matches(option, value):
+                    widget.setCurrentIndex(idx)
+                    return
+
+            labels = widget.property("_auto_option_labels")
+            if isinstance(labels, list):
+                for idx, label in enumerate(labels):
+                    if PeriodicSettingsUseCase._value_matches(label, value):
+                        widget.setCurrentIndex(idx)
+                        return
+
+            # Backward compatibility: legacy configs may store combo index.
+            if isinstance(value, int) and 0 <= value < len(values):
+                widget.setCurrentIndex(value)
+                return
+
+        text = str(value)
+        index = widget.findText(text)
+        if index >= 0:
+            widget.setCurrentIndex(index)
+            return
+
+        try:
+            widget.setCurrentIndex(int(value))
+        except Exception:
+            pass
+
+    @staticmethod
+    def _combo_get_value(widget: ComboBox) -> Any:
+        index = int(widget.currentIndex())
+        values = widget.property("_auto_option_values")
+        if isinstance(values, list) and 0 <= index < len(values):
+            return values[index]
+        return index
+
+    @staticmethod
+    def _stringify_for_text_widget(value: Any) -> str:
+        if value is None:
+            return ""
+        if isinstance(value, (list, tuple, set, dict)):
+            normalized = list(value) if isinstance(value, set) else value
+            try:
+                return json.dumps(normalized, ensure_ascii=False, indent=2)
+            except Exception:
+                return str(value)
+        return str(value)
+
+    @staticmethod
+    def _coerce_text_for_config(text: str, sample: Any) -> Any:
+        raw = str(text or "")
+        stripped = raw.strip()
+
+        if isinstance(sample, bool):
+            return stripped.lower() in {"1", "true", "yes", "on"}
+
+        if isinstance(sample, int) and not isinstance(sample, bool):
+            try:
+                return int(float(stripped))
+            except Exception:
+                return sample
+
+        if isinstance(sample, float):
+            try:
+                return float(stripped)
+            except Exception:
+                return sample
+
+        if isinstance(sample, dict):
+            if not stripped:
+                return {}
+            try:
+                parsed = json.loads(stripped)
+                if isinstance(parsed, dict):
+                    return parsed
+            except Exception:
+                pass
+            return sample
+
+        if isinstance(sample, list):
+            if not stripped:
+                return []
+            if stripped.startswith("[") and stripped.endswith("]"):
+                try:
+                    parsed = json.loads(stripped)
+                    if isinstance(parsed, list):
+                        return parsed
+                except Exception:
+                    pass
+            return [part.strip() for part in re.split(r"[\n,]", stripped) if part.strip()]
+
+        if isinstance(sample, tuple):
+            parsed = PeriodicSettingsUseCase._coerce_text_for_config(stripped, list(sample))
+            return tuple(parsed) if isinstance(parsed, list) else sample
+
+        if isinstance(sample, set):
+            parsed = PeriodicSettingsUseCase._coerce_text_for_config(stripped, list(sample))
+            return set(parsed) if isinstance(parsed, list) else sample
+
+        return raw
+
+    @staticmethod
     def apply_config_to_widgets(widgets: Iterable[Any]) -> None:
         for widget in widgets:
             config_item = getattr(config, widget.objectName(), None)
@@ -33,12 +149,29 @@ class PeriodicSettingsUseCase:
 
             if isinstance(widget, CheckBox):
                 widget.setChecked(bool(config_item.value))
+            elif isinstance(widget, SwitchButton):
+                widget.setChecked(bool(config_item.value))
             elif isinstance(widget, ComboBox):
-                widget.setCurrentIndex(int(config_item.value))
+                PeriodicSettingsUseCase._combo_set_value(widget, config_item.value)
             elif isinstance(widget, LineEdit):
                 widget.setText(str(config_item.value))
             elif isinstance(widget, SpinBox):
-                widget.setValue(int(config_item.value))
+                try:
+                    widget.setValue(int(config_item.value))
+                except Exception:
+                    widget.setValue(0)
+            elif isinstance(widget, DoubleSpinBox):
+                try:
+                    widget.setValue(float(config_item.value))
+                except Exception:
+                    widget.setValue(0.0)
+            elif isinstance(widget, Slider):
+                try:
+                    widget.setValue(int(config_item.value))
+                except Exception:
+                    pass
+            elif isinstance(widget, QPlainTextEdit):
+                widget.setPlainText(PeriodicSettingsUseCase._stringify_for_text_widget(config_item.value))
 
     @staticmethod
     def apply_tree_selection(tree: QTreeWidget, text_to_key: Dict[str, str]) -> None:
@@ -69,12 +202,35 @@ class PeriodicSettingsUseCase:
                 return checked
             return None
 
+        if isinstance(widget, SwitchButton):
+            checked = bool(widget.isChecked())
+            config.set(config_item, checked)
+            if widget.objectName() == "CheckBox_is_use_power":
+                return checked
+            return None
+
         if isinstance(widget, ComboBox):
-            config.set(config_item, int(widget.currentIndex()))
+            config.set(config_item, PeriodicSettingsUseCase._combo_get_value(widget))
             return None
 
         if isinstance(widget, SpinBox):
             config.set(config_item, int(widget.value()))
+            return None
+
+        if isinstance(widget, DoubleSpinBox):
+            config.set(config_item, float(widget.value()))
+            return None
+
+        if isinstance(widget, Slider):
+            config.set(config_item, int(widget.value()))
+            return None
+
+        if isinstance(widget, QPlainTextEdit):
+            sample = getattr(config_item, "value", None)
+            if sample is None:
+                sample = getattr(config_item, "defaultValue", None)
+            parsed = PeriodicSettingsUseCase._coerce_text_for_config(widget.toPlainText(), sample)
+            config.set(config_item, parsed)
             return None
 
         if isinstance(widget, LineEdit):

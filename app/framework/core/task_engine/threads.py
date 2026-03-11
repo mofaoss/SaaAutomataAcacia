@@ -336,7 +336,7 @@ class TaskQueueThread(QThread):
                     normal_stop_flag = False
                     break
 
-                if config.inform_message.value or '--toast-only' in sys.argv:
+                if (config.inform_message.value or '--toast-only' in sys.argv) and task_id != 'task_close_game':
                     try:
                         full_time = auto.calculate_power_time() if auto is not None else None
                         content = f'体力将在 {full_time} 完全恢复' if full_time else '体力计算出错'

@@ -65,18 +65,83 @@
 ### 2.3 架构一图流
 
 ```mermaid
-flowchart LR
-    A["Module Decorators\n(periodic/on_demand)"] --> B["ModuleMeta Registry"]
-    B --> C["ModuleSpec Mapping"]
-    C --> D["Host Views\n(periodic / on-demand)"]
-    C --> E["AutoPage Factory"]
-    E --> F["AutoPage Render\n(config_schema -> widgets)"]
-    F --> G["Config Read/Write"]
-    F --> H["i18n Resolver"]
-    D --> I["Task Runner / Threading"]
-    J["UI Manifest + U(...)"] --> K["Automation Resolver"]
-    K --> I
+flowchart TD
+    subgraph Phase1["1. 模块定义"]
+        A["使用 @periodic_module / @on_demand_module"]
+        B["解析 Type Hints"]
+        C["解析 Field 元数据"]
+        A --> B
+        A --> C
+    end
+
+    subgraph Phase2["2. 系统注册"]
+        D["生成 ModuleMeta"]
+        E["ModuleRegistry 存储"]
+        F["映射为 ModuleSpec"]
+        B --> D
+        C --> D
+        D --> E
+        E --> F
+    end
+
+    subgraph Phase3["3. Auto UI 渲染"]
+        G["AutoPageFactory 创建页面"]
+        H["AutoPageBase 渲染字段"]
+        I{"类型推断"}
+        J["QCheckBox"]
+        K["QSpinBox"]
+        L["ColorPreview"]
+        M["AutoPageI18nMixin"]
+        F --> G
+        G --> H
+        H --> I
+        I -- bool --> J
+        I -- int --> K
+        I -- color --> L
+        H --> M
+    end
+
+    subgraph Phase4["4. 任务执行"]
+        N["用户点击执行"]
+        O["TaskRunner 工作线程"]
+        P["调用 runner"]
+        Q["Automation Resolver"]
+        R["Event Bus"]
+        J --> N
+        K --> N
+        L --> N
+        N --> O
+        O --> P
+        P --> Q
+        P --> R
+    end
+
+    style D fill:#ff99c8,stroke:#333,stroke-width:2px
+    style G fill:#99ccff,stroke:#333,stroke-width:2px
+    style O fill:#99ff99,stroke:#333,stroke-width:2px
+    style Q fill:#ffff99,stroke:#333,stroke-width:2px
 ```
+
+  💡 通俗易懂的解释：
+
+  这个架构的核心理念是 “声明式开发”，可以类比为：“你写一份菜单，系统自动帮你开一家餐馆”。
+
+   1. 定义阶段 (就像写菜单)：
+      你只需要在 Python 类上面打个“标签”（装饰器），告诉系统这个功能是“周期性运行”还是“按需运行”，并给变量写好类型（比如 int 代表数字）。
+
+
+   2. 注册阶段 (就像审核菜单)：
+      系统会自动读取你的代码，把它转换成一份标准化的“规格书”（ModuleSpec），不需要你手动去写任何关于 UI 布局的代码。
+
+
+   3. UI 渲染阶段 (就像自动装修餐馆)：
+      AutoPage 引擎像是一个智能机器人。它看到规格书里写了“数字”，就自动在界面上放个数字框；看到“布尔值”，就放个勾选框。同时，它会自动查字典（i18n），把你的英文变量名变成中文显示出来。
+
+
+   4. 执行阶段 (就像大厨炒菜)：
+      当用户点火（点击执行）时，系统会专门派一个“工作者”（线程）去跑你的代码，这样界面就不会卡死。你的代码通过“自动化工具箱”（Resolver）去操作游戏，并将结果通过“广播站”（Event
+  Bus）实时告诉界面显示给用户看。
+
 
 ---
 
@@ -758,7 +823,7 @@ from app.framework.core.module_system import Field, periodic_module
 
 @periodic_module(
     "Auto Login",
-    description="### Tips\n* Select your server first\n* Enable auto-open if needed",
+    description="### Tips * Select your server first * Enable auto-open if needed",
     fields={
         "CheckBox_open_game_directly": Field(id="open_game_directly"),
         "LineEdit_game_directory": Field(id="game_directory"),

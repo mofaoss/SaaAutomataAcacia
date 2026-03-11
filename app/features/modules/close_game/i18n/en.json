@@ -9,5 +9,11 @@
   "module.close_game.ui.exit_saa_but_don_t_shutdown": "Exit SAA but don't shutdown",
   "module.close_game.ui.shutdown_pc": "Shutdown PC",
   "module.dummy.title": "Execute Exit",
-  "module.task_close_game.title": "Execute Exit"
+  "module.task_close_game.field.CheckBox_close_game.label": "Exit Game",
+  "module.task_close_game.field.CheckBox_shutdown.label": "Shutdown System",
+  "module.task_close_game.field.CheckBox_close_proxy.label": "Exit Application",
+  "module.task_close_game.title": "Execute Exit",
+  "module.dummy.field.CheckBox_close_game.label": "Checkbox Close Game",
+  "module.dummy.field.CheckBox_shutdown.label": "Checkbox Shutdown",
+  "module.dummy.field.CheckBox_close_proxy.label": "Checkbox Close Proxy"
 }

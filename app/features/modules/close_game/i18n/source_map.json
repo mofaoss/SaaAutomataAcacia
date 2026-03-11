@@ -8,6 +8,9 @@
   "module.close_game.ui.exit_game": "en",
   "module.close_game.ui.exit_saa_but_don_t_shutdown": "en",
   "module.close_game.ui.shutdown_pc": "en",
+  "module.dummy.field.CheckBox_close_game.label": "en",
+  "module.dummy.field.CheckBox_close_proxy.label": "en",
+  "module.dummy.field.CheckBox_shutdown.label": "en",
   "module.dummy.title": "en",
   "module.task_close_game.description": "zh_CN",
   "module.task_close_game.title": "en"

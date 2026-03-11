@@ -190,7 +190,8 @@ def _extract_declarations_from_file(path: Path, tree: ast.AST) -> list[tuple[str
                     fields = _extract_fields(kw.value)
 
             if not module_id:
-                dummy = type("Dummy", (), {"__name__": _target_name(node)})
+                name = _target_name(node)
+                dummy = type(name, (), {})
                 module_id = infer_module_id(dummy)
 
             out.append((owner_scope, owner_module, f"module.{module_id}.title", title, "en"))

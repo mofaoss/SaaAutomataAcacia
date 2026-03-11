@@ -83,10 +83,24 @@ def _resolve_field_meta(
     inf_group, inf_layout = _infer_layout_and_group(param_name, type_hint, default_val)
 
     if isinstance(field_decl, Field):
-        field_id = field_decl.id or param_name
-        # Developer ergonomics: when `label` is omitted, reuse `id` as the
-        # humanized label seed before falling back to param name.
-        label_seed = field_decl.label or field_decl.id or param_name
+        declared_id = field_decl.id
+        declared_label = field_decl.label
+
+        # Backward compatibility: Field("Some Label") should be treated as
+        # label-only declaration, not as an unstable field id.
+        if (
+            declared_label is None
+            and isinstance(declared_id, str)
+            and declared_id
+            and re.fullmatch(r"^[A-Za-z_][A-Za-z0-9_]*$", declared_id) is None
+        ):
+            declared_label = declared_id
+            declared_id = None
+
+        field_id = declared_id or param_name
+        # Developer ergonomics: when `label` is omitted, reuse resolved id as
+        # the humanized label seed before falling back to param name.
+        label_seed = declared_label or field_id or param_name
         label_default = _clean_label(label_seed)
         help_default = field_decl.help
         group = field_decl.group or inf_group

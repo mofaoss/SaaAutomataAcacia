@@ -25,12 +25,14 @@ class CloseGameModule:
         self,
         auto,
         logger,
+        app_config,
         CheckBox_close_game: bool = False,
         CheckBox_shutdown: bool = False,
         CheckBox_close_proxy: bool = False,
     ):
         self.auto = auto
         self.logger = logger
+        self.app_config = app_config
         self.close_game_enabled = bool(CheckBox_close_game)
         self.shutdown_enabled = bool(CheckBox_shutdown)
         self.close_proxy_enabled = bool(CheckBox_close_proxy)
@@ -39,7 +41,7 @@ class CloseGameModule:
         # 1. 退出游戏
         if self.close_game_enabled:
             self.logger.info(_('Exiting game...', msgid='exiting_game'))
-            hwnd = is_snowbreak_running()
+            hwnd = is_snowbreak_running(app_config=self.app_config)
             if hwnd:
                 win32gui.SendMessage(hwnd, win32con.WM_CLOSE, 0, 0)
                 time.sleep(2)
