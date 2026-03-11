@@ -47,7 +47,8 @@ def discover_modules(package: str):
     if not hasattr(pkg, "__path__"):
         return
 
-    imported = _discover_by_pkgutil(pkg)
-    if imported:
-        return
+    # In packaged environments pkgutil enumeration can be partial.
+    # Always execute both strategies and rely on Python import cache for deduplication.
+    _discover_by_pkgutil(pkg)
     _discover_by_filesystem(pkg)
+
