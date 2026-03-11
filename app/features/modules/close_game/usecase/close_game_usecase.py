@@ -6,7 +6,7 @@ import win32con
 from app.framework.infra.events.signal_bus import signalBus
 from app.features.modules.enter_game.usecase.enter_game_usecase import is_snowbreak_running
 
-from app.framework.core.module_system import on_demand_module, periodic_module
+from app.framework.core.module_system import on_demand_module, periodic_module, Field
 from app.framework.i18n import _
 
 
@@ -14,6 +14,11 @@ from app.framework.i18n import _
     "Execute Exit",
     description="### Tips\n"
                 "* Closes the game, proxy, or shuts down the system after all tasks are completed.",
+    fields={
+        "CheckBox_close_game": Field("Exit Game"),
+        "CheckBox_shutdown": Field("Shutdown System"),
+        "CheckBox_close_proxy": Field("Exit Application"),
+    }
 )
 class CloseGameModule:
     def __init__(

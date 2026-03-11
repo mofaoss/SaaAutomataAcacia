@@ -119,6 +119,10 @@ class Screenshot:
             if not hwnd or not win32gui.IsWindow(hwnd):
                 self._log_error_throttled('invalid_hwnd', "截图失败：无效的窗口句柄，窗口可能已关闭")
                 return None
+            
+            if win32gui.IsIconic(hwnd):
+                self._log_error_throttled('window_minimized', "截图失败：窗口已最小化，无法截取内容")
+                return None
 
             # 获取窗口尺寸与客户区尺寸
             left, top, right, bottom = win32gui.GetWindowRect(hwnd)
@@ -126,14 +130,14 @@ class Screenshot:
             w = right - left
             h = bottom - top
             if w <= 0 or h <= 0:
-                self._log_error_throttled('invalid_window_size', "截图失败：窗口尺寸无效")
+                self._log_error_throttled('invalid_window_size', f"截图失败：窗口尺寸无效 ({w}x{h})")
                 return None
 
             client_rect = win32gui.GetClientRect(hwnd)
             client_width = client_rect[2] - client_rect[0]
             client_height = client_rect[3] - client_rect[1]
             if client_width <= 0 or client_height <= 0:
-                self._log_error_throttled('invalid_client_size', "截图失败：客户区尺寸无效，等待下一帧重试")
+                self._log_error_throttled('invalid_client_size', f"截图失败：客户区尺寸无效 ({client_width}x{client_height})，等待下一帧重试")
                 return None
             client_screen_x, client_screen_y = win32gui.ClientToScreen(hwnd, (0, 0))
             client_offset_x = client_screen_x - left

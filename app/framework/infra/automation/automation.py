@@ -67,14 +67,16 @@ class Automation:
         :param window_class: 是启动器还是游戏窗口
         :param logger: 用于记录日志的Logger对象，可选参数。
         """
-        # 启动器截图和操作的窗口句柄不同
-        self.screenshot_hwnd = win32gui.FindWindow(None, window_title)
         self.window_title = window_title
         self.window_class = window_class
         # self.is_starter = window_class != config.LineEdit_game_class.value
         self.is_starter = False
         self.logger = logger
-        self.hwnd = self.get_hwnd()
+        
+        self.screenshot_hwnd = None
+        self.hwnd = None
+        self._refresh_hwnds()
+
         self.screenshot = Screenshot(self.logger)
         # 当前截图
         self.current_screenshot = None
@@ -92,6 +94,49 @@ class Automation:
         self._ui_resolver = UIResolver()
 
         self._init_input()
+
+    def _refresh_hwnds(self):
+        """刷新窗口句柄，优先寻找有尺寸的窗口"""
+        try:
+            # 1. 尝试使用 get_hwnd 获取精准句柄（根据类名）
+            target_hwnd = get_hwnd(self.window_title, self.window_class)
+            
+            # 2. 如果是普通游戏模式，截图句柄和操作句柄通常一致
+            if not self.is_starter:
+                self.hwnd = target_hwnd
+                self.screenshot_hwnd = target_hwnd
+            else:
+                # 启动器模式下，截图可能需要父窗口
+                self.hwnd = target_hwnd
+                # 寻找同标题的顶层窗口作为截图目标
+                self.screenshot_hwnd = win32gui.FindWindow(None, self.window_title)
+            
+            if self.screenshot_hwnd:
+                rect = win32gui.GetWindowRect(self.screenshot_hwnd)
+                if rect[2] - rect[0] <= 0 or rect[3] - rect[1] <= 0:
+                    # 如果当前句柄没尺寸，尝试重新枚举所有同名窗口寻找有尺寸的
+                    def callback(hwnd, results):
+                        if win32gui.GetWindowText(hwnd) == self.window_title:
+                            try:
+                                r = win32gui.GetWindowRect(hwnd)
+                                if r[2] - r[0] > 0 and r[3] - r[1] > 0:
+                                    results.append(hwnd)
+                            except Exception:
+                                pass
+                        return True
+                    valid_hwnds = []
+                    win32gui.EnumWindows(callback, valid_hwnds)
+                    if valid_hwnds:
+                        self.screenshot_hwnd = valid_hwnds[0]
+                        if not self.is_starter:
+                            self.hwnd = valid_hwnds[0]
+                            
+            if hasattr(self, "input_handler") and self.input_handler:
+                self.input_handler.hwnd = self.hwnd
+                
+        except Exception as e:
+            if hasattr(self, "logger") and self.logger:
+                self.logger.error(f"刷新窗口句柄失败: {e}")
 
     def _resolve_ui_click(self, ref_or_id, **kwargs):
         if isinstance(ref_or_id, UIReference):
@@ -420,18 +465,19 @@ class Automation:
 
     def _ensure_input_hwnd(self):
         if self.hwnd and win32gui.IsWindow(self.hwnd):
-            if self.input_handler.hwnd != self.hwnd:
-                self.input_handler.hwnd = self.hwnd
-            return True
-        hwnd = get_hwnd(self.window_title, self.window_class)
-        if not hwnd:
+            rect = win32gui.GetWindowRect(self.hwnd)
+            if rect[2] - rect[0] > 0 and rect[3] - rect[1] > 0:
+                if self.input_handler.hwnd != self.hwnd:
+                    self.input_handler.hwnd = self.hwnd
+                return True
+        
+        self._refresh_hwnds()
+        if not self.hwnd:
             self._log_error_throttled(
                 "refresh_hwnd_failed",
                 _(f'Handle for window {self.window_title} not found', msgid='handle_for_window_value_not_found'),
             )
             return False
-        self.hwnd = hwnd
-        self.input_handler.hwnd = hwnd
         return True
 
     def type_string(self, text):
@@ -477,6 +523,21 @@ class Automation:
         :return: 成功时返回截图及其位置和缩放因子，失败时抛出异常。
         """
         try:
+            # 如果句柄无效或尺寸为0，尝试刷新一次
+            need_refresh = False
+            if not self.screenshot_hwnd or not win32gui.IsWindow(self.screenshot_hwnd):
+                need_refresh = True
+            else:
+                try:
+                    rect = win32gui.GetWindowRect(self.screenshot_hwnd)
+                    if rect[2] - rect[0] <= 0 or rect[3] - rect[1] <= 0:
+                        need_refresh = True
+                except Exception:
+                    need_refresh = True
+            
+            if need_refresh:
+                self._refresh_hwnds()
+
             result = self.screenshot.screenshot(self.screenshot_hwnd, (0, 0, 1, 1), self.is_starter,
                                                 is_interval=is_interval)
             if result:
@@ -488,9 +549,27 @@ class Automation:
                     self.current_screenshot = self.first_screenshot
                 return result
             else:
+                # 再次尝试刷新句柄并重试一次
+                self._refresh_hwnds()
+                # 失败后强制等待，防止外部循环过快导致主线程/日志系统卡死
+                time.sleep(0.1)
+                result = self.screenshot.screenshot(self.screenshot_hwnd, (0, 0, 1, 1), self.is_starter,
+                                                    is_interval=is_interval)
+                if result:
+                    self.first_screenshot, self.scale_x, self.scale_y, self.relative_pos = result
+                    if crop != (0, 0, 1, 1):
+                        self.current_screenshot, self.relative_pos = ImageUtils.crop_image(self.first_screenshot, crop,
+                                                                                           self.hwnd)
+                    else:
+                        self.current_screenshot = self.first_screenshot
+                    return result
+                
                 self.current_screenshot = None
+                return None
         except Exception as e:
             self._log_error_throttled("take_screenshot_failed", _(f'Screenshot failed: {e}', msgid='screenshot_failed_e'))
+            time.sleep(0.2) # 严重错误时增加等待
+            return None
 
     def calculate_positions(self, max_loc):
         """

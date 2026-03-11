@@ -1,28 +1,49 @@
 ﻿# SAA 开发者手册（2026 AutoPage 协议版）
 
-> 本文档是当前代码协议的唯一中文基线，重点覆盖 **模块声明 → AutoPage 自动生成 UI → 宿主接入 → i18n 工具链** 的完整契约。  
+> 本文档是当前代码协议的唯一中文基线，重点覆盖 **模块声明 → AutoPage 自动生成 UI → 宿主接入 → i18n 工具链** 的完整契约。
 > 旧文档中基于 `@module(...)`、`AutoPageBase` 固定左右分栏等描述已经过时，以下内容均以当前源码为准。
+
+---
+
+## 0. 快速导览
+
+本节产出：按你的角色快速找到可执行章节，减少无关阅读成本。
+
+- 我是模块开发者：先看 `3 -> 5 -> 6 -> 15 -> 16`
+- 我要进行国际化适配 i18n 贡献问题：先看 `7 -> 11 -> 14`
+- 我要修UI问题（AutoPage）：先看 `6 -> 9 -> 10 -> 14`
+- 我要改进自动化技术（`U`/manifest）：先看 `18 -> 14 -> 16`
 
 ---
 
 ## 1. 适用范围与目标
 
+本节产出：理解本文档的适用边界与评判标准，避免在 framework 引入业务兜底。
+
 本文档解决三个问题：
 
 1. 新模块如何声明，才能被框架发现、注册、自动生成 UI 并稳定运行。
-2. AutoPage 的字段/控件/布局/i18n/action 是如何推断与绑定的。
-3. 如何保证“框架只提供通用能力，不引入具体游戏业务逻辑”，并让后续兼容其他游戏。
+2. AutoPage（自动生成UI功能）的字段/控件/布局/i18n（国际化）/action 是如何推断与绑定的。
+3. 框架如何“只提供通用能力，不引入具体游戏业务逻辑”。
 
 核心原则：
 
 - 声明式：模块只声明协议，框架负责通用装配。
-- 宿主解耦：periodic 与 on-demand 在各自 AutoPage 中定义页面行为差异。
+- 宿主解耦：periodic （周期性任务） 与 on-demand （非周期性任务、即时任务）在各自 AutoPage 中定义页面行为差异。
 - i18n 前置：声明文本与 UI 文本走统一提取与审计链路，不在业务里兜底语言问题。
 - 类型优先：配置读写按字段类型做可逆转换，避免 UI/配置错位。
+
+### 1.1 核心原则（务实版）
+
+- 先可运行再优化：优先保证可编译、可发现、可执行，再迭代抽象。
+- 框架加能力，不加业务：通用规则写 framework，任务语义留在 module。
+- 兼容优先于重写：优先通过统一协议演进，避免大面积手工特判迁移。
 
 ---
 
 ## 2. 当前模块系统总览
+
+本节产出：建立模块系统、AutoPage、宿主、i18n、自动化之间的协作心智模型。
 
 ### 2.1 顶层角色
 
@@ -41,9 +62,27 @@
 5. AutoPage 按 `config_schema` 渲染字段并读写 `config`。
 6. 宿主按 `ui_bindings` 查找页面/按钮/日志/卡片，接入执行器。
 
+### 2.3 架构一图流
+
+```mermaid
+flowchart LR
+    A["Module Decorators\n(periodic/on_demand)"] --> B["ModuleMeta Registry"]
+    B --> C["ModuleSpec Mapping"]
+    C --> D["Host Views\n(periodic / on-demand)"]
+    C --> E["AutoPage Factory"]
+    E --> F["AutoPage Render\n(config_schema -> widgets)"]
+    F --> G["Config Read/Write"]
+    F --> H["i18n Resolver"]
+    D --> I["Task Runner / Threading"]
+    J["UI Manifest + U(...)"] --> K["Automation Resolver"]
+    K --> I
+```
+
 ---
 
 ## 3. 模块声明协议（最新）
+
+本节产出：按声明协议新增模块且一次通过发现、注册、UI 生成与运行注入。
 
 ### 3.1 只能使用的声明装饰器
 
@@ -145,6 +184,8 @@ actions={
 
 ## 4. 模块发现与注册协议
 
+本节产出：知道模块为什么会/不会被发现，以及注册冲突如何判定。
+
 ### 4.1 自动发现路径规则
 
 只扫描满足以下条件的模块：
@@ -171,6 +212,8 @@ actions={
 ---
 
 ## 5. Config Schema 生成协议
+
+本节产出：理解字段如何从构造器映射到 `SchemaField`，并控制 UI 暴露面。
 
 来源：`build_config_schema(func, module_id, fields=None)`。
 
@@ -224,6 +267,8 @@ actions={
 ---
 
 ## 6. AutoPage 自动 UI 协议
+
+本节产出：定位 UI 生成问题的根因入口（类型推断、布局、tips、读写、actions）。
 
 ## 6.1 页面类型
 
@@ -341,9 +386,20 @@ AutoPage 会在同组字段中自动识别 `*_upper/lower/min/max/base/current/p
 
 这是框架通用能力，不包含具体游戏业务语义。
 
+## 6.11 改动边界（做/不做）
+
+| 类别 | 可以做（框架通用能力） | 不应做（业务兜底） |
+| --- | --- | --- |
+| 字段渲染 | 类型推断、控件映射、值转换、布局算法 | 针对某个任务字段名写死特殊逻辑 |
+| i18n | 候选 key 回退、乱码过滤、tips 规范化 | `if module_id == xxx` 强行替换文案 |
+| 宿主适配 | periodic/on-demand 页面行为差异 | 在 base 层写死某游戏任务流程 |
+| actions | 通用注入上下文与签名适配 | 业务动作流程搬到 framework |
+
 ---
 
 ## 7. AutoPage i18n 协议
+
+本节产出：快速判断“英文残留/中文错位/乱码”属于 key、回退还是数据清理问题。
 
 来源：`AutoPageI18nMixin`。
 
@@ -392,6 +448,8 @@ AutoPage 会在同组字段中自动识别 `*_upper/lower/min/max/base/current/p
 
 ## 8. Action 调用协议（AutoPage）
 
+本节产出：确保 action 按钮显示、分组、调用、回显全过程可预测。
+
 来源：`AutoPageActionsMixin`。
 
 ### 8.1 按钮生成
@@ -430,6 +488,8 @@ AutoPage 会在同组字段中自动识别 `*_upper/lower/min/max/base/current/p
 ---
 
 ## 9. 宿主接入协议
+
+本节产出：正确完成 AutoPage 与 periodic/on-demand 宿主的页面挂载与执行绑定。
 
 ## 9.1 `ModuleSpec` / `ModuleUiBindings`
 
@@ -499,9 +559,18 @@ class ModuleSpec:
 
 `OnDemandAutoPage` 在 background 策略下会隐藏模块内 start 按钮。
 
+### 9.6 Host 差异最小记忆卡
+
+- periodic：无模块内 start、无本地 log、tips 在底部、默认单列布局。
+- on-demand（exclusive）：有 start、有本地 log，可单任务启停。
+- on-demand（background）：模块内 start 可隐藏，开关状态驱动后台线程。
+- 宿主查控件顺序：`attr -> field_widgets -> findChild`（periodic 提供缓存）。
+
 ---
 
 ## 10. periodic 与 on-demand 页面结构差异（当前协议）
+
+本节产出：明确布局职责归属，避免把宿主特性错误塞回 `AutoPageBase`。
 
 ### 10.1 AutoPageBase 不再承担固定左右分栏
 
@@ -529,6 +598,8 @@ class ModuleSpec:
 ---
 
 ## 11. i18n 工具链协议（必须执行）
+
+本节产出：按统一流水线清理遗留 key、补全翻译并阻断新债务。
 
 统一入口：`python scripts/i18n_check.py`
 
@@ -566,9 +637,19 @@ class ModuleSpec:
 - 校验语言覆盖、模板字段一致性、owner 漂移、结构正确性。
 - 阻断新增 i18n 技术债（包括错误目录、非规范 key 等）。
 
+### 11.4 什么时候跑哪些脚本
+
+| 变更类型 | 最低命令 | 目的 |
+| --- | --- | --- |
+| 只改文案/翻译 | `python scripts/i18n_check.py` | 抽取、归一化、审计与守卫 |
+| 改 UI 资源（`ui.json`/图像定位） | `python scripts/ui_sync.py --audit` | 检查 unresolved、冲突与漂移 |
+| 改模块声明/AutoPage 行为 | `python scripts/smoke_modules.py` + `python scripts/i18n_check.py` | 同时验证运行与文案链路 |
+
 ---
 
 ## 12. 开发规范：如何只加框架通用能力
+
+本节产出：在迭代功能时守住“框架通用能力”边界，减少未来迁移成本。
 
 ### 12.1 可以做的
 
@@ -601,6 +682,8 @@ class ModuleSpec:
 
 ## 13. 迁移旧协议（`@module`）到新协议
 
+本节产出：用最短路径完成旧模块迁移并通过最低回归检查。
+
 1. 把 `@module(host=...)` 替换为 `@periodic_module` 或 `@on_demand_module`。
 2. 校正声明文本为英文 ASCII。
 3. 若构造器含内部参数，显式使用 `fields` 做 UI 白名单。
@@ -613,6 +696,18 @@ class ModuleSpec:
 ---
 
 ## 14. 排障手册（面向 AutoPage）
+
+本节产出：按“症状 -> 根因入口 -> 第一命令”快速定位高频问题。
+
+### 14.0 故障速查（先看这个）
+
+| 症状 | 根因入口 | 第一条命令 |
+| --- | --- | --- |
+| tips/按钮文案出现英文 | `7` 与 `11`（key 回退/残留 alias） | `python scripts/i18n_check.py` |
+| 下拉显示 0/1 或数字索引 | `6.4/6.5`（类型与 options 解析） | `python scripts/smoke_modules.py` |
+| 按钮显示但点击无效 | `8`（method 绑定/签名）与 `9`（宿主绑定） | `python scripts/smoke_modules.py` |
+| periodic 页面显示不全 | `10` 与 `6.7`（布局职责/列策略） | `python -m compileall app` |
+| 自动化点击找不到目标 | `18`（U/manifest 解析） | `python scripts/ui_sync.py --audit` |
 
 ### 14.1 下拉显示 0/1 或索引数字
 
@@ -656,6 +751,8 @@ class ModuleSpec:
 
 ## 15. 最小声明示例（推荐写法）
 
+本节产出：复制即可得到符合当前协议的最小可运行模块声明样式。
+
 ```python
 from app.framework.core.module_system import Field, periodic_module
 
@@ -692,6 +789,8 @@ class EnterGameModule:
 
 ## 16. 发布前检查清单
 
+本节产出：发布前统一最低质量门槛，减少“能跑但不可维护”的提交。
+
 1. 装饰器是否为 `@periodic_module/@on_demand_module`。
 2. 声明文本是否英文 ASCII。
 3. `fields` 是否正确约束 UI 暴露面。
@@ -700,17 +799,30 @@ class EnterGameModule:
 6. `python scripts/i18n_check.py` 无阻断问题。
 7. 不存在模块特判式 framework 逻辑。
 
+### 16.1 最低回归门槛（不可跳过）
+
+```bash
+python -m compileall app
+python scripts/smoke_modules.py
+python scripts/i18n_check.py
+```
+
 ---
 
 ## 17. 文档维护规则
 
+本节产出：确保协议变更与文档同步，避免文档再次过时。
+
 - 任何协议变更（字段类型推断、actions 声明结构、i18n key 解析顺序、宿主绑定行为）都必须同步更新本文档。
 - 若源码与文档冲突，以源码为准，并在同次提交更新本文档。
 - 新增能力优先抽象为通用协议，不在 framework 写业务兜底。
+- 若改动涉及以下任一项，PR 必须同步更新对应章节：装饰器参数、字段类型映射、i18n key 解析顺序、host 绑定规则、`U`/manifest 解析规则。
 
 ---
 
 ## 18. 自动化 `U` 对象协议（UI Manifest）
+
+本节产出：稳定使用 `U` 与 manifest 协议完成 UI 资源定位、解释和点击执行。
 
 `U` 是自动化层的统一 UI 引用构造器，定义于：
 
