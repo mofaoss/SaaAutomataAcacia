@@ -2264,6 +2264,34 @@
     "is_runtime_visible": true,
     "mixed_source_template": false
   },
+  "framework.ui.action_failed_error": {
+    "kind": "dynamic_template",
+    "template_id": "action_failed_error",
+    "msgid": "action_failed_error",
+    "source_template": "Action failed: {error}",
+    "fields": [
+      "error"
+    ],
+    "field_details": {
+      "error": {
+        "format_spec": "",
+        "conversion": ""
+      }
+    },
+    "owner_scope": "framework",
+    "owner_module": null,
+    "file_path": "app/framework/ui/views/auto_page.py",
+    "line": 582,
+    "col": 44,
+    "function_name": "_invoke_action",
+    "class_name": "AutoPage",
+    "context": "ui",
+    "source_language": "en",
+    "template_hash": "72207ae80938d958271b3fc566a3cfc90373888d",
+    "callsite_key": "app/framework/ui/views/auto_page.py:582:44",
+    "is_runtime_visible": true,
+    "mixed_source_template": false
+  },
   "framework.ui.error_executing_ocr_e": {
     "kind": "dynamic_template",
     "template_id": "error_executing_ocr_e",

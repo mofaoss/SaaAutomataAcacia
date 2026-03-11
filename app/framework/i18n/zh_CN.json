@@ -49,13 +49,13 @@
   "framework.ui.00_00": "00:00",
   "framework.ui.1": "1",
   "framework.ui.996710620": "996710620",
+  "framework.ui.current_color": "当前颜色",
   "framework.ui.does_not_meet": "不符合",
+  "framework.ui.group_general": "通用",
+  "framework.ui.group_visual_calibration": "视觉校准",
   "framework.ui.handle_for_value_not_found": "未找到 {self_window_title} 的句柄",
   "framework.ui.meets": "符合",
   "framework.ui.no_screenshot_currently_unable_to_read_text": "当前无截图，无法读取文本",
   "framework.ui.txt_6c14bd7f6f9e": "关闭",
-  "framework.ui.txt_f526c89937e1": "确定",
-  "framework.ui.group_general": "通用",
-  "framework.ui.group_visual_calibration": "视觉校准",
-  "framework.ui.current_color": "当前颜色"
+  "framework.ui.txt_f526c89937e1": "确定"
 }
