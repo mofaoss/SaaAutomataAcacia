@@ -172,7 +172,36 @@ flowchart TD
 )
 ```
 
-`@on_demand_module(...)` 参数同上。
+```python
+@on_demand_module(
+    name: str,
+    *,
+    fields: dict[str, str | Field] | None = None,
+    actions: dict[str, str] | None = None,
+    module_id: str | None = None,
+    execution: Literal["exclusive", "background"] | None = None,
+    background_keys: tuple[str, ...] | list[str] | str | None = None,
+    description: str = "",
+)
+```
+
+### 3.2.1 `drink` 声明示例（中文名：`猜心对局`）
+
+```python
+from app.framework.core.module_system import Field, on_demand_module
+
+@on_demand_module(
+    "Drink",
+    fields={
+        "ComboBox_drink_person": Field(id="drink_person"),
+        "ComboBox_drink_mode": Field(id="drink_mode"),
+        "CheckBox_drink_auto_buy_stamina": Field(id="auto_buy_stamina"),
+    },
+    description="### Tips\n* Automates the Card Match mini-game for passive farming.",
+)
+class DrinkModule:
+    ...
+```
 
 ### 3.3 声明文本约束（强校验）
 
@@ -340,6 +369,16 @@ actions={
 - `AutoPageBase`：公共渲染与字段读写能力。
 - `PeriodicAutoPage`：periodic 宿主特化（无 start/log，tips 在底部，不允许半宽布局）。
 - `OnDemandAutoPage`：on-demand 宿主特化（有 start/log，双栏布局，支持 background 模式隐藏 start）。
+
+### 6.1.1 `drink` 的 AutoPage 映射示例
+
+按上面的声明，AutoPage 默认会这样推断控件：
+
+- `ComboBox_drink_person` -> 下拉框（`ComboBox`）
+- `ComboBox_drink_mode` -> 下拉框（`ComboBox`）
+- `CheckBox_drink_auto_buy_stamina` -> 布尔开关（`SwitchButton`）
+
+若未提供自定义页面，on-demand 宿主会使用 `OnDemandAutoPage`，并套用分栏布局与本地日志面板。
 
 ## 6.2 构建生命周期
 
@@ -582,6 +621,7 @@ class ModuleSpec:
     ui_bindings: Optional[ModuleUiBindings]
     passive: bool
     on_demand_execution: Literal["exclusive", "background"]
+    on_demand_background_keys: tuple[str, ...]
 ```
 
 ### 9.2 `ui_factory` 默认行为
@@ -620,7 +660,8 @@ class ModuleSpec:
 背景任务判定：
 
 1. 若模块类有 `should_background_run(config)`/`should_background_run()`，优先调用。
-2. 否则扫描页面 schema 中所有 `CheckBox_*`，任意 true 则认为应运行。
+2. 否则仅评估声明式 `background_keys` 对应的配置项；任意 true 则认为应运行。
+3. 不允许再做全页面 `CheckBox_*` 扫描兜底。
 
 `OnDemandAutoPage` 在 background 策略下会隐藏模块内 start 按钮。
 
@@ -816,35 +857,34 @@ class ModuleSpec:
 
 ## 15. 最小声明示例（推荐写法）
 
-本节产出：复制即可得到符合当前协议的最小可运行模块声明样式。
+本节产出：复制即可得到符合当前协议的 on-demand AutoPage 最小可运行声明样式。
 
 ```python
-from app.framework.core.module_system import Field, periodic_module
+from app.framework.core.module_system import Field, on_demand_module
 
-@periodic_module(
-    "Auto Login",
-    description="### Tips * Select your server first * Enable auto-open if needed",
+@on_demand_module(
+    "Drink",
     fields={
-        "CheckBox_open_game_directly": Field(id="open_game_directly"),
-        "LineEdit_game_directory": Field(id="game_directory"),
+        "ComboBox_drink_person": Field(id="drink_person"),
+        "ComboBox_drink_mode": Field(id="drink_mode"),
+        "CheckBox_drink_auto_buy_stamina": Field(id="auto_buy_stamina"),
     },
-    actions={
-        "Tutorial": "show_path_tutorial",
-        "Browse": "select_game_directory",
-    },
+    description="### Tips\n* Automates the Card Match mini-game for passive farming.",
 )
-class EnterGameModule:
+class DrinkModule:
     def __init__(
         self,
         auto,
         logger,
-        CheckBox_open_game_directly: bool = False,
-        LineEdit_game_directory: str = "./",
+        ComboBox_drink_person: int = 0,
+        ComboBox_drink_mode: int = 0,
+        CheckBox_drink_auto_buy_stamina: bool = False,
     ):
         self.auto = auto
         self.logger = logger
-        self.auto_open_game = bool(CheckBox_open_game_directly)
-        self.game_directory = str(LineEdit_game_directory)
+        self.drink_person = int(ComboBox_drink_person)
+        self.drink_mode = int(ComboBox_drink_mode)
+        self.auto_buy_stamina = bool(CheckBox_drink_auto_buy_stamina)
 
     def run(self):
         ...
@@ -925,6 +965,38 @@ def U(
 - `inferred_text = text_or_id if id else None`。
 - 定义型文本默认写入 `text={"zh_CN": text_or_id}`，`kind` 自动推断为 `text/image`。
 - 会自动带上调用点 `source_file/source_line`，用于 explain 与问题定位。
+
+### 18.2.1 实用示例（以 `drink` / `猜心对局` 为例）
+
+1. 直接使用 manifest 已注册 ID（`UIReference`）：
+
+```python
+# 这两种写法都有效，都会走同一套解析链路。
+self.auto.click(U("drink_start"))
+self.auto.click("drink_start")
+```
+
+2. 使用内联定义覆盖（`UIDefinition`）：
+
+```python
+self.auto.click(
+    U(
+        "开始",
+        id="drink_start",
+        roi=(0.62, 0.86, 0.78, 0.94),
+        find_type="text",
+        threshold=0.82,
+    )
+)
+```
+
+3. 先 explain 再执行（便于排障）：
+
+```python
+explain = self.auto.explain(U("drink_start"))
+if not explain.ok:
+    self.logger.warning(explain.detail)
+```
 
 ### 18.3 `Automation` 对 `U` 的消费入口
 

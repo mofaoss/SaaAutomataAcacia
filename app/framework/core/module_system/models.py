@@ -64,6 +64,7 @@ class ModuleMeta:
     passive: bool = False
 
     on_demand_execution: Literal["exclusive", "background"] = "exclusive"
+    on_demand_background_keys: tuple[str, ...] = ()
 
     en_name: str = ""
 

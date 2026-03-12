@@ -3,5 +3,5 @@
   "module.get_reward.log.txt_f595c566e197": "领取凭证奖励超时",
   "module.get_reward.log.txt_f828ccd23235": "领取任务奖励超时",
   "module.task_reward.title": "领取奖励",
-  "module.task_reward.description": "### 提示\n* 自动领取日常/周常任务奖励以及凭证（战令）奖励。"
+  "module.task_reward.description": "### 提示\n* 自动领取日常/周常任务奖励以及凭证奖励。"
 }

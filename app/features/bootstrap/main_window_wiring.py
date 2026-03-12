@@ -38,14 +38,24 @@ class SnowbreakMainWindowBridge(MainWindowFeatureBridge):
         load_i18n_catalogs()
 
     def create_home_interface(self, window):
+        from app.framework.core.module_system.registry import get_module
+        from app.features.modules.shopping.ui.shop_periodic_page import ShopPage
+        
         enter_game_service = EnterGameService(window._is_non_chinese_ui, app_config=config)
+        
+        # 独立接入：在接线层将业务依赖注入到 UI 工厂中
+        shop_meta = get_module("task_shop")
+        if shop_meta:
+            selection_usecase = ShoppingSelectionUseCase(window._is_non_chinese_ui)
+            # 重写工厂方法，实现构造注入，解耦框架
+            shop_meta.ui_factory = lambda parent, _host, **_: ShopPage(parent, selection_usecase=selection_usecase)
+
         return PeriodicTasksPage(
             "Periodic Tasks",
             window,
             game_environment=enter_game_service,
             home_sync=back_to_home,
             task_profile_provider=get_periodic_task_profile,
-            create_shopping_selection_usecase=lambda is_non_chinese_ui: ShoppingSelectionUseCase(is_non_chinese_ui),
             create_enter_game_actions=lambda _game_environment: enter_game_service,
             create_collect_supplies_actions=lambda settings_usecase: CollectSuppliesModule(
                 redeem_codes_usecase=RedeemCodesUseCase(settings_usecase),

@@ -88,6 +88,11 @@ def _validate_english_declaration(text: str, *, field: str) -> None:
         )
 
 
+def _clean_widget_label(param_name: str) -> str:
+    cleaned = re.sub(r"^(SpinBox|ComboBox|CheckBox|LineEdit|DoubleSpinBox|Slider|TextEdit)_", "", str(param_name or ""))
+    return humanize_name(cleaned)
+
+
 def _literal(node: ast.AST) -> Any:
     if isinstance(node, ast.Constant):
         return node.value
@@ -105,7 +110,7 @@ def _extract_fields(fields_node: ast.AST) -> dict[str, dict[str, str | None]]:
             continue
 
         field_id = param_name
-        label = humanize_name(param_name)
+        label = _clean_widget_label(param_name)
         help_text = None
 
         value = _literal(value_node)
@@ -113,6 +118,7 @@ def _extract_fields(fields_node: ast.AST) -> dict[str, dict[str, str | None]]:
             _validate_english_declaration(value, field=f"fields[{param_name}] label")
             label = value
         elif isinstance(value_node, ast.Call) and isinstance(value_node.func, ast.Name) and value_node.func.id == "Field":
+            label_explicit = False
             for kw in value_node.keywords:
                 if kw.arg == "id":
                     v = _literal(kw.value)
@@ -123,11 +129,14 @@ def _extract_fields(fields_node: ast.AST) -> dict[str, dict[str, str | None]]:
                     if isinstance(v, str) and v.strip():
                         _validate_english_declaration(v.strip(), field=f"fields[{param_name}] label")
                         label = v.strip()
+                        label_explicit = True
                 elif kw.arg == "help":
                     v = _literal(kw.value)
                     if isinstance(v, str) and v.strip():
                         _validate_english_declaration(v.strip(), field=f"fields[{param_name}] help")
                         help_text = v.strip()
+            if not label_explicit:
+                label = _clean_widget_label(field_id)
 
         result[param_name] = {
             "field_id": field_id,
@@ -202,7 +211,7 @@ def _extract_declarations_from_file(path: Path, tree: ast.AST) -> list[tuple[str
                         owner_scope,
                         owner_module,
                         f"module.{module_id}.field.{field_id}.label",
-                        meta["label"] or humanize_name(param_name),
+                        meta["label"] or _clean_widget_label(field_id),
                         "en",
                     )
                 )

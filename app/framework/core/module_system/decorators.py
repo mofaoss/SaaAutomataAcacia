@@ -92,10 +92,6 @@ _ON_DEMAND_PAGE_ALIAS: dict[str, str] = {
 _ON_DEMAND_PASSIVE: dict[str, bool] = {
 }
 
-_ON_DEMAND_EXECUTION: dict[str, str] = {
-    "trigger": "background",
-}
-
 # Keep module ids stable while declarations stay minimal (no explicit module_id).
 # Keys are package folder names under app/features/modules.
 _PERIODIC_MODULE_ID_BY_PACKAGE: dict[str, str] = {
@@ -180,6 +176,25 @@ def _validate_declaration_actions(actions: dict[str, str] | None) -> None:
             )
 
 
+def _normalize_background_keys(
+    background_keys: tuple[str, ...] | list[str] | str | None,
+) -> tuple[str, ...]:
+    if background_keys is None:
+        return ()
+    if isinstance(background_keys, str):
+        candidates = (background_keys,)
+    else:
+        candidates = tuple(background_keys)
+
+    normalized: list[str] = []
+    seen: set[str] = set()
+    for raw_key in candidates:
+        key = str(raw_key or "").strip()
+        if not key or key in seen:
+            continue
+        seen.add(key)
+        normalized.append(key)
+    return tuple(normalized)
 
 
 def _resolve_symbol(symbol_path: str):
@@ -311,6 +326,8 @@ def _build_meta(
     order: int | None = None,
     enabled: bool = True,
     passive: bool | None = None,
+    on_demand_execution: str | None = None,
+    on_demand_background_keys: tuple[str, ...] | list[str] | str | None = None,
     description: str = "",
 ) -> ModuleMeta:
     _validate_english_declaration(name, field="module name")
@@ -331,10 +348,16 @@ def _build_meta(
     resolved_ui_bindings = _infer_ui_bindings(resolved_id, module_name, host)
     resolved_passive = bool(_ON_DEMAND_PASSIVE.get(resolved_id, False) if passive is None else passive)
     resolved_on_demand_execution = "exclusive"
+    resolved_background_keys: tuple[str, ...] = ()
     if host == ModuleHost.ON_DEMAND:
-        resolved_on_demand_execution = str(_ON_DEMAND_EXECUTION.get(resolved_id, "exclusive")).strip().lower()
+        requested_execution = "exclusive" if on_demand_execution is None else on_demand_execution
+        resolved_on_demand_execution = str(requested_execution).strip().lower()
         if resolved_on_demand_execution not in {"exclusive", "background"}:
-            resolved_on_demand_execution = "exclusive"
+            raise ValueError(
+                "on_demand execution must be either 'exclusive' or 'background', "
+                f"got: {on_demand_execution!r}"
+            )
+        resolved_background_keys = _normalize_background_keys(on_demand_background_keys)
 
     periodic_overrides = _PERIODIC_POLICY_OVERRIDES.get(resolved_id, {})
     resolved_periodic_enabled_by_default = bool(periodic_overrides.get("periodic_enabled_by_default", False))
@@ -367,6 +390,7 @@ def _build_meta(
         enabled=enabled,
         passive=resolved_passive,
         on_demand_execution=resolved_on_demand_execution,
+        on_demand_background_keys=resolved_background_keys,
         module_class=module_class,
         periodic_enabled_by_default=resolved_periodic_enabled_by_default,
         periodic_mandatory=resolved_periodic_mandatory,
@@ -390,7 +414,7 @@ def _build_meta(
     meta.ui_bindings = resolved_ui_bindings
     if resolved_page_class_path:
         meta.ui_factory = (
-            lambda parent, _host, _path=resolved_page_class_path: _resolve_symbol(_path)(parent)
+            lambda parent, _host, **_kwargs: _resolve_symbol(_kwargs.get('_path', resolved_page_class_path))(parent)
         )
 
     if resolved_id in _PENDING_PAGES:
@@ -408,6 +432,8 @@ def _register_with_host(
     order: int | None = None,
     enabled: bool = True,
     passive: bool | None = None,
+    on_demand_execution: str | None = None,
+    on_demand_background_keys: tuple[str, ...] | list[str] | str | None = None,
     description: str = "",
 ):
     def decorator(target):
@@ -421,6 +447,8 @@ def _register_with_host(
             order=order,
             enabled=enabled,
             passive=passive,
+            on_demand_execution=on_demand_execution,
+            on_demand_background_keys=on_demand_background_keys,
             description=description,
         )
         register_module(meta)
@@ -435,6 +463,8 @@ def on_demand_module(
     fields: dict[str, str | Field] | None = None,
     actions: dict[str, str] | None = None,
     module_id: str | None = None,
+    execution: str | None = None,
+    background_keys: tuple[str, ...] | list[str] | str | None = None,
     description: str = "",
 ):
     return _register_with_host(
@@ -443,6 +473,8 @@ def on_demand_module(
         fields=fields,
         actions=actions,
         module_id=module_id,
+        on_demand_execution=execution,
+        on_demand_background_keys=background_keys,
         description=description,
     )
 
@@ -473,7 +505,7 @@ def module_page(module_id: str):
         if meta is not None:
             meta.page_cls = cls
             if meta.ui_factory is None:
-                meta.ui_factory = lambda parent, _host: cls(parent)
+                meta.ui_factory = lambda parent, _host, **_: cls(parent)
         else:
             _PENDING_PAGES[module_id] = cls
         return cls

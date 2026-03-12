@@ -70,6 +70,7 @@ def _meta_to_spec(meta, host: ModuleHost) -> ModuleSpec:
         ui_bindings=meta.ui_bindings,
         passive=meta.passive,
         on_demand_execution=getattr(meta, "on_demand_execution", "exclusive"),
+        on_demand_background_keys=getattr(meta, "on_demand_background_keys", ()),
     )
 
 

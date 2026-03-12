@@ -10,6 +10,11 @@ from app.framework.infra.vision.vision import count_color_blocks
 
 @on_demand_module(
     "Trigger",
+    execution="background",
+    background_keys=(
+        "CheckBox_trigger_auto_f",
+        "CheckBox_trigger_auto_e",
+    ),
     fields={
         "CheckBox_trigger_auto_f": Field(
             id="auto_f",

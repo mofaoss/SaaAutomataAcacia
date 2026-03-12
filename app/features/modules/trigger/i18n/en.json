@@ -1,10 +1,14 @@
 {
   "module.dummy.field.auto_f.help": "Automatically press F when collect prompt appears",
-  "module.dummy.field.auto_f.label": "Checkbox Trigger Auto F",
+  "module.dummy.field.auto_f.label": "Auto F",
   "module.dummy.field.nita_auto_e.help": "Automatically press E during QTE stage",
-  "module.dummy.field.nita_auto_e.label": "Checkbox Trigger Auto E",
+  "module.dummy.field.nita_auto_e.label": "Nita Auto E",
   "module.dummy.title": "Trigger",
   "module.trigger.description": "### Tips\n* The auto assist runs in background mode and does not block other on-demand tasks.\n* Enable 'Auto F' to automatically handle interaction pickup prompts.\n* Enable 'Nita Auto E' to automatically press E during QTE stages.",
+  "module.trigger.field.auto_f.help": "Automatically press F when collect prompt appears",
+  "module.trigger.field.auto_f.label": "Auto F",
+  "module.trigger.field.nita_auto_e.help": "Automatically press E during QTE stage",
+  "module.trigger.field.nita_auto_e.label": "Nita Auto E",
   "module.trigger.log.error": "Error",
   "module.trigger.log.game_task_is_not_running": "Game/Task is not running",
   "module.trigger.log.trigger_skipped_all_options_disabled": "Trigger skipped: all options are disabled",
@@ -20,9 +24,5 @@
   "module.trigger.ui.log": "Log",
   "module.trigger.ui.nita_auto_e": "Nita Auto E",
   "module.trigger.ui.nita_e_auto_qte": "Nita E Auto QTE",
-  "module.trigger.ui.trigger_list": "Trigger List",
-  "module.trigger.field.auto_f.label": "Checkbox Trigger Auto F",
-  "module.trigger.field.auto_f.help": "Automatically press F when collect prompt appears",
-  "module.trigger.field.nita_auto_e.label": "Checkbox Trigger Auto E",
-  "module.trigger.field.nita_auto_e.help": "Automatically press E during QTE stage"
+  "module.trigger.ui.trigger_list": "Trigger List"
 }

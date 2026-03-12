@@ -51,7 +51,7 @@ class EventTipsActionsPort(Protocol):
 
 
 TaskProfileProvider = Callable[[], PeriodicTaskProfilePort]
-ShoppingSelectionFactory = Callable[[bool], ShoppingSelectionPort]
 EnterGameActionsFactory = Callable[[IGameEnvironment], EnterGameActionsPort]
 CollectSuppliesActionsFactory = Callable[[Any], CollectSuppliesActionsPort]
 EventTipsActionsFactory = Callable[[Any, bool, Callable[[str, str], str]], EventTipsActionsPort]
+

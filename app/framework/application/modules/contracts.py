@@ -30,6 +30,7 @@ class ModuleSpec:
     ui_bindings: Optional[ModuleUiBindings] = None
     passive: bool = False
     on_demand_execution: Literal["exclusive", "background"] = "exclusive"
+    on_demand_background_keys: tuple[str, ...] = ()
 
     def supports(self, host: HostContext) -> bool:
         return host in self.hosts

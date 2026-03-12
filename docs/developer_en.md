@@ -108,7 +108,36 @@ The old `@module(...)` is no longer the baseline of the current contract.
 )
 ```
 
-`@on_demand_module(...)` has the same parameters.
+```python
+@on_demand_module(
+    name: str,
+    *,
+    fields: dict[str, str | Field] | None = None,
+    actions: dict[str, str] | None = None,
+    module_id: str | None = None,
+    execution: Literal["exclusive", "background"] | None = None,
+    background_keys: tuple[str, ...] | list[str] | str | None = None,
+    description: str = "",
+)
+```
+
+### 3.2.1 Declaration Example: `drink` (Chinese title: `猜心对局`)
+
+```python
+from app.framework.core.module_system import Field, on_demand_module
+
+@on_demand_module(
+    "Drink",
+    fields={
+        "ComboBox_drink_person": Field(id="drink_person"),
+        "ComboBox_drink_mode": Field(id="drink_mode"),
+        "CheckBox_drink_auto_buy_stamina": Field(id="auto_buy_stamina"),
+    },
+    description="### Tips\n* Automates the Card Match mini-game for passive farming.",
+)
+class DrinkModule:
+    ...
+```
 
 ### 3.3 Declaration Text Constraints (Strict Validation)
 
@@ -276,6 +305,16 @@ Deliverable of this section: locate the root cause entry points of UI generation
 * `AutoPageBase`: common rendering and field read/write capabilities.
 * `PeriodicAutoPage`: periodic host specialization (no start/log, tips at the bottom, half-width layout not allowed).
 * `OnDemandAutoPage`: on-demand host specialization (has start/log, split layout, supports hiding start in background mode).
+
+### 6.1.1 AutoPage Example: `drink`
+
+With the declaration above, AutoPage resolves widgets as follows by default:
+
+* `ComboBox_drink_person` -> dropdown (`ComboBox`)
+* `ComboBox_drink_mode` -> dropdown (`ComboBox`)
+* `CheckBox_drink_auto_buy_stamina` -> boolean switch (`SwitchButton`)
+
+If no custom page is provided, on-demand host uses `OnDemandAutoPage` and applies split layout + local log panel.
 
 ## 6.2 Build Lifecycle
 
@@ -518,6 +557,7 @@ class ModuleSpec:
     ui_bindings: Optional[ModuleUiBindings]
     passive: bool
     on_demand_execution: Literal["exclusive", "background"]
+    on_demand_background_keys: tuple[str, ...]
 ```
 
 ### 9.2 Default Behavior of `ui_factory`
@@ -556,7 +596,8 @@ This guarantees a compatibility layer between old widget names and new AutoPage 
 Background task determination:
 
 1. If the module class has `should_background_run(config)` / `should_background_run()`, call it first.
-2. Otherwise, scan all `CheckBox_*` fields in the page schema; if any is true, the task is considered runnable.
+2. Otherwise, evaluate only declaration-provided `background_keys`; if any mapped config value is true, the task is considered runnable.
+3. No schema-wide `CheckBox_*` fallback scan is allowed.
 
 `OnDemandAutoPage` hides the module-internal start button in background strategy.
 
@@ -753,35 +794,34 @@ Check first:
 
 ## 15. Minimal Declaration Example (Recommended Style)
 
-Deliverable of this section: copy and use a minimal runnable module declaration style that conforms to the current contract.
+Deliverable of this section: copy and use a minimal runnable declaration for an on-demand AutoPage module.
 
 ```python
-from app.framework.core.module_system import Field, periodic_module
+from app.framework.core.module_system import Field, on_demand_module
 
-@periodic_module(
-    "Auto Login",
-    description="### Tips\n* Select your server first\n* Enable auto-open if needed",
+@on_demand_module(
+    "Drink",
     fields={
-        "CheckBox_open_game_directly": Field(id="open_game_directly"),
-        "LineEdit_game_directory": Field(id="game_directory"),
+        "ComboBox_drink_person": Field(id="drink_person"),
+        "ComboBox_drink_mode": Field(id="drink_mode"),
+        "CheckBox_drink_auto_buy_stamina": Field(id="auto_buy_stamina"),
     },
-    actions={
-        "Tutorial": "show_path_tutorial",
-        "Browse": "select_game_directory",
-    },
+    description="### Tips\n* Automates the Card Match mini-game for passive farming.",
 )
-class EnterGameModule:
+class DrinkModule:
     def __init__(
         self,
         auto,
         logger,
-        CheckBox_open_game_directly: bool = False,
-        LineEdit_game_directory: str = "./",
+        ComboBox_drink_person: int = 0,
+        ComboBox_drink_mode: int = 0,
+        CheckBox_drink_auto_buy_stamina: bool = False,
     ):
         self.auto = auto
         self.logger = logger
-        self.auto_open_game = bool(CheckBox_open_game_directly)
-        self.game_directory = str(LineEdit_game_directory)
+        self.drink_person = int(ComboBox_drink_person)
+        self.drink_mode = int(ComboBox_drink_mode)
+        self.auto_buy_stamina = bool(CheckBox_drink_auto_buy_stamina)
 
     def run(self):
         ...
@@ -863,6 +903,38 @@ Additional rules:
 * Definition-style text is written by default as `text={"zh_CN": text_or_id}`, and `kind` is auto-inferred as `text/image`.
 * The callsite `source_file/source_line` is automatically attached for explain and issue localization.
 
+### 18.2.1 Practical Examples (with `drink` / `猜心对局`)
+
+1. Use a registered manifest ID directly (`UIReference`):
+
+```python
+# Both forms are valid and go through the same resolver pipeline.
+self.auto.click(U("drink_start"))
+self.auto.click("drink_start")
+```
+
+2. Use an inline definition override (`UIDefinition`):
+
+```python
+self.auto.click(
+    U(
+        "Start",
+        id="drink_start",
+        roi=(0.62, 0.86, 0.78, 0.94),
+        find_type="text",
+        threshold=0.82,
+    )
+)
+```
+
+3. Resolve first, then execute (debug-friendly):
+
+```python
+explain = self.auto.explain(U("drink_start"))
+if not explain.ok:
+    self.logger.warning(explain.detail)
+```
+
 ### 18.3 `Automation` Consumption Entry for `U`
 
 Source: `app/framework/infra/automation/automation.py`
@@ -891,7 +963,7 @@ The resolved output is uniformly `ResolvedUIObject`, containing:
 Recommended usage:
 
 ```python
-self.auto.click(U("开始", id="start", roi=(0.1, 0.2, 0.3, 0.4)))
+self.auto.click(U("Start", id="start", roi=(0.1, 0.2, 0.3, 0.4)))
 self.auto.click("start")
 ```
 

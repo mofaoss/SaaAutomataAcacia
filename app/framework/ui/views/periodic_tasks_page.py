@@ -15,7 +15,6 @@ from app.framework.core.interfaces.periodic_ports import (
     EnterGameActionsFactory,
     EventTipsActionsFactory,
     TaskProfileProvider,
-    ShoppingSelectionFactory,
 )
 from app.framework.infra.logging.gui_logger import setup_ui_logger
 from app.framework.ui.shared.log_startup_logo import insert_startup_logo
@@ -65,7 +64,6 @@ class PeriodicTasksPage(QFrame, BaseInterface):
         game_environment: IGameEnvironment | None = None,
         home_sync=None,
         task_profile_provider: TaskProfileProvider | None = None,
-        create_shopping_selection_usecase: ShoppingSelectionFactory | None = None,
         create_enter_game_actions: EnterGameActionsFactory | None = None,
         create_collect_supplies_actions: CollectSuppliesActionsFactory | None = None,
         create_event_tips_actions: EventTipsActionsFactory | None = None,
@@ -77,8 +75,6 @@ class PeriodicTasksPage(QFrame, BaseInterface):
         self._is_non_chinese_ui = is_non_chinese_ui_language()
         if task_profile_provider is None:
             raise ValueError("PeriodicTasksPage requires injected task_profile_provider")
-        if create_shopping_selection_usecase is None:
-            raise ValueError("PeriodicTasksPage requires injected create_shopping_selection_usecase")
         if create_enter_game_actions is None:
             raise ValueError("PeriodicTasksPage requires injected create_enter_game_actions")
         if create_collect_supplies_actions is None:
@@ -99,7 +95,6 @@ class PeriodicTasksPage(QFrame, BaseInterface):
         self.game_environment = game_environment
         self.home_sync = home_sync or (lambda _auto, _logger: True)
         self.startup_update_hook = startup_update_hook
-        self.shopping_selection_usecase = create_shopping_selection_usecase(self._is_non_chinese_ui)
 
         self.ui = PeriodicTasksView(
             self,
@@ -519,19 +514,11 @@ class PeriodicTasksPage(QFrame, BaseInterface):
 
     def _load_config(self):
         self.settings_usecase.apply_config_to_widgets(self.ui.findChildren(QWidget))
-        self.shopping_selection_usecase.load_item_config(
-            settings_usecase=self.settings_usecase,
-            root_widget=self.ui,
-        )
 
     def _connect_to_save_changed(self):
         self.ui_binding_usecase.connect_config_bindings(
             root_widget=self.ui,
             on_widget_change=self.save_changed,
-        )
-        self.shopping_selection_usecase.connect_selector_bindings(
-            root_widget=self.ui,
-            settings_usecase=self.settings_usecase,
         )
 
     def open_game_directly(self):

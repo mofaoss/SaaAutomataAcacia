@@ -174,6 +174,7 @@ class OnDemandTasksPage(QFrame, BaseInterface):
                 "start_button_attr": bindings.start_button_attr,
                 "card_widget_attr": bindings.card_widget_attr,
                 "on_demand_execution": getattr(spec, "on_demand_execution", "exclusive"),
+                "on_demand_background_keys": tuple(getattr(spec, "on_demand_background_keys", ()) or ()),
             }
 
     @staticmethod
@@ -382,17 +383,12 @@ class OnDemandTasksPage(QFrame, BaseInterface):
             except Exception:
                 return False
 
-        page = getattr(self, meta.get("page_attr", ""), None)
-        module_meta = getattr(page, "module_meta", None)
-        schema = list(getattr(module_meta, "config_schema", []) or [])
-        if not schema:
+        configured_keys = tuple(meta.get("on_demand_background_keys", ()) or ())
+        if not configured_keys:
             return False
 
-        for field in schema:
-            field_name = str(getattr(field, "param_name", "") or "")
-            if not field_name.startswith("CheckBox_"):
-                continue
-            cfg_item = getattr(config, field_name, None)
+        for field_name in configured_keys:
+            cfg_item = getattr(config, str(field_name), None)
             if cfg_item is None:
                 continue
             if bool(getattr(cfg_item, "value", False)):

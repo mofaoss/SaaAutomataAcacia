@@ -1,10 +1,10 @@
 {
-  "module.dummy.field.CheckBox_open_game_directly.label": "Checkbox Open Game Directly",
-  "module.dummy.field.LineEdit_game_directory.label": "Lineedit Game Directory",
+  "module.dummy.field.CheckBox_open_game_directly.label": "Auto open game",
+  "module.dummy.field.LineEdit_game_directory.label": "Game directory",
   "module.dummy.title": "Auto Login",
   "module.enter_game.description": "### Tips\n* Select your server in Settings first\n* Enable \"Auto open game\" to let scheduler launch the game automatically\n* Fill in the game installation path shown in your launcher settings",
-  "module.enter_game.field.CheckBox_open_game_directly.label": "Checkbox Open Game Directly",
-  "module.enter_game.field.LineEdit_game_directory.label": "Lineedit Game Directory",
+  "module.enter_game.field.CheckBox_open_game_directly.label": "Auto open game",
+  "module.enter_game.field.LineEdit_game_directory.label": "Game directory",
   "module.enter_game.legacy.22bfd52ce240": "Detected that the game process started by the program is still running, skipping duplicate startup",
   "module.enter_game.legacy.f80650f28a54": "Game window already exists",
   "module.enter_game.legacy.fc3cf53d556a": "Failed to resolve launch arguments",
@@ -24,5 +24,7 @@
   "module.enter_game.ui.game_directory": "Game directory",
   "module.enter_game.ui.game_executable_not_found_under_start_path": "Game executable not found under: {start_path}",
   "module.enter_game.ui.tutorial": "Tutorial",
+  "module.task_login.field.CheckBox_open_game_directly.label": "Auto open game",
+  "module.task_login.field.LineEdit_game_directory.label": "Game directory",
   "module.task_login.title": "Auto Login"
 }

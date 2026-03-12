@@ -11,8 +11,9 @@ from app.framework.ui.views.periodic_base import ModulePageBase
 
 @module_page("task_shop")
 class ShopPage(ModulePageBase):
-    def __init__(self, parent=None):
+    def __init__(self, parent=None, selection_usecase=None):
         super().__init__("page_shop", parent=parent, host_context="periodic", use_default_layout=True)
+        self.selection_usecase = selection_usecase
 
         self.ScrollArea = ScrollArea(self)
         self.ScrollArea.setObjectName("ScrollArea")
@@ -62,6 +63,19 @@ class ShopPage(ModulePageBase):
         self.ScrollArea.setWidget(self.scrollAreaWidgetContents)
         self.main_layout.addWidget(self.ScrollArea)
         self.apply_i18n()
+
+        if self.selection_usecase:
+            from app.framework.application.periodic.periodic_settings_usecase import PeriodicSettingsUseCase
+            settings_usecase = PeriodicSettingsUseCase()
+            self.selection_usecase.load_item_config(
+                settings_usecase=settings_usecase,
+                root_widget=self,
+            )
+            self.selection_usecase.connect_selector_bindings(
+                root_widget=self,
+                settings_usecase=settings_usecase,
+            )
+
         self.finalize()
 
     def apply_i18n(self):
