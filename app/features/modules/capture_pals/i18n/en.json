@@ -1,20 +1,5 @@
 {
-  "module.capture_pals.log.position_correction_before_exit_in_fixed_mode_a_0_33s_wait_0_2s_s_0_033s": "Position correction before exit in fixed mode: A(0.33s) -> Wait(0.2s) -> S(0.033s)",
-  "module.capture_pals.log.tmpl_f776ee883a8c": "{msg}：{sec:.1f}s",
   "module.capture_pals.title": "Capture Pals",
-  "module.capture_pals.ui.adventure_island": "Adventure Island",
-  "module.capture_pals.ui.adventure_island_mode": "Adventure Island mode",
-  "module.capture_pals.ui.adventure_island_settings": "Adventure Island settings",
-  "module.capture_pals.ui.fixed_interval_s": "Fixed interval (s)",
-  "module.capture_pals.ui.fixed_point_capture": "Fixed Point Capture",
-  "module.capture_pals.ui.log": "Log",
-  "module.capture_pals.ui.partner_island": "Partner Island",
-  "module.capture_pals.ui.partner_island_mode": "Partner Island mode",
-  "module.capture_pals.ui.partner_island_settings": "Partner Island settings",
-  "module.capture_pals.ui.patrol_capture": "Patrol Capture",
-  "module.capture_pals.ui.patrol_interval_s": "Patrol interval (s)",
-  "module.capture_pals.ui.select_islands": "Select islands",
-  "module.capture_pals.ui.start_capture_pals": "Start Capture Pals",
-  "module.capture_pals.ui.sync_capture": "Sync capture",
-  "module.dummy.title": "Capture Pals"
+  "module.capture_pals.log.tmpl_f776ee883a8c": "{msg}：{sec:.1f}s",
+  "module.capture_pals.log.txt_c696cf20c8e8": "Position correction before exit in fixed mode: A(0.33s) -> Wait(0.2s) -> S(0.033s)"
 }

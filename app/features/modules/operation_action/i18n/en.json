@@ -1,14 +1,3 @@
 {
-  "module.action.title": "Operation",
-  "module.dummy.title": "Operation",
-  "module.operation_action.ui.log": "Log",
-  "module.operation_action.ui.run_count": "Run count",
-  "module.operation_action.ui.sprint_mode": "Sprint mode",
-  "module.operation_action.ui.start_operation": "Start Operation",
-  "module.task_operation.title": "Operation",
-  "module.operation_action.field.ComboBox_run.option.0": "Toggle Sprint",
-  "module.operation_action.field.ComboBox_run.option.1": "Hold Sprint",
-  "module.operation_action.ui.toggle_sprint": "Toggle Sprint",
-  "module.operation_action.ui.hold_sprint": "Hold Sprint",
   "module.operation.title": "Operation"
 }

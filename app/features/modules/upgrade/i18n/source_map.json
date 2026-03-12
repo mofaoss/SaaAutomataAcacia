@@ -1,7 +1,4 @@
 {
-  "module.dummy.title": "en",
-  "module.task_weapon.description": "zh_CN",
-  "module.task_weapon.title": "en",
   "module.upgrade.log.txt_0acb8fb21993": "zh_CN",
   "module.upgrade.log.txt_22a9f1e6e089": "zh_CN",
   "module.upgrade.log.txt_26cf00442b85": "zh_CN",
@@ -13,6 +10,5 @@
   "module.upgrade.log.txt_ccd91a348c2d": "zh_CN",
   "module.upgrade.log.txt_e688c14cbc54": "zh_CN",
   "module.upgrade.log.txt_ed2323f4b9af": "zh_CN",
-  "module.upgrade.ui.enable_weapon_upgrade": "en",
   "module.weapon_upgrade.title": "en"
 }

@@ -98,7 +98,7 @@ class Screenshot:
             # logger.info(f"找到窗口‘{title}’的句柄为：{hwnd}")
             return hwnd
         else:
-            self.logger.error(_(f"未找到窗口: {title}"))
+            self._log_error_throttled('window_not_found')
             return None
 
     def screenshot(self, hwnd, crop=(0, 0, 1, 1), is_starter=True, is_interval=True):
@@ -119,7 +119,7 @@ class Screenshot:
             if not hwnd or not win32gui.IsWindow(hwnd):
                 self._log_error_throttled('invalid_hwnd', "截图失败：无效的窗口句柄，窗口可能已关闭")
                 return None
-            
+
             if win32gui.IsIconic(hwnd):
                 self._log_error_throttled('window_minimized', "截图失败：窗口已最小化，无法截取内容")
                 return None
@@ -203,6 +203,3 @@ class Screenshot:
             # print(traceback.format_exc())
             self._log_error_throttled('screenshot_failed', f"截图失败：{repr(e)},窗口可以不置顶但不能最小化")
             return None
-
-
-

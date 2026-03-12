@@ -72,7 +72,7 @@ class Automation:
         # self.is_starter = window_class != config.LineEdit_game_class.value
         self.is_starter = False
         self.logger = logger
-        
+
         self.screenshot_hwnd = None
         self.hwnd = None
         self._refresh_hwnds()
@@ -96,21 +96,17 @@ class Automation:
         self._init_input()
 
     def _refresh_hwnds(self):
-        """刷新窗口句柄，优先寻找有尺寸的窗口"""
+        """刷新窗口句柄。保持与 main 分支一致：操作句柄与截图句柄解耦。"""
         try:
-            # 1. 尝试使用 get_hwnd 获取精准句柄（根据类名）
+            # 1. 优先解析可操作句柄（按类名）
             target_hwnd = get_hwnd(self.window_title, self.window_class)
-            
-            # 2. 如果是普通游戏模式，截图句柄和操作句柄通常一致
-            if not self.is_starter:
-                self.hwnd = target_hwnd
-                self.screenshot_hwnd = target_hwnd
-            else:
-                # 启动器模式下，截图可能需要父窗口
-                self.hwnd = target_hwnd
-                # 寻找同标题的顶层窗口作为截图目标
-                self.screenshot_hwnd = win32gui.FindWindow(None, self.window_title)
-            
+
+            # 2. 截图句柄优先使用顶层标题窗口；
+            #    仅在未找到时退回到可操作句柄，避免截图/输入共用错误句柄。
+            top_level_hwnd = win32gui.FindWindow(None, self.window_title)
+            self.hwnd = target_hwnd
+            self.screenshot_hwnd = top_level_hwnd or target_hwnd
+
             if self.screenshot_hwnd:
                 rect = win32gui.GetWindowRect(self.screenshot_hwnd)
                 if rect[2] - rect[0] <= 0 or rect[3] - rect[1] <= 0:
@@ -128,12 +124,13 @@ class Automation:
                     win32gui.EnumWindows(callback, valid_hwnds)
                     if valid_hwnds:
                         self.screenshot_hwnd = valid_hwnds[0]
-                        if not self.is_starter:
-                            self.hwnd = valid_hwnds[0]
-                            
+                        # 不覆盖 self.hwnd：输入句柄仍以类名解析结果为准（main 分支行为）。
+            if self.screenshot_hwnd is None:
+                self.screenshot_hwnd = self.hwnd
+
             if hasattr(self, "input_handler") and self.input_handler:
                 self.input_handler.hwnd = self.hwnd
-                
+
         except Exception as e:
             if hasattr(self, "logger") and self.logger:
                 self.logger.error(f"刷新窗口句柄失败: {e}")
@@ -470,7 +467,7 @@ class Automation:
                 if self.input_handler.hwnd != self.hwnd:
                     self.input_handler.hwnd = self.hwnd
                 return True
-        
+
         self._refresh_hwnds()
         if not self.hwnd:
             self._log_error_throttled(
@@ -534,7 +531,7 @@ class Automation:
                         need_refresh = True
                 except Exception:
                     need_refresh = True
-            
+
             if need_refresh:
                 self._refresh_hwnds()
 
@@ -563,7 +560,7 @@ class Automation:
                     else:
                         self.current_screenshot = self.first_screenshot
                     return result
-                
+
                 self.current_screenshot = None
                 return None
         except Exception as e:
@@ -1165,8 +1162,3 @@ class Automation:
 
 if __name__ == '__main__':
     pass
-
-
-
-
-

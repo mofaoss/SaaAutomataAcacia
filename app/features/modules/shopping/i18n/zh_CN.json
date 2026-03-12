@@ -1,9 +1,3 @@
 {
-  "module.dummy.title": "商店购买",
-  "module.shopping.ui.insufficient_currency": "买不起了，杂鱼~",
-  "module.shopping.ui.open_shop_timeout": "打开商店超时",
-  "module.shopping.ui.purchase_timeout": "购买商品超时",
-  "module.shopping.ui.select_items_to_buy": "选择要购买的商品",
-  "module.shopping.ui.shop_scroll_failed_all_fallback_points_were_ineffective": "商店滚动失败：本轮所有滚轮点位均未生效",
-  "module.task_shop.title": "商店购买"
+  "module.shopping.ui.select_items_to_buy": "选择要购买的商品"
 }

@@ -1,11 +1,4 @@
 {
   "module.alien_guardian.log.txt_41cfe240cf3d": "异星守护战斗超时",
-  "module.alien_guardian.title": "异星守护",
-  "module.alien_guardian.ui.endless_mode": "无尽模式",
-  "module.alien_guardian.ui.log": "日志",
-  "module.alien_guardian.ui.run_mode": "运行模式",
-  "module.alien_guardian.ui.stage_mode": "闯关模式",
-  "module.alien_guardian.ui.start_alien_guardian": "开始异星守护",
-  "module.alien_guardian.ui.tips_click_start_after_battle_begins_recommended_support_pals_steel_shot_and_bla": "### 提示\n* 开始战斗后再点击开始\n* 常驻伙伴推荐带钢珠和炽热投手\n* 闯关模式为半自动一关一关打。需要手动开枪，手动选择下一关",
-  "module.dummy.title": "异星守护"
+  "module.alien_guardian.title": "异星守护"
 }

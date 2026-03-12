@@ -1,11 +1,4 @@
 {
   "module.alien_guardian.log.txt_41cfe240cf3d": "zh_CN",
-  "module.alien_guardian.title": "en",
-  "module.alien_guardian.ui.endless_mode": "en",
-  "module.alien_guardian.ui.log": "en",
-  "module.alien_guardian.ui.run_mode": "en",
-  "module.alien_guardian.ui.stage_mode": "en",
-  "module.alien_guardian.ui.start_alien_guardian": "en",
-  "module.alien_guardian.ui.tips_click_start_after_battle_begins_recommended_support_pals_steel_shot_and_bla": "en",
-  "module.dummy.title": "en"
+  "module.alien_guardian.title": "en"
 }

@@ -1,18 +1,5 @@
 {
-  "module.action.title": "常规训练",
-  "module.dummy.title": "常规训练",
-  "module.operation_action.log.txt_25f747b8c522": "进入常规行动时连续滚轮无进展，已停止以避免后台卡死",
   "module.operation_action.log.txt_494267964b01": "执行常规训练超时",
   "module.operation_action.log.txt_a66679214182": "进入常规行动超时",
-  "module.operation_action.ui.log": "日志",
-  "module.operation_action.ui.run_count": "刷取次数",
-  "module.operation_action.ui.sprint_mode": "疾跑方式",
-  "module.operation_action.ui.start_operation": "开始常规训练",
-  "module.task_operation.title": "常规训练",
-  "module.task_operation.description": "### 提示\n* 自动进行常规训练\n* 可配置运行次数和冲刺模式\n* 从主界面或行动界面开始均可",
-  "module.action.description": "### 提示\n* 自动进行常规训练\n* 可配置运行次数和冲刺模式\n* 从主界面或行动界面开始均可",
-  "module.operation_action.field.ComboBox_run.option.0": "切换疾跑",
-  "module.operation_action.field.ComboBox_run.option.1": "按住疾跑",
-  "module.operation_action.ui.toggle_sprint": "切换疾跑",
-  "module.operation_action.ui.hold_sprint": "按住疾跑"
+  "module.operation_action.log.txt_25f747b8c522": "进入常规行动时连续滚轮无进展，已停止以避免后台卡死"
 }

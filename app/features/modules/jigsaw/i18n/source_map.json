@@ -1,14 +1,13 @@
 {
-  "module.dummy.title": "en",
-  "module.jigsaw.log.cn_text_0003_8": "zh_CN",
-  "module.jigsaw.log.cn_text_0006_8": "zh_CN",
-  "module.jigsaw.log.cn_text_0008_8": "zh_CN",
-  "module.jigsaw.log.cn_text_0010_8": "zh_CN",
-  "module.jigsaw.log.cn_text_0012_8": "zh_CN",
-  "module.jigsaw.log.cn_text_0013_8": "zh_CN",
-  "module.jigsaw.log.cn_text_0022": "zh_CN",
-  "module.jigsaw.log.cn_text_0027": "zh_CN",
   "module.jigsaw.log.no_valid_fragment_count_detected_skip_auto_select": "zh_CN",
+  "module.jigsaw.log.tmpl_0d7ba5dbcfa4": "zh_CN",
+  "module.jigsaw.log.tmpl_13c9e1a5d3c1": "zh_CN",
+  "module.jigsaw.log.tmpl_28f2e1b754f9": "zh_CN",
+  "module.jigsaw.log.tmpl_4738088a3660": "zh_CN",
+  "module.jigsaw.log.tmpl_868bc408e732": "zh_CN",
+  "module.jigsaw.log.tmpl_bfadd614ce6a": "zh_CN",
+  "module.jigsaw.log.tmpl_e220043fb9e3": "zh_CN",
+  "module.jigsaw.log.tmpl_f45708f1f4c3": "zh_CN",
   "module.jigsaw.log.txt_069d28174cc0": "zh_CN",
   "module.jigsaw.log.txt_0c08b005ae3e": "zh_CN",
   "module.jigsaw.log.txt_0ed86114790e": "zh_CN",
@@ -28,9 +27,5 @@
   "module.jigsaw.log.txt_e4aaa31123ac": "zh_CN",
   "module.jigsaw.log.txt_e8d1a87afe86": "zh_CN",
   "module.jigsaw.log.txt_eb0ee52f7360": "zh_CN",
-  "module.jigsaw.ui.auto_gift": "en",
-  "module.jigsaw.ui.auto_receive": "en",
-  "module.jigsaw.ui.smart_recycle": "en",
-  "module.shard_exchange.title": "en",
-  "module.task_shard_exchange.title": "en"
+  "module.shard_exchange.title": "en"
 }

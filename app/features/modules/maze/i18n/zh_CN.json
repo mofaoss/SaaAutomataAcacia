@@ -1,12 +1,5 @@
 {
-  "module.dummy.title": "迷宫",
   "module.maze.log.txt_349be3359a9a": "今日的迷宫次数已经一滴都不剩了",
   "module.maze.log.txt_db0376a9c8ea": "迷宫超时",
-  "module.maze.title": "迷宫",
-  "module.maze.ui.log": "日志",
-  "module.maze.ui.repeat_run": "重复运行",
-  "module.maze.ui.run_mode": "运行模式",
-  "module.maze.ui.single_run": "单次运行",
-  "module.maze.ui.start_maze": "开始迷宫",
-  "module.maze.ui.tips_this_feature_only_supports_the_new_buff_maze_not_the_old_maze_single_run_is": "### 提示\n* 本功能只适用于增益迷宫（新迷宫），而非老迷宫\n* 运行模式中单次运行适合打前3关，重复运行则是一直刷最后一关\n* 进配队界面选好增益后再让安卡希雅的开始迷宫\n* 增益推荐配技能-爆电和护盾-夺取\n* 配队必须要有辰星-琼弦，且把角色放在中间位\n* 辅助有豹豹上豹豹防止暴毙"
+  "module.maze.title": "迷宫"
 }

@@ -1,14 +1,5 @@
 {
   "module.close_game.log.exiting_application": "正在退出应用...",
   "module.close_game.log.exiting_game": "正在退出游戏...",
-  "module.close_game.log.system_will_shut_down_in_60s": "系统将在 60 秒后关机...",
-  "module.close_game.ui.exit_game": "退出游戏",
-  "module.close_game.ui.exit_saa_but_don_t_shutdown": "退出小助手但不关机",
-  "module.close_game.ui.shutdown_pc": "关机",
-  "module.dummy.title": "执行关闭",
-  "module.task_close_game.field.CheckBox_close_game.label": "退出游戏",
-  "module.task_close_game.field.CheckBox_shutdown.label": "关闭电脑",
-  "module.task_close_game.field.CheckBox_close_proxy.label": "退出应用",
-  "module.task_close_game.title": "执行关闭",
-  "module.task_close_game.description": "### 提示\n* 在所有任务执行完成后，可选择自动退出游戏、退出小助手或关闭电脑。"
+  "module.close_game.log.system_will_shut_down_in_60s": "系统将在 60 秒后关机..."
 }

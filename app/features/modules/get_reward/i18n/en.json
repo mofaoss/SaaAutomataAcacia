@@ -1,8 +1,5 @@
 {
-  "module.dummy.title": "Get Reward",
+  "module.get_reward.title": "Claim Rewards",
   "module.get_reward.log.txt_f595c566e197": "Get voucher reward timeout",
-  "module.get_reward.log.txt_f828ccd23235": "Get task reward timeout",
-  "module.task_reward.title": "Get Reward",
-  "module.task_reward.description": "### Tips\n* Automatically claim daily/weekly task rewards and voucher rewards.",
-  "module.get_reward.title": "Claim Rewards"
+  "module.get_reward.log.txt_f828ccd23235": "Get task reward timeout"
 }

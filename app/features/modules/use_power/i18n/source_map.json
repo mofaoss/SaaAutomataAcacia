@@ -1,10 +1,7 @@
 {
-  "module.dummy.title": "en",
-  "module.task_stamina.description": "zh_CN",
-  "module.task_stamina.title": "en",
-  "module.use_power.log.cn_text_0015_8": "zh_CN",
-  "module.use_power.log.cn_text_0016_8": "zh_CN",
-  "module.use_power.log.cn_text_0017_8": "zh_CN",
+  "module.use_power.log.tmpl_02eb1da91013": "zh_CN",
+  "module.use_power.log.tmpl_8944b1b1045d": "zh_CN",
+  "module.use_power.log.tmpl_e0d704465eda": "zh_CN",
   "module.use_power.log.txt_1f1f05500f55": "zh_CN",
   "module.use_power.log.txt_57eee03d5b9d": "zh_CN",
   "module.use_power.log.txt_5f89d4252951": "zh_CN",
@@ -23,17 +20,5 @@
   "module.use_power.log.txt_d78394cce7f4": "zh_CN",
   "module.use_power.log.txt_d99122bbcf29": "zh_CN",
   "module.use_power.log.txt_ed71b62bb094": "zh_CN",
-  "module.use_power.title": "en",
-  "module.use_power.ui.auto_use_expiring": "en",
-  "module.use_power.ui.day_1": "en",
-  "module.use_power.ui.day_2": "en",
-  "module.use_power.ui.day_3": "en",
-  "module.use_power.ui.day_4": "en",
-  "module.use_power.ui.day_5": "en",
-  "module.use_power.ui.day_6": "en",
-  "module.use_power.ui.day_potion": "en",
-  "module.use_power.ui.event_stages": "en",
-  "module.use_power.ui.no_potion": "en",
-  "module.use_power.ui.operation_logistics": "en",
-  "module.use_power.ui.stamina_usage_mode": "en"
+  "module.use_power.title": "en"
 }

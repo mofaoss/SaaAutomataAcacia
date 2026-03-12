@@ -32,34 +32,6 @@
     "is_runtime_visible": true,
     "mixed_source_template": false
   },
-  "module.enter_game.log.failed_to_spawn_process_exc_2": {
-    "kind": "dynamic_template",
-    "template_id": "failed_to_spawn_process_exc_2",
-    "msgid": "failed_to_spawn_process_exc_2",
-    "source_template": "Failed to spawn process: {exc}",
-    "fields": [
-      "exc"
-    ],
-    "field_details": {
-      "exc": {
-        "format_spec": "",
-        "conversion": ""
-      }
-    },
-    "owner_scope": "module",
-    "owner_module": "enter_game",
-    "file_path": "app/features/modules/enter_game/usecase/enter_game_usecase.py",
-    "line": 308,
-    "col": 29,
-    "function_name": "launch_game_with_guard",
-    "class_name": null,
-    "context": "log",
-    "source_language": "en",
-    "template_hash": "95e43593fd2b3ddcd5e5b1b63930219fc9df5d28",
-    "callsite_key": "app/features/modules/enter_game/usecase/enter_game_usecase.py:308:29",
-    "is_runtime_visible": true,
-    "mixed_source_template": false
-  },
   "module.enter_game.log.game_exe_not_found_please_check_the_path_start_p": {
     "kind": "dynamic_template",
     "template_id": "game_exe_not_found_please_check_the_path_start_p",
@@ -146,6 +118,34 @@
     "source_language": "en",
     "template_hash": "b68ff809b9e48f562d1971f3d30402e64d25b7dd",
     "callsite_key": "app/features/modules/enter_game/usecase/enter_game_usecase.py:444:20",
+    "is_runtime_visible": true,
+    "mixed_source_template": false
+  },
+  "module.enter_game.ui.failed_to_spawn_process_exc": {
+    "kind": "dynamic_template",
+    "template_id": "failed_to_spawn_process_exc",
+    "msgid": "failed_to_spawn_process_exc",
+    "source_template": "Failed to spawn process: {exc}",
+    "fields": [
+      "exc"
+    ],
+    "field_details": {
+      "exc": {
+        "format_spec": "",
+        "conversion": ""
+      }
+    },
+    "owner_scope": "module",
+    "owner_module": "enter_game",
+    "file_path": "app/features/modules/enter_game/usecase/enter_game_usecase.py",
+    "line": 376,
+    "col": 42,
+    "function_name": "launch_game_with_guard",
+    "class_name": null,
+    "context": "ui",
+    "source_language": "en",
+    "template_hash": "95e43593fd2b3ddcd5e5b1b63930219fc9df5d28",
+    "callsite_key": "app/features/modules/enter_game/usecase/enter_game_usecase.py:376:42",
     "is_runtime_visible": true,
     "mixed_source_template": false
   },

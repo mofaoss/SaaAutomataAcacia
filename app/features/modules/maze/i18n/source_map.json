@@ -1,12 +1,5 @@
 {
-  "module.dummy.title": "en",
   "module.maze.log.txt_349be3359a9a": "zh_CN",
   "module.maze.log.txt_db0376a9c8ea": "zh_CN",
-  "module.maze.title": "en",
-  "module.maze.ui.log": "en",
-  "module.maze.ui.repeat_run": "en",
-  "module.maze.ui.run_mode": "en",
-  "module.maze.ui.single_run": "en",
-  "module.maze.ui.start_maze": "en",
-  "module.maze.ui.tips_this_feature_only_supports_the_new_buff_maze_not_the_old_maze_single_run_is": "en"
+  "module.maze.title": "en"
 }

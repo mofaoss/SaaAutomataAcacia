@@ -1,8 +1,5 @@
 {
-  "module.dummy.title": "en",
   "module.get_reward.log.txt_f595c566e197": "zh_CN",
   "module.get_reward.log.txt_f828ccd23235": "zh_CN",
-  "module.get_reward.title": "en",
-  "module.task_reward.description": "zh_CN",
-  "module.task_reward.title": "en"
+  "module.get_reward.title": "en"
 }

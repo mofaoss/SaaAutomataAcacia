@@ -23,8 +23,8 @@ class CustomMessageBox(MessageBoxBase):
         self.viewLayout.addWidget(self.content)
 
         # change the text of button
-        self.yesButton.setText(_('确定'))
-        self.cancelButton.setText(_('关闭'))
+        self.yesButton.setText(_('yes'))
+        self.cancelButton.setText(_('cancel'))
         self.setClosableOnMaskClicked(True)
 
         # self.widget.setMinimumWidth(50)

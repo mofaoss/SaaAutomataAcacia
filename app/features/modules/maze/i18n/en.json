@@ -1,10 +1,3 @@
 {
-  "module.dummy.title": "Maze",
-  "module.maze.title": "Maze",
-  "module.maze.ui.log": "Log",
-  "module.maze.ui.repeat_run": "Repeat Run",
-  "module.maze.ui.run_mode": "Run mode",
-  "module.maze.ui.single_run": "Single Run",
-  "module.maze.ui.start_maze": "Start Maze",
-  "module.maze.ui.tips_this_feature_only_supports_the_new_buff_maze_not_the_old_maze_single_run_is": "### Tips\n* This feature only supports the new Buff Maze, not the old maze\n* Single Run is suitable for first 3 stages; Repeat Run keeps farming the last stage\n* Select buffs in team setup first, then click Start Maze in Acacia\n* Recommended buffs: Skill-Chain Lightning and Shield-Steal\n* Team must include Chenxing - Qiongxian in the middle slot\n* Bring a strong support unit to reduce sudden deaths"
+  "module.maze.title": "Maze"
 }

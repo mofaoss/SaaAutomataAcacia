@@ -19,11 +19,19 @@ def _run_step(name: str, cmd: list[str]) -> int:
 def main() -> int:
     parser = argparse.ArgumentParser(description="Unified i18n workflow: extract -> normalize -> seed -> audit -> ui-sync-check -> guard")
     parser.add_argument("--all", action="store_true", help="Run guard on all files (default: changed files only)")
+    parser.add_argument(
+        "--incremental-extract",
+        action="store_true",
+        help="Use incremental extract mode (disable default replace/prune behavior).",
+    )
     args = parser.parse_args()
 
     py = sys.executable
+    extract_cmd = [py, "scripts/extract_module_i18n.py"]
+    if args.incremental_extract:
+        extract_cmd.append("--incremental")
     steps = [
-        ("extract", [py, "scripts/extract_module_i18n.py"]),
+        ("extract", extract_cmd),
         ("normalize", [py, "scripts/normalize_i18n_data.py"]),
         ("seed-missing", [py, "scripts/seed_i18n_missing.py"]),
         ("audit", [py, "scripts/audit_i18n.py", "--fail-on-issues"]),

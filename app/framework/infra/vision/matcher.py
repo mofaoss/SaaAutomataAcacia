@@ -131,7 +131,8 @@ class Matcher:
             template = cv2.imread(template_path, cv2.IMREAD_UNCHANGED)
             if template is None:
                 if config.isLog.value:
-                    logger.warning(_(f"模板图片读取失败: {template_path}"))
+                    # logger.warning(_(f"模板图片读取失败: {template_path}"))
+                    logger.warning(_(f"Failed to read template image: {template_path}"))
                 return []
 
             if template.ndim == 3 and template.shape[-1] == 4:
@@ -217,10 +218,8 @@ class Matcher:
             if config.isLog.value:
                 # 只有用户开了日志开关，才把这个底层报错打印出来
                 file_name = os.path.basename(template_path)
-                logger.error(_(f"图像识别底层异常({file_name})：{str(e)}"))
+                logger.error(_(f"Image recognition error in template ({file_name}): {str(e)}"))
             return []
 
 
 matcher = Matcher()
-
-

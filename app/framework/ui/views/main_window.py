@@ -467,12 +467,12 @@ class MainWindow(FluentWindow, BaseInterface):
 
             if self.homeInterface.CheckBox_open_game_directly.isChecked():
                 if config.LineEdit_game_directory.value == './':
-                    logger.warning(_(f"未配置游戏路径，请先根据教程配置路径"))
+                    logger.warning(_(f"Game path is not configured. Please set it up according to the tutorial first."))
                 else:
-                    logger.info(_(f"开始自动运行日常"))
+                    logger.info(_(f"Starting daily tasks automatically"))
                     self.homeInterface.on_start_button_click()
             else:
-                logger.warning(_(f'未勾选"自动打开游戏"'))
+                logger.warning(_(f'"Auto login" is not checked'))
 
         self._finish_splash_screen()
         if config.checkUpdateAtStartUp.value:
@@ -493,7 +493,7 @@ class MainWindow(FluentWindow, BaseInterface):
 
         if not best:
             InfoBar.success(
-                title=self._ui_text("已是最新", "Up to date"),
+                title=_("Up to date"),
                 content=self._ui_text("", ""),
                 orient=Qt.Orientation.Horizontal,
                 isClosable=True,
@@ -504,13 +504,14 @@ class MainWindow(FluentWindow, BaseInterface):
             return
 
         download_url = str((best or {}).get("download_url") or "").strip()
-        download_link_text = self._ui_text("现在更新", "Update now")
+        download_link_text = _("Update now")
         content_html = self._ui_text(
             f"<a href=\"#\">{download_link_text}</a>",
             f"<a href=\"#\">{download_link_text}</a>"
         )
         info_bar = InfoBar.warning(
-            title=self._ui_text("检测到新版本", "New version available"),
+            # title=self._ui_text("检测到新版本", "New version available"),
+            title=_("New version available")
             content=content_html,
             orient=Qt.Orientation.Horizontal,
             isClosable=True,
@@ -598,7 +599,7 @@ class MainWindow(FluentWindow, BaseInterface):
         self.setMinimumSize(int(target_geo.width() * 0.5), int(target_geo.height() * 0.6))
 
         self.setWindowIcon(self._resolve_app_icon())
-        self.setWindowTitle(self._ui_text('安卡小助手', 'SaaAssistantAca'))
+        self.setWindowTitle(_("Assistant Aca", msgid="app_name"))
         setThemeColor("#009FAA")
         self.setMicaEffectEnabled(False)
         self.navigationInterface.setReturnButtonVisible(False)
@@ -742,9 +743,8 @@ class MainWindow(FluentWindow, BaseInterface):
             # 显示一个气泡提示，告诉用户程序跑到托盘去了 (只提示一次避免烦人，可以根据需要保留)
             if not getattr(self, "_has_shown_tray_tip", False):
                 self.tray_icon.showMessage(
-                    self._ui_text("已最小化", "Minimized"),
-                    self._ui_text("安卡希雅已隐藏到系统托盘，后台计划依然生效哦！",
-                                  "Acacia is running in the system tray. Background tasks are still active!"),
+                    _("Minimized"),
+                    _("Acacia is running in the system tray. Background tasks are still active!"),
                     QSystemTrayIcon.MessageIcon.Information,
                     2000
                 )
@@ -794,7 +794,8 @@ class MainWindow(FluentWindow, BaseInterface):
             if best and best.get("download_url"):
                 w.start_unified_download(best["download_url"])
             else:
-                logger.warning(_("未能获取到有效的更新下载链接"))
+                # logger.warning(_("未能获取到有效的更新下载链接"))
+                logger.warning(_("Update download URL is not available"))
 
     def showScreenshot(self, screenshot):
         def ndarray_to_qpixmap(ndarray):
@@ -821,7 +822,8 @@ class MainWindow(FluentWindow, BaseInterface):
         save_screenshot(screenshot)
 
         if not isinstance(self.message_window, CustomMessageBox):
-            self.message_window = CustomMessageBox(self, '当前截图', 'image')
+            # self.message_window = CustomMessageBox(self, '当前截图', 'image')
+            self.message_window = CustomMessageBox(self, _("Current Screenshot"), 'image')
         screenshot_pixmap = ndarray_to_qpixmap(screenshot)
         scaled_pixmap = screenshot_pixmap.scaled(
             200, 200, Qt.AspectRatioMode.KeepAspectRatio, Qt.TransformationMode.SmoothTransformation
@@ -844,26 +846,26 @@ def setup_global_exception_hook():
         capture_exception(logger, exc_value, AppErrorCode.TASK_EXECUTION_FAILED, context="global_exception_hook")
 
         # 1. 打印在控制台 / 写入 crash.log
-        print(f"发生致命错误:\n{error_msg}")
+        # print(f"发生致命错误:\n{error_msg}")
+        print(_(f"A fatal error occurred:\n{error_msg}"))
         try:
             ensure_runtime_dirs()
             with open(APPDATA_DIR / "crash.log", "a", encoding="utf-8") as f:
                 f.write(f"\n[{datetime.datetime.now()}] \n{error_msg}\n")
         except Exception as log_error:
-            logger.error(_(f"写入 crash.log 失败: {log_error}"))
+            logger.error(log_error)
+
 
         # 2. 调用主窗口弹窗警报
         try:
             # 拿到 Qt 正在运行的主窗口实例
             main_win = QApplication.activeWindow()
             if main_win:
-                MessageBox("系统崩溃保护", f"程序发生了未捕获的严重异常，已将报错存入 crash.log，请截图反馈群管：\n\n{exc_value}", main_win).exec()
+                # MessageBox("系统崩溃保护", f"程序发生了未捕获的严重异常，已将报错存入 crash.log，请截图反馈群管：\n\n{exc_value}", main_win).exec()
+                MessageBox(_("System Crash Protection"), _(f"The program has encountered an uncaught critical exception. The error has been saved to crash.log. Please take a screenshot and report it to the group admin:\n\n{exc_value}"), main_win).exec()
         except Exception as dialog_error:
-            logger.error(_(f"崩溃弹窗失败: {dialog_error}"))
+            # logger.error(_(f"崩溃弹窗失败: {dialog_error}"))
+            logger.error(dialog_error)
+
 
     sys.excepthook = handle_exception
-
-
-
-
-

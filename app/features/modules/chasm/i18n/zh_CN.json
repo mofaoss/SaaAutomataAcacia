@@ -1,8 +1,5 @@
 {
-  "module.chasm.log.txt_47bc9f327171": "领取拟境奖励超时",
   "module.chasm.log.txt_6f1bb8faf2a5": "当前未开放拟境",
   "module.chasm.log.txt_7a972d966bbe": "精神拟境超时",
-  "module.dummy.title": "精神拟境",
-  "module.task_chasm.title": "精神拟境",
-  "module.task_chasm.description": "### 提示\n* 精神拟境每周二 10:00 开放\n* 自动进行快速测评并领取奖励"
+  "module.chasm.log.txt_47bc9f327171": "领取拟境奖励超时"
 }

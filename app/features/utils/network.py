@@ -295,7 +295,7 @@ def handle_update_logic(raw_data: Dict[str, Any], online_data: Dict[str, Any], r
     if not local_config_data:
         config.set(config.update_data, raw_data)
         if config.isLog.value:
-            parent.logger.info(_(f'Obtained update information: {online_data}', msgid='obtained_update_information_online_data'))
+            parent.logger.info(_(f'Obtained update information: {online_data}'))
         url = (
             f"https://www.cbjq.com/api.php?op=search_api&action=get_article_detail"
             f"&catid={response.data.updateData.linkCatId}&id={response.data.updateData.linkId}"
@@ -332,14 +332,14 @@ def handle_update_logic(raw_data: Dict[str, Any], online_data: Dict[str, Any], r
 
             if content:
                 if config.isLog.value:
-                    parent.logger.info(_(f'Obtained update information: {online_data}', msgid='obtained_update_information_online_data_2'))
+                    parent.logger.info(_(f'Obtained update information: {online_data}'))
                 config.set(config.update_data, raw_data)
                 config.set(config.task_name,
                            response.data.updateData.questName)
                 url = f"https://www.cbjq.com/api.php?op=search_api&action=get_article_detail&catid={response.data.updateData.linkCatId}&id={response.data.updateData.linkId}"
                 _refresh_tips(parent, url=url)
                 InfoBar.success(
-                    title=_('Update Successful', msgid='update_successful_3'),
+                    title=_('Update Successful'),
                     content=_(f'New {content} detected', msgid='new_content_detected'),
                     orient=Qt.Orientation.Horizontal,
                     isClosable=True,
@@ -357,13 +357,14 @@ def handle_update_logic_fallback(data, online_data, parent):
     if not config.update_data.value:
         config.set(config.update_data, data)
         if config.isLog.value:
-            parent.logger.info(_(f'获取到更新信息：{online_data}'))
+            # parent.logger.info(_(f'获取到更新信息：{online_data}'))
+            parent.logger.info(_(f'Obtained update information: {online_data}'))
         catId = online_data["updateData"]["linkCatId"]
         linkId = online_data["updateData"]["linkId"]
         url = f"https://www.cbjq.com/api.php?op=search_api&action=get_article_detail&catid={catId}&id={linkId}"
         _refresh_tips(parent, url=url)
         InfoBar.success(
-            title=_('Update Successful', msgid='update_successful_2'),
+            title=_('Update Successful'),
             content=_('New redeem code event information detected', msgid='new_redeem_code_event_information_detected_2'),
             orient=Qt.Orientation.Horizontal,
             isClosable=True,
@@ -394,7 +395,5 @@ def handle_update_logic_fallback(data, online_data, parent):
 
 
 def handle_cloudflare_error(error_msg, parent):
-    parent.logger.error(_(f'通过cloudflare在线更新出错: {error_msg}'))
+    parent.logger.error(_(f'Through Cloudflare online update error: {error_msg}', msgid='through_cloudflare_online_update_error'))
     _refresh_tips(parent)
-
-

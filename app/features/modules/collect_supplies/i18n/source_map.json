@@ -1,5 +1,4 @@
 {
-  "module.collect_supplies.legacy.3fd0e9e4395f": "en",
   "module.collect_supplies.log.redeem_code_start": "en",
   "module.collect_supplies.log.txt_38f62bff935b": "zh_CN",
   "module.collect_supplies.log.txt_4ee66e7b80ae": "zh_CN",
@@ -11,17 +10,6 @@
   "module.collect_supplies.log.txt_7f27c869d1be": "zh_CN",
   "module.collect_supplies.log.txt_c46faaf756ee": "zh_CN",
   "module.collect_supplies.title": "en",
-  "module.collect_supplies.ui.claim_bait": "en",
-  "module.collect_supplies.ui.claim_mail": "en",
-  "module.collect_supplies.ui.dorm_shards": "en",
-  "module.collect_supplies.ui.import": "en",
-  "module.collect_supplies.ui.redeem_codes": "en",
-  "module.collect_supplies.ui.reset": "en",
   "module.collect_supplies.ui.reset_successful": "en",
-  "module.collect_supplies.ui.successfully_reset_import_and_display_content": "en",
-  "module.dummy.title": "en",
-  "module.task_supplies.action.on_import_codes_click.label": "zh_CN",
-  "module.task_supplies.action.on_reset_codes_click.label": "zh_CN",
-  "module.task_supplies.description": "zh_CN",
-  "module.task_supplies.title": "en"
+  "module.collect_supplies.ui.successfully_reset_import_and_display_content": "en"
 }

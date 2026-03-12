@@ -1,6 +1,7 @@
 ﻿#!/usr/bin/env python
 from __future__ import annotations
 
+import argparse
 import ast
 import hashlib
 import json
@@ -166,6 +167,16 @@ def _owner_i18n_dir(owner_scope: str, owner_module: str | None) -> Path:
     if owner_scope == "module" and owner_module:
         return MODULES_ROOT / owner_module / "i18n"
     return FRAMEWORK_ROOT / "i18n"
+
+
+def _existing_owner_i18n_dirs() -> dict[tuple[str, str | None], Path]:
+    owners: dict[tuple[str, str | None], Path] = {("framework", None): FRAMEWORK_ROOT / "i18n"}
+    if MODULES_ROOT.exists():
+        for module_dir in MODULES_ROOT.iterdir():
+            if not module_dir.is_dir() or module_dir.name.startswith("__"):
+                continue
+            owners[("module", module_dir.name)] = module_dir / "i18n"
+    return owners
 
 
 def _extract_declarations_from_file(path: Path, tree: ast.AST) -> list[tuple[str, str | None, str, str, str]]:
@@ -757,7 +768,72 @@ def _save_json(path: Path, data: dict[str, Any]) -> None:
     path.write_text(json.dumps(data, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
 
 
+def _owner_target_keys(
+    by_lang: dict[str, dict[str, str]],
+    source_map: dict[str, str],
+    dynamic_meta: dict[str, dict[str, Any]],
+) -> set[str]:
+    keys: set[str] = set(source_map.keys())
+    keys.update(dynamic_meta.keys())
+    for payload in by_lang.values():
+        keys.update(payload.keys())
+    return keys
+
+
+def _replace_lang_payload(
+    *,
+    current: dict[str, Any],
+    extracted_for_lang: dict[str, str],
+    target_keys: set[str],
+) -> dict[str, str]:
+    replacement: dict[str, str] = {}
+    for key, value in extracted_for_lang.items():
+        replacement[str(key)] = str(value)
+    for key in sorted(target_keys):
+        if key in replacement:
+            continue
+        cur_val = current.get(key)
+        if isinstance(cur_val, str):
+            replacement[key] = cur_val
+    return replacement
+
+
+def _replace_source_map_payload(
+    *,
+    current: dict[str, Any],
+    extracted_source_map: dict[str, str],
+    by_lang: dict[str, dict[str, str]],
+    target_keys: set[str],
+) -> dict[str, str]:
+    out: dict[str, str] = {}
+    for key in sorted(target_keys):
+        src = extracted_source_map.get(key)
+        if src not in SUPPORTED_SOURCE_LANGS:
+            if key in by_lang.get("en", {}):
+                src = "en"
+            elif key in by_lang.get("zh_CN", {}):
+                src = "zh_CN"
+            else:
+                existing = current.get(key)
+                if isinstance(existing, str) and existing in SUPPORTED_SOURCE_LANGS:
+                    src = existing
+        if src in SUPPORTED_SOURCE_LANGS:
+            out[key] = src
+    return out
+
+
 def main() -> int:
+    parser = argparse.ArgumentParser(
+        description="Extract i18n entries from code. Default is replace/prune; use --incremental for merge-only mode."
+    )
+    parser.add_argument(
+        "--incremental",
+        action="store_true",
+        help="Incremental merge mode (legacy behavior): append/update keys without pruning stale entries.",
+    )
+    args = parser.parse_args()
+    replace_mode = not args.incremental
+
     owner_lang_entries: dict[tuple[str, str | None], dict[str, dict[str, str]]] = {}
     owner_source_map: dict[tuple[str, str | None], dict[str, str]] = {}
     owner_dynamic_meta: dict[tuple[str, str | None], dict[str, dict[str, Any]]] = {}
@@ -848,34 +924,77 @@ def main() -> int:
                         callsite["fields"] = keep_meta.get("fields", [])
                         callsite["field_details"] = keep_meta.get("field_details", {})
 
+    owners_to_update: set[tuple[str, str | None]] = set(owner_lang_entries.keys())
+    owners_to_update.update(owner_source_map.keys())
+    owners_to_update.update(owner_dynamic_meta.keys())
+    existing_owner_dirs = _existing_owner_i18n_dirs()
+    if replace_mode:
+        owners_to_update.update(existing_owner_dirs.keys())
+
     updated_owners = 0
-    for owner, by_lang in owner_lang_entries.items():
+    for owner in sorted(owners_to_update, key=lambda item: (item[0], item[1] or "")):
         owner_scope, owner_module = owner
-        i18n_dir = _owner_i18n_dir(owner_scope, owner_module)
+        by_lang = owner_lang_entries.get(owner, {})
+        extracted_source_map = owner_source_map.get(owner, {})
+        extracted_template_meta = owner_dynamic_meta.get(owner, {})
+        target_keys = _owner_target_keys(by_lang, extracted_source_map, extracted_template_meta)
+
+        i18n_dir = existing_owner_dirs.get(owner) or _owner_i18n_dir(owner_scope, owner_module)
         i18n_dir.mkdir(parents=True, exist_ok=True)
 
-        for lang in SUPPORTED_SOURCE_LANGS:
-            if lang not in by_lang:
-                continue
+        existing_langs = {
+            path.stem
+            for path in i18n_dir.glob("*.json")
+            if path.stem not in {"source_map", "template_meta"}
+        }
+        langs_to_process = set(SUPPORTED_SOURCE_LANGS)
+        if replace_mode:
+            langs_to_process.update(existing_langs)
+
+        for lang in sorted(langs_to_process):
             path = i18n_dir / f"{lang}.json"
             current = _load_json(path)
             if not isinstance(current, dict):
                 current = {}
-            current.update(by_lang[lang])
-            _save_json(path, current)
+            if replace_mode:
+                replacement = _replace_lang_payload(
+                    current=current,
+                    extracted_for_lang=by_lang.get(lang, {}),
+                    target_keys=target_keys,
+                )
+                if lang not in SUPPORTED_SOURCE_LANGS and not replacement:
+                    path.unlink(missing_ok=True)
+                    continue
+                _save_json(path, replacement)
+            else:
+                if lang not in by_lang:
+                    continue
+                current.update(by_lang[lang])
+                _save_json(path, current)
 
         source_map_path = i18n_dir / "source_map.json"
         source_map = _load_json(source_map_path)
         if not isinstance(source_map, dict):
             source_map = {}
-        source_map.update(owner_source_map.get(owner, {}))
+        if replace_mode:
+            source_map = _replace_source_map_payload(
+                current=source_map,
+                extracted_source_map=extracted_source_map,
+                by_lang=by_lang,
+                target_keys=target_keys,
+            )
+        else:
+            source_map.update(extracted_source_map)
         _save_json(source_map_path, dict(sorted(source_map.items(), key=lambda x: x[0])))
 
         template_meta_path = i18n_dir / "template_meta.json"
         template_meta = _load_json(template_meta_path)
         if not isinstance(template_meta, dict):
             template_meta = {}
-        template_meta.update(owner_dynamic_meta.get(owner, {}))
+        if replace_mode:
+            template_meta = dict(sorted(extracted_template_meta.items(), key=lambda x: x[0]))
+        else:
+            template_meta.update(extracted_template_meta)
         _save_json(template_meta_path, dict(sorted(template_meta.items(), key=lambda x: x[0])))
 
         # callsite metadata is intentionally not persisted as a standalone i18n
@@ -884,6 +1003,7 @@ def main() -> int:
 
         updated_owners += 1
 
+    print(f"mode={'replace' if replace_mode else 'incremental'}")
     print(f"updated_owners={updated_owners}")
     return 0
 

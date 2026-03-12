@@ -1,17 +1,3 @@
 {
-  "module.dummy.title": "Use Stamina",
-  "module.task_stamina.title": "Use Stamina",
-  "module.use_power.ui.auto_use_expiring": "Auto use expiring",
-  "module.use_power.ui.day_1": "Day 1",
-  "module.use_power.ui.day_2": "Day 2",
-  "module.use_power.ui.day_3": "Day 3",
-  "module.use_power.ui.day_4": "Day 4",
-  "module.use_power.ui.day_5": "Day 5",
-  "module.use_power.ui.day_6": "Day 6",
-  "module.use_power.ui.day_potion": "day potion",
-  "module.use_power.ui.event_stages": "Event Stages",
-  "module.use_power.ui.no_potion": "No Potion",
-  "module.use_power.ui.operation_logistics": "Operation Logistics",
-  "module.use_power.ui.stamina_usage_mode": "Stamina usage mode",
   "module.use_power.title": "Use Stamina"
 }

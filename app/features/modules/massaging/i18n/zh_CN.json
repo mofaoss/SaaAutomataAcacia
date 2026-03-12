@@ -1,12 +1,4 @@
 {
-  "module.massaging.log.txt_9e2b58e7b9d2": "按摩超时",
   "module.massaging.log.txt_da1c18da65d3": "进入按摩超时",
-  "module.massaging.title": "按摩",
-  "module.massaging.ui.wife": "角色",
-  "module.massaging.description": "### 提示\n* 自动执行角色按摩流程。\n* 可选择希望按摩的角色。\n* 请在进入按摩界面或站在管理本前再启动。",
-  "module.massaging.ui.character_1": "角色 1",
-  "module.massaging.ui.character_2": "角色 2",
-  "module.massaging.ui.character_3": "角色 3",
-  "module.massaging.ui.character_4": "角色 4",
-  "module.massaging.ui.character_5": "角色 5"
+  "module.massaging.log.txt_9e2b58e7b9d2": "按摩超时"
 }

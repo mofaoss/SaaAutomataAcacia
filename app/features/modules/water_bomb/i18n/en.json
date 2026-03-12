@@ -1,11 +1,3 @@
 {
-  "module.dummy.title": "Water Bomb",
-  "module.water_bomb.title": "Water Bomb",
-  "module.water_bomb.ui.count_confidence": "Count confidence",
-  "module.water_bomb.ui.log": "Log",
-  "module.water_bomb.ui.start_water_bomb": "Start Water Bomb",
-  "module.water_bomb.ui.stop_after_wins": "stop after wins",
-  "module.water_bomb.ui.template_confidence": "Template confidence",
-  "module.water_bomb.ui.tips_stand_at_the_water_bomb_entrance_before_starting_if_items_or_hp_are_not_rec": "### Tips\n* Stand at the Water Bomb entrance before starting\n* If items or HP are not recognized, lower the two confidence values above",
-  "module.water_bomb.ui.win_streak": "Win streak"
+  "module.water_bomb.title": "Water Bomb"
 }

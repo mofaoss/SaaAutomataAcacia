@@ -1,15 +1,6 @@
 {
-  "module.collect_supplies.legacy.3fd0e9e4395f": "Reset Successful",
-  "module.collect_supplies.log.redeem_code_start": "Start redeeming code {code}",
-  "module.collect_supplies.ui.claim_bait": "Claim Bait",
-  "module.collect_supplies.ui.claim_mail": "Claim Mail",
-  "module.collect_supplies.ui.dorm_shards": "Dorm Shards",
-  "module.collect_supplies.ui.import": "Import",
-  "module.collect_supplies.ui.redeem_codes": "Redeem Codes",
-  "module.collect_supplies.ui.reset": "Reset",
+  "module.collect_supplies.title": "Collect Supplies",
   "module.collect_supplies.ui.reset_successful": "Reset Successful",
   "module.collect_supplies.ui.successfully_reset_import_and_display_content": "Successfully reset import and display {content}",
-  "module.dummy.title": "Collect Supplies",
-  "module.task_supplies.title": "Collect Supplies",
-  "module.collect_supplies.title": "Collect Supplies"
+  "module.collect_supplies.log.redeem_code_start": "Start redeeming code {code}"
 }

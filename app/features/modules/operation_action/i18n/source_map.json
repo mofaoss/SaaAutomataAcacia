@@ -1,19 +1,6 @@
 {
-  "module.action.description": "zh_CN",
-  "module.action.title": "en",
-  "module.dummy.title": "en",
   "module.operation.title": "en",
-  "module.operation_action.field.ComboBox_run.option.0": "zh_CN",
-  "module.operation_action.field.ComboBox_run.option.1": "zh_CN",
   "module.operation_action.log.txt_25f747b8c522": "zh_CN",
   "module.operation_action.log.txt_494267964b01": "zh_CN",
-  "module.operation_action.log.txt_a66679214182": "zh_CN",
-  "module.operation_action.ui.hold_sprint": "zh_CN",
-  "module.operation_action.ui.log": "en",
-  "module.operation_action.ui.run_count": "en",
-  "module.operation_action.ui.sprint_mode": "en",
-  "module.operation_action.ui.start_operation": "en",
-  "module.operation_action.ui.toggle_sprint": "zh_CN",
-  "module.task_operation.description": "zh_CN",
-  "module.task_operation.title": "en"
+  "module.operation_action.log.txt_a66679214182": "zh_CN"
 }
