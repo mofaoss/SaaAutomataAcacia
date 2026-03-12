@@ -9,7 +9,7 @@ from app.framework.ui.widgets.tree import TreeFrame_person, TreeFrame_weapon
 from app.framework.ui.views.periodic_base import ModulePageBase
 
 
-@module_page("task_shop")
+@module_page("商店购买")
 class ShopPage(ModulePageBase):
     def __init__(self, parent=None, selection_usecase=None):
         super().__init__("page_shop", parent=parent, host_context="periodic", use_default_layout=True)
@@ -79,7 +79,7 @@ class ShopPage(ModulePageBase):
         self.finalize()
 
     def apply_i18n(self):
-        self.StrongBodyLabel.setText(_("Select items to buy", msgid='select_items_to_buy'))
+        self.StrongBodyLabel.setText(_("选择要购买的商品", msgid='select_items_to_buy'))
         shop_items = [
             ("CheckBox_buy_3", "通用强化套件", "Universal Enhancement Kit"),
             ("CheckBox_buy_4", "优选强化套件", "Premium Enhancement Kit"),
@@ -99,5 +99,3 @@ class ShopPage(ModulePageBase):
             checkbox = getattr(self, attr, None)
             if checkbox is not None:
                 checkbox.setText(_(en))
-
-

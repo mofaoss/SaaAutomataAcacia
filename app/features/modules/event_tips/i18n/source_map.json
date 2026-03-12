@@ -1,6 +1,7 @@
 {
   "module.event_tips.log.error_occurred_while_updating_controls_e": "en",
   "module.event_tips.log.successfully_fetched_event_schedule": "en",
+  "module.event_tips.ui.event_status_display_with_title": "en",
   "module.event_tips.ui.failed_to_update_event_schedule": "en",
   "module.event_tips.ui.no_local_information_stored_and_no_url_fetched": "en"
 }

@@ -9,7 +9,7 @@ from app.framework.infra.vision.vision import count_color_blocks
 
 
 @on_demand_module(
-    "Trigger",
+    "自动辅助",
     execution="background",
     background_keys=(
         "CheckBox_trigger_auto_f",
@@ -17,18 +17,18 @@ from app.framework.infra.vision.vision import count_color_blocks
     ),
     fields={
         "CheckBox_trigger_auto_f": Field(
-            id="auto_f",
-            help="Automatically press F when collect prompt appears",
+            name="自动采集或劝降F",
+            help="出现可采集或可劝降的图标时，自动按下 F 键进行交互",
         ),
         "CheckBox_trigger_auto_e": Field(
-            id="nita_auto_e",
-            help="Automatically press E during QTE stage",
+            name="妮塔悸响qte辅助E",
+            help="QTE 辅助按下 E 键",
         ),
     },
-    description="### Tips\n"
-    "* Trigger runs as a background helper and does not block other on-demand tasks.\n"
-    "* Enable Auto F to collect prompts automatically.\n"
-    "* Enable Nita Auto E for QTE timing support.",
+    description="### 提示\n"
+    "* 自动辅助以后台模式运行，不会阻塞其他即时任务。\n"
+    "* 开启 Auto F 后会自动拾取提示目标。\n"
+    "* 开启妮塔 Auto E 后会在 QTE 阶段自动辅助按键。",
 )
 class TriggerModule:
     def __init__(

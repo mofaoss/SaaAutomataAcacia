@@ -1,4 +1,4 @@
-﻿import os
+import os
 import time
 from datetime import datetime
 from app.framework.i18n.runtime import _
@@ -12,19 +12,42 @@ from app.framework.infra.config.app_config import config as app_config
 from app.framework.infra.vision.vision import count_color_blocks
 from app.framework.infra.automation.timer import Timer
 
-from app.framework.core.module_system import on_demand_module
+from app.framework.core.module_system import Field, on_demand_module
+
+
+_FISHING_FIELDS = {
+    "SpinBox_fish_times": Field("钓鱼次数", group="基础设置"),
+    "ComboBox_lure_type": Field(
+        "鱼饵类型",
+        group="基础设置",
+        options=(
+            (0, "万能"),
+            (1, "普通"),
+            (2, "豪华"),
+            (3, "至尊"),
+            (4, "重量级"),
+            (5, "巨型"),
+            (6, "重量级"),
+            (7, "巨型"),
+        ),
+    ),
+    "ComboBox_fishing_mode": Field("判定模式", group="基础设置", options=((0, "颜色检测"), (1, "时间判定"))),
+    "CheckBox_is_limit_time": Field("启用时间兜底", group="基础设置"),
+    "CheckBox_is_save_fish": Field("保存截图", group="基础设置"),
+    "LineEdit_fish_key": Field("收杆按键", group="颜色与按键"),
+    "LineEdit_fish_upper": Field("黄色上限(H,S,V)", group="颜色与按键"),
+    "LineEdit_fish_lower": Field("黄色下限(H,S,V)", group="颜色与按键"),
+}
 
 
 @on_demand_module(
-    "Fishing",
+    "钓鱼",
+    fields=_FISHING_FIELDS,
     actions={
-        "Calibrate Color": "action_calibrate_color",
-        "Reset": "action_reset_color",
+        "颜色校准": "action_calibrate_color",
+        "重置颜色": "action_reset_color",
     },
-    description="### Tips\n"
-                "* Automated fishing with QTE support.\n"
-                "* **Visual Calibration**: Adjust HSV values if fish detection is unreliable.\n"
-                "* **Lure**: Ensure you have enough lures of the selected type.",
+    description="### 提示\n* 自动钓鱼并支持 QTE。\n* 颜色校准：识别不稳定时请调节 HSV 参数。\n* 鱼饵：请确保所选鱼饵数量充足。",
 )
 class FishingModule:
     def __init__(
@@ -356,6 +379,7 @@ class FishingModule:
             self.logger.error(_(f"未识别出按键文字，请手动设置{e}"))
             return False
         return True
+
 
 
 

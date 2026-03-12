@@ -14,7 +14,7 @@ from app.framework.core.module_system import on_demand_module, periodic_module
 from app.framework.i18n import _
 
 
-@periodic_module("Shop")
+@periodic_module("商店")
 class ShoppingModule:
     def __init__(
         self,
@@ -270,3 +270,4 @@ class ShoppingSelectionUseCase:
     @staticmethod
     def save_weapon_item(*, settings_usecase, index: int, check_state: int):
         settings_usecase.persist_indexed_item("item_weapon_", index, check_state)
+

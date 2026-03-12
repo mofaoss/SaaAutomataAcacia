@@ -8,20 +8,19 @@ from app.framework.core.module_system import Field, on_demand_module, periodic_m
 
 
 _OPERATION_FIELDS = {
-    "SpinBox_action_times": Field(id="run_times", layout="full"),
-    "ComboBox_run": Field(id="run_mode", layout="full", options=((0, "Toggle Sprint"), (1, "Hold Sprint"))),
+    "SpinBox_action_times": Field(name="行动次数", layout="full"),
+    "ComboBox_run": Field(name="疾跑模式", layout="full", options=((0, _("切换疾跑")), (1, _("按住疾跑")))),
 }
 
 @on_demand_module(
-    "Operation",
+    "常规训练",
     fields=_OPERATION_FIELDS,
-    description="### Tips\n* Automatically performs Operation (Normal Training) missions.\n* Configure the number of times to run and the sprint mode.\n* Start from the home screen or the operation selection screen.",
+    description="### 提示\n* 自动执行常规作战关卡。\n* 可配置运行次数和疾跑模式。\n* 请从主页或常规作战选择界面开始。",
 )
 @periodic_module(
-    "Operation",
+    "常规训练",
     fields=_OPERATION_FIELDS,
-    description="### Tips\n* Automatically performs Operation (Normal Training) missions.\n* Configure the number of times to run and the sprint mode.\n* Start from the home screen or the operation selection screen.",
-)
+    description="### 提示\n* 自动执行常规作战关卡。\n* 可配置运行次数和疾跑模式。\n* 请从主页或常规作战选择界面开始。",)
 class OperationModule:
     def __init__(self, auto, logger, isLog: bool = False, SpinBox_action_times: int = 1, ComboBox_run: int = 0):
         self.auto = auto

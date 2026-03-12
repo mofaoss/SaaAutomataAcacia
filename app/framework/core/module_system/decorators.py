@@ -120,53 +120,101 @@ _ON_DEMAND_MODULE_ID_BY_PACKAGE: dict[str, str] = {
     "massaging": "massaging",
 }
 
-_EN_DECL_RE = re.compile(r"^[\x20-\x7E]+$")
+_MODULE_ID_RE = re.compile(r"^[A-Za-z_][A-Za-z0-9_]*$")
 
 
-def _validate_english_declaration(text: str, *, field: str) -> None:
-    if not isinstance(text, str) or not text.strip():
-        raise ValueError(f"{field} must be a non-empty English string")
-    if not _EN_DECL_RE.fullmatch(text):
+def _validate_declaration_text(text: object, *, field: str) -> None:
+    if not str(text or "").strip():
+        raise ValueError(f"{field} must be a non-empty string")
+
+
+def _validate_module_name(name: str) -> None:
+    if not isinstance(name, str) or not name.strip():
+        raise ValueError("module name must be a non-empty string")
+
+
+def _validate_module_id(module_id: str) -> None:
+    normalized = str(module_id or "").strip()
+    if not normalized:
+        raise ValueError("module_id must be a non-empty string when provided")
+    if not _MODULE_ID_RE.fullmatch(normalized):
         raise ValueError(
-            f"{field} must use English ASCII declaration text only (found unsupported chars): {text!r}"
+            f"module_id must be an English identifier [A-Za-z_][A-Za-z0-9_]*, got: {module_id!r}"
         )
 
 
-def _validate_declaration_fields(fields: dict[str, str | Field] | None) -> None:
+def _normalize_binding_token(raw: str) -> str:
+    token = re.sub(r"\s+", "_", str(raw or "").strip())
+    token = re.sub(r"[^\w]+", "_", token)
+    token = re.sub(r"_+", "_", token).strip("_")
+    return token.lower()
+
+
+def _infer_binding_id(target, resolved_id: str, declared_name: str) -> str:
+    id_based = _normalize_binding_token(resolved_id)
+    if id_based:
+        return id_based
+
+    try:
+        class_based = infer_module_id(target)
+    except Exception:
+        class_based = ""
+    if class_based:
+        return class_based
+
+    name_based = _normalize_binding_token(declared_name)
+    if name_based:
+        return name_based
+    return "module"
+
+
+def _default_name_msgid(target, declared_module_id: str | None, resolved_id: str) -> str:
+    candidate = _normalize_binding_token(declared_module_id or "")
+    if not candidate:
+        try:
+            candidate = infer_module_id(target)
+        except Exception:
+            candidate = ""
+    if not candidate:
+        candidate = _normalize_binding_token(resolved_id)
+    candidate = candidate or "module"
+    return f"module.{candidate}.title"
+
+
+def _validate_declaration_fields(fields: dict[str, Field] | None) -> None:
     if not fields:
         return
     for param, meta in fields.items():
-        if isinstance(meta, str):
-            _validate_english_declaration(meta, field=f"fields[{param}] label")
-        elif isinstance(meta, Field):
-            if meta.label:
-                _validate_english_declaration(meta.label, field=f"fields[{param}] label")
-            if meta.help:
-                _validate_english_declaration(meta.help, field=f"fields[{param}] help")
-            if meta.options:
-                for idx, option in enumerate(meta.options):
-                    label: str | None = None
-                    if isinstance(option, dict):
-                        raw_label = option.get("label")
-                        if isinstance(raw_label, str):
-                            label = raw_label
-                    elif isinstance(option, (tuple, list)) and len(option) == 2:
-                        left, right = option
-                        if isinstance(right, str) and not isinstance(left, str):
-                            label = right
-                        elif isinstance(left, str) and not isinstance(right, str):
-                            label = left
-                        elif isinstance(right, str):
-                            label = right
-                    if label:
-                        _validate_english_declaration(label, field=f"fields[{param}] options[{idx}] label")
+        if not isinstance(meta, Field):
+            raise ValueError(f"fields[{param}] must be a Field declaration")
+        if meta.name:
+            _validate_declaration_text(meta.name, field=f"fields[{param}] name")
+        if meta.help:
+            _validate_declaration_text(meta.help, field=f"fields[{param}] help")
+        if meta.options:
+            for idx, option in enumerate(meta.options):
+                label: str | None = None
+                if isinstance(option, dict):
+                    raw_label = option.get("label")
+                    if isinstance(raw_label, str):
+                        label = raw_label
+                elif isinstance(option, (tuple, list)) and len(option) == 2:
+                    left, right = option
+                    if isinstance(right, str) and not isinstance(left, str):
+                        label = right
+                    elif isinstance(left, str) and not isinstance(right, str):
+                        label = left
+                    elif isinstance(right, str):
+                        label = right
+                if label:
+                    _validate_declaration_text(label, field=f"fields[{param}] options[{idx}] label")
 
 
 def _validate_declaration_actions(actions: dict[str, str] | None) -> None:
     if not actions:
         return
     for label, method_name in actions.items():
-        _validate_english_declaration(str(label), field=f"actions[{label}] label")
+        _validate_declaration_text(label, field=f"actions[{label}] label")
         if not isinstance(method_name, str) or not method_name.strip():
             raise ValueError(f"actions[{label}] method must be a non-empty string")
         normalized = method_name.strip()
@@ -290,7 +338,13 @@ def _infer_periodic_index(resolved_order: int) -> int:
     return max(0, (resolved_order // 10) - 1)
 
 
-def _infer_ui_bindings(resolved_id: str, module_name: str | None, host: ModuleHost):
+def _infer_ui_bindings(
+    resolved_id: str,
+    module_name: str | None,
+    host: ModuleHost,
+    *,
+    binding_id: str,
+):
     from app.framework.application.modules.contracts import ModuleUiBindings
 
     if host == ModuleHost.PERIODIC:
@@ -298,14 +352,15 @@ def _infer_ui_bindings(resolved_id: str, module_name: str | None, host: ModuleHo
         return ModuleUiBindings(page_attr=f"page_{alias}")
 
     # on-demand defaults
-    suffix = _ON_DEMAND_PAGE_ALIAS.get(resolved_id, resolved_id)
+    binding_token = str(binding_id or resolved_id).strip() or resolved_id
+    suffix = _ON_DEMAND_PAGE_ALIAS.get(binding_token, binding_token)
     page_attr = f"page_{suffix}"
 
     return ModuleUiBindings(
         page_attr=page_attr,
-        start_button_attr=f"PushButton_start_{resolved_id}",
+        start_button_attr=f"PushButton_start_{binding_token}",
         card_widget_attr=f"SimpleCardWidget_{suffix}",
-        log_widget_attr=f"textBrowser_log_{resolved_id}",
+        log_widget_attr=f"textBrowser_log_{binding_token}",
     )
 
 
@@ -320,7 +375,7 @@ def _build_meta(
     target,
     host: ModuleHost,
     name: str,
-    fields: dict[str, str | Field] | None,
+    fields: dict[str, Field] | None,
     actions: dict[str, str] | None,
     module_id: str | None,
     order: int | None = None,
@@ -330,7 +385,7 @@ def _build_meta(
     on_demand_background_keys: tuple[str, ...] | list[str] | str | None = None,
     description: str = "",
 ) -> ModuleMeta:
-    _validate_english_declaration(name, field="module name")
+    _validate_module_name(name)
     _validate_declaration_fields(fields)
     _validate_declaration_actions(actions)
 
@@ -342,10 +397,19 @@ def _build_meta(
         inferred_id = _ON_DEMAND_MODULE_ID_BY_PACKAGE[module_name]
     elif host == ModuleHost.PERIODIC and not inferred_id.startswith("task_"):
         inferred_id = f"task_{inferred_id}"
-    resolved_id = module_id or inferred_id
+    if module_id is not None:
+        _validate_module_id(module_id)
+    resolved_id = str(module_id or inferred_id).strip()
+    binding_id = _infer_binding_id(target, resolved_id, name)
+    name_msgid = _default_name_msgid(target, module_id, resolved_id)
     resolved_order = int(_DEFAULT_ORDER.get(resolved_id, 100) if order is None else order)
     resolved_page_class_path = _infer_page_class_path(target, host)
-    resolved_ui_bindings = _infer_ui_bindings(resolved_id, module_name, host)
+    resolved_ui_bindings = _infer_ui_bindings(
+        resolved_id,
+        module_name,
+        host,
+        binding_id=binding_id,
+    )
     resolved_passive = bool(_ON_DEMAND_PASSIVE.get(resolved_id, False) if passive is None else passive)
     resolved_on_demand_execution = "exclusive"
     resolved_background_keys: tuple[str, ...] = ()
@@ -382,7 +446,8 @@ def _build_meta(
     meta = ModuleMeta(
         id=resolved_id,
         name=name,
-        en_name=name,
+        name_msgid=name_msgid,
+        binding_id=binding_id,
         host=host,
         runner=runner,
         order=resolved_order,
@@ -426,7 +491,7 @@ def _register_with_host(
     *,
     host: ModuleHost,
     name: str,
-    fields: dict[str, str | Field] | None = None,
+    fields: dict[str, Field] | None = None,
     actions: dict[str, str] | None = None,
     module_id: str | None = None,
     order: int | None = None,
@@ -460,7 +525,7 @@ def _register_with_host(
 def on_demand_module(
     name: str,
     *,
-    fields: dict[str, str | Field] | None = None,
+    fields: dict[str, Field] | None = None,
     actions: dict[str, str] | None = None,
     module_id: str | None = None,
     execution: str | None = None,
@@ -482,7 +547,7 @@ def on_demand_module(
 def periodic_module(
     name: str,
     *,
-    fields: dict[str, str | Field] | None = None,
+    fields: dict[str, Field] | None = None,
     actions: dict[str, str] | None = None,
     module_id: str | None = None,
     description: str = "",

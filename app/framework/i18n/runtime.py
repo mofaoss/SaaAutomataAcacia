@@ -88,7 +88,8 @@ class TranslatableMessage:
     dynamic_candidate: bool = False
     literal_callsite: bool = False
 
-    _rendered_cache: str | None = None
+    # Rendering cache should not affect identity/equality semantics.
+    _rendered_cache: str | None = field(default=None, compare=False, repr=False)
 
     def __str__(self) -> str:
         if self._rendered_cache is None:
@@ -137,6 +138,17 @@ class TranslatableMessage:
 
     def __bool__(self) -> bool:
         return bool(self.source_text)
+
+    # def _hash_identity(self) -> tuple[str, str]:
+    #     """Stable hash key: prefer semantic msgid, fallback to template/source text."""
+    #     if self.msgid:
+    #         return ("msgid", str(self.msgid))
+    #     if self.template_id:
+    #         return ("template", str(self.template_id))
+    #     return ("source", str(self.source_text))
+
+    # def __hash__(self) -> int:
+    #     return hash(self._hash_identity())
 
 
 def _telemetry_warn(event: str, detail: str) -> None:
@@ -322,12 +334,17 @@ def _looks_like_template_skeleton(text: str, fields: list[str]) -> bool:
     return False
 
 
+def _public_text(message: TranslatableMessage) -> str:
+    """Public boundary: always expose concrete translated text as plain str."""
+    return str(message)
+
+
 def _(
     text: str,
     *,
     msgid: str | None = None,
     **kwargs: Any,
-) -> TranslatableMessage:
+) -> str:
     # Internal-only kwargs injected by import/build rewrite pipeline.
     dynamic = bool(kwargs.pop("__i18n_dynamic__", False))
     template_skeleton = kwargs.pop("__i18n_template__", None)
@@ -360,7 +377,7 @@ def _(
         payload.update(kwargs)
         fields = extract_template_fields(skeleton)
         field_details = extract_template_field_details(skeleton)
-        return TranslatableMessage(
+        message = TranslatableMessage(
             source_text=source_text,
             source_lang=source_lang,
             msgid=stable_msgid,
@@ -379,6 +396,7 @@ def _(
             dynamic_candidate=False,
             literal_callsite=False,
         )
+        return _public_text(message)
 
     source_text = _coerce_text(text)
     if dynamic_candidate or callsite_kind == "dynamic_candidate":
@@ -392,7 +410,7 @@ def _(
         )
         if stable_msgid is None:
             stable_msgid = f"txt_{hashlib.sha1(source_text.encode('utf-8')).hexdigest()[:12]}"
-        return TranslatableMessage(
+        message = TranslatableMessage(
             source_text=source_text,
             source_lang=DEFAULT_SOURCE_LANG,
             msgid=stable_msgid,
@@ -407,6 +425,7 @@ def _(
             dynamic_candidate=True,
             literal_callsite=False,
         )
+        return _public_text(message)
 
     if not literal_callsite and callsite_kind != "static_literal":
         # Heuristic safety: unresolved non-literal mixed/external strings should not be
@@ -422,7 +441,7 @@ def _(
             )
             if stable_msgid is None:
                 stable_msgid = f"txt_{hashlib.sha1(source_text.encode('utf-8')).hexdigest()[:12]}"
-            return TranslatableMessage(
+            message = TranslatableMessage(
                 source_text=source_text,
                 source_lang=DEFAULT_SOURCE_LANG,
                 msgid=stable_msgid,
@@ -437,6 +456,7 @@ def _(
                 dynamic_candidate=True,
                 literal_callsite=False,
             )
+            return _public_text(message)
 
     # Strict static path applies only to known static literals.
     # For external/non-rewritten calls we preserve historical static behavior.
@@ -458,9 +478,7 @@ def _(
         dynamic_candidate=False,
         literal_callsite=literal_callsite,
     )
-    if context_hint == "ui":
-        return TranslatableString(str(message), message)
-    return message
+    return _public_text(message)
 
 
 def _owner_prefix(message: TranslatableMessage) -> str:

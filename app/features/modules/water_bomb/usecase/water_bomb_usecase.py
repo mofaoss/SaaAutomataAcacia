@@ -1,4 +1,4 @@
-﻿import time
+import time
 from app.framework.i18n.runtime import _
 
 import cv2
@@ -6,12 +6,20 @@ import cv2
 from app.framework.infra.automation.timer import Timer
 from app.features.modules.water_bomb.decision import Round, Status
 
-from app.framework.core.module_system import on_demand_module, periodic_module
+from app.framework.core.module_system import Field, on_demand_module
+
+
+_WATER_BOMB_FIELDS = {
+    "SpinBox_water_win_times": Field("目标连胜次数", group="对局设置"),
+    "Slider_count_threshold": Field("颜色计数阈值(%)", group="识别设置"),
+    "Slider_template_threshold": Field("模板匹配阈值(%)", group="识别设置"),
+}
 
 
 @on_demand_module(
-    "Water Bomb",
-    description="### Tips\n* Automatically plays the Heart-pounding Water Bomb (Buckshot Roulette) mini-game.\n* Uses an optimal strategy to maximize win probability.\n* Configure thresholds for recognition and target win count.",
+    "水弹",
+    fields=_WATER_BOMB_FIELDS,
+    description="### 提示\n* 自动游玩心动水弹（Buckshot Roulette）小游戏。\n* 使用策略决策以提高胜率。\n* 可配置识别阈值与目标胜场数。",
 )
 class WaterBombModule:
     def __init__(
@@ -674,6 +682,7 @@ class WaterBombModule:
         # print(status_dict)
         win_prob, strategy = self.round_fight.optimal_strategy(status)
         return win_prob, strategy
+
 
 
 

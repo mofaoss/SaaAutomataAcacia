@@ -21,17 +21,24 @@ import cv2
 import numpy as np
 from app.framework.i18n.runtime import _
 
-from app.framework.core.module_system import on_demand_module, periodic_module
+from app.framework.core.module_system import Field, periodic_module
 from app.framework.infra.automation.timer import Timer
 from app.features.utils.home_navigation import back_to_home
 
 
+_WEAPON_UPGRADE_FIELDS: dict[str, Field] = {}
+
+
 @periodic_module(
-    "Weapon Upgrade",
-    description="### Tips\n* Automatically upgrades weapons in your inventory.\n* It will sort weapons by level and select the first one to upgrade.\n* Ensure you have enough upgrade materials.",
+    "武器升级",
+    fields=_WEAPON_UPGRADE_FIELDS,
+    description="""### 提示
+            * 自动强化仓库中的武器。
+            * 会按等级排序并优先选择可强化目标。
+            * 请确保材料充足。""",
 )
 class WeaponUpgradeModule:
-    def __init__(self, auto, logger, isLog: bool = True, enable_weapon_upgrade: bool = True):
+    def __init__(self, auto, logger, isLog: bool = True):
         self.auto = auto
         self.logger = logger
         self.is_log = bool(isLog)
@@ -39,7 +46,7 @@ class WeaponUpgradeModule:
         self.base_w = 1280
         self.base_h = 720
 
-        self.enable_weapon_upgrade = bool(enable_weapon_upgrade)
+        # self.enable_weapon_upgrade = bool(enable_weapon_upgrade)
 
     def _roi(self, x, y, w, h):
         return (x / self.base_w, y / self.base_h, (x + w) / self.base_w, (y + h) / self.base_h)
@@ -69,9 +76,9 @@ class WeaponUpgradeModule:
         return count >= min_count
 
     def run(self):
-        if not self.enable_weapon_upgrade:
-            self.logger.info(_("用户未勾选【升级枪械】，跳过该任务。"))
-            return
+        # if not self.enable_weapon_upgrade:
+        #     self.logger.info(_("用户未勾选【升级枪械】，跳过该任务。"))
+        #     return
 
         self.logger.info(_("开始武器强化流程..."))
         back_to_home(self.auto, self.logger)

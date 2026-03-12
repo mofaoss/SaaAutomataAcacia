@@ -16,8 +16,8 @@ class TaskDomain(str, Enum):
 class TaskDefinition:
     id: str
     module_class: type
-    zh_name: str
-    en_name: str
+    name: str
+    name_msgid: str
     domain: TaskDomain
     ui_page_index: Optional[int] = None
     option_key: Optional[str] = None
@@ -34,8 +34,8 @@ class TaskDefinition:
             "module_class": self.module_class,
             "ui_page_index": self.ui_page_index,
             "option_key": self.option_key,
-            "zh_name": self.zh_name,
-            "en_name": self.en_name,
+            "name": self.name,
+            "name_msgid": self.name_msgid,
             "requires_home_sync": self.requires_home_sync,
             "is_mandatory": self.is_mandatory,
             "force_first": self.force_first,

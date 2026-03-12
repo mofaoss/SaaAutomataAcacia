@@ -1,4 +1,5 @@
 {
+  "module.event_tips.ui.event_status_display_with_title": "{title}: {status}",
   "module.event_tips.ui.failed_to_update_event_schedule": "Failed to update event schedule",
   "module.event_tips.ui.no_local_information_stored_and_no_url_fetched": "No local information stored and no URL fetched",
   "module.event_tips.log.successfully_fetched_event_schedule": "Successfully fetched event schedule",

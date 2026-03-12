@@ -4,6 +4,9 @@ from dataclasses import dataclass, field
 from enum import Enum
 from typing import Any, Callable, Literal
 
+from app.framework.core.module_system.naming import humanize_name
+from app.framework.i18n import tr
+
 
 class ModuleHost(str, Enum):
     PERIODIC = "periodic"
@@ -12,14 +15,11 @@ class ModuleHost(str, Enum):
 
 @dataclass(frozen=True, slots=True)
 class Field:
-    """Decorator-time field metadata for stable i18n field IDs and layout hints.
+    """Decorator-time field metadata aligned with module `name + id + msgid` style."""
 
-    `label` is optional: when omitted, UI label falls back to a humanized `id`
-    (or parameter name when `id` is also omitted).
-    """
-
-    id: str | None = None
-    label: str | None = None
+    name: str | None = None
+    field_id: str | None = None
+    msgid: str | None = None
     help: str | None = None
     group: str | None = None
     layout: Literal["full", "half", "row"] = "full"
@@ -38,6 +38,7 @@ class SchemaField:
     label_key: str
     help_key: str
     label_default: str
+    label_declared: bool = False
     help_default: str | None = None
     group: str | None = None
     layout: Literal["full", "half", "row"] = "full"
@@ -52,6 +53,8 @@ class ModuleMeta:
     name: str
     host: ModuleHost
     runner: Callable[..., Any]
+    name_msgid: str = ""
+    binding_id: str = ""
 
     page_cls: type | None = None
     ui_factory: Callable[[object, ModuleHost], object] | None = None
@@ -65,8 +68,6 @@ class ModuleMeta:
 
     on_demand_execution: Literal["exclusive", "background"] = "exclusive"
     on_demand_background_keys: tuple[str, ...] = ()
-
-    en_name: str = ""
 
     periodic_enabled_by_default: bool = False
     periodic_mandatory: bool = False
@@ -86,6 +87,8 @@ class ModuleMeta:
     generated_module_class: type | None = None
 
     def display_name(self, is_non_chinese_ui: bool) -> str:
-        if is_non_chinese_ui and self.en_name:
-            return self.en_name
-        return self.name
+        fallback = str(self.name or "").strip()
+        if not fallback:
+            fallback = humanize_name(str(self.id or "")) or str(self.id or "")
+        key = str(self.name_msgid or "").strip()
+        return tr(key, fallback=fallback) if key else fallback

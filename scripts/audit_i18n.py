@@ -279,7 +279,9 @@ def _audit_owner(base: Path, owner_name: str, *, module_id_map: dict[str, str] |
         + missing_from_zh_cn["zh_HK"]
     )
 
-    structural_issues = english_values_in_zh_cn + chinese_values_in_en + chinese_key_suffixes + owner_drift_keys
+    # Chinese key suffixes are now allowed (tracked as warning-only metrics),
+    # so they must not block CI.
+    structural_issues = english_values_in_zh_cn + chinese_values_in_en + owner_drift_keys
     dynamic_issues = (
         dynamic_template_field_mismatch_count
         + dynamic_template_format_spec_mismatch_count

@@ -5,14 +5,20 @@ from app.framework.i18n.runtime import _
 from app.framework.infra.automation.timer import Timer
 from app.features.utils.home_navigation import back_to_home
 
-from app.framework.core.module_system import on_demand_module, periodic_module
+from app.framework.core.module_system import Field, periodic_module
+
+
+_CHASM_FIELDS: dict[str, Field] = {}
 
 
 @periodic_module(
-    "Neural Sim",
-    description="### Tips\n"
-                "* Neural Simulation opens every Tuesday at 10:00\n"
-                "* Automatically performs Quick Evaluation and collects rewards",
+    "精神拟境",
+    fields=_CHASM_FIELDS,
+    description=(
+        "### 提示\n"
+        "* 精神拟境每周二 10:00 开放。\n"
+        "* 会自动执行快速测评并领取奖励。"
+    ),
 )
 class ChasmModule:
     def __init__(self, auto, logger, isLog: bool = False):
@@ -155,6 +161,3 @@ class ChasmModule:
             days=(0 - current_weekday) + 7)
         # print(tuesday_10am, now, next_monday_4am)
         return tuesday_10am <= now < next_monday_4am
-
-
-

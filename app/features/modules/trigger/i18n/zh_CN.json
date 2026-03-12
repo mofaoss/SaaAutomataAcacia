@@ -1,7 +1,5 @@
 {
-  "module.trigger.field.auto_f.help": "出现采集提示时自动按 F。",
-  "module.trigger.field.auto_f.label": "自动按 F",
-  "module.trigger.field.nita_auto_e.help": "QTE 阶段自动按 E。",
-  "module.trigger.field.nita_auto_e.label": "妮塔自动按 E",
-  "module.trigger.title": "自动辅助"
+  "module.trigger.title": "自动辅助",
+  "module.trigger.field.CheckBox_trigger_auto_f.help": "出现可采集或可劝降的图标时，自动按下 F 键进行交互",
+  "module.trigger.field.CheckBox_trigger_auto_e.help": "QTE 辅助按下 E 键"
 }

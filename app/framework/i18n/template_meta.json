@@ -1,4 +1,25 @@
 {
+  "framework.log.auto_login_is_not_checked": {
+    "kind": "dynamic_template",
+    "template_id": null,
+    "msgid": null,
+    "source_template": "\"Auto login\" is not checked",
+    "fields": [],
+    "field_details": {},
+    "owner_scope": "framework",
+    "owner_module": null,
+    "file_path": "app/framework/ui/views/main_window.py",
+    "line": 475,
+    "col": 31,
+    "function_name": "_finalize_startup",
+    "class_name": "MainWindow",
+    "context": "log",
+    "source_language": "en",
+    "template_hash": "d33be1ec822cd039f5e79d08eb908821d8bfb6ac",
+    "callsite_key": "app/framework/ui/views/main_window.py:475:31",
+    "is_runtime_visible": true,
+    "mixed_source_template": false
+  },
   "framework.log.client_area_size_client_width_x_client_height_ac": {
     "kind": "dynamic_template",
     "template_id": "client_area_size_client_width_x_client_height_ac",
@@ -92,14 +113,14 @@
     "owner_scope": "framework",
     "owner_module": null,
     "file_path": "app/framework/core/task_engine/threads.py",
-    "line": 276,
+    "line": 277,
     "col": 33,
     "function_name": "run",
     "class_name": "TaskQueueThread",
     "context": "log",
     "source_language": "en",
     "template_hash": "5a53dbb03c1b9098bc46e66632d59f527fd9e4e0",
-    "callsite_key": "app/framework/core/task_engine/threads.py:276:33",
+    "callsite_key": "app/framework/core/task_engine/threads.py:277:33",
     "is_runtime_visible": true,
     "mixed_source_template": false
   },
@@ -296,6 +317,34 @@
     "is_runtime_visible": true,
     "mixed_source_template": false
   },
+  "framework.log.exception_occurred_during_image_matching_e": {
+    "kind": "dynamic_template",
+    "template_id": null,
+    "msgid": null,
+    "source_template": "Exception occurred during image matching: {e}",
+    "fields": [
+      "e"
+    ],
+    "field_details": {
+      "e": {
+        "format_spec": "",
+        "conversion": ""
+      }
+    },
+    "owner_scope": "framework",
+    "owner_module": null,
+    "file_path": "app/framework/infra/vision/image.py",
+    "line": 159,
+    "col": 29,
+    "function_name": "match_template",
+    "class_name": "ImageUtils",
+    "context": "log",
+    "source_language": "en",
+    "template_hash": "195e71b6c071a11003ccda26697f53daa99c80cd",
+    "callsite_key": "app/framework/infra/vision/image.py:159:29",
+    "is_runtime_visible": true,
+    "mixed_source_template": false
+  },
   "framework.log.exception_occurred_while_stopping_automatic_task": {
     "kind": "dynamic_template",
     "template_id": "exception_occurred_while_stopping_automatic_task",
@@ -313,14 +362,14 @@
     "owner_scope": "framework",
     "owner_module": null,
     "file_path": "app/framework/core/task_engine/threads.py",
-    "line": 70,
+    "line": 71,
     "col": 20,
     "function_name": "stop",
     "class_name": "TaskQueueThread",
     "context": "log",
     "source_language": "en",
     "template_hash": "42bcdb3cc59d8d0456099bf68cf35431f5cca526",
-    "callsite_key": "app/framework/core/task_engine/threads.py:70:20",
+    "callsite_key": "app/framework/core/task_engine/threads.py:71:20",
     "is_runtime_visible": true,
     "mixed_source_template": false
   },
@@ -341,14 +390,14 @@
     "owner_scope": "framework",
     "owner_module": null,
     "file_path": "app/framework/core/task_engine/threads.py",
-    "line": 410,
+    "line": 411,
     "col": 32,
     "function_name": "stop",
     "class_name": "ModuleTaskThread",
     "context": "log",
     "source_language": "en",
     "template_hash": "9a68065526f07d6ca9629b8021ac5088ebaaf558",
-    "callsite_key": "app/framework/core/task_engine/threads.py:410:32",
+    "callsite_key": "app/framework/core/task_engine/threads.py:411:32",
     "is_runtime_visible": true,
     "mixed_source_template": false
   },
@@ -410,6 +459,34 @@
     "source_language": "en",
     "template_hash": "0f830a7da11011520b602d31dc0bdf7d38a1a3e2",
     "callsite_key": "app/framework/infra/automation/input.py:237:16",
+    "is_runtime_visible": true,
+    "mixed_source_template": false
+  },
+  "framework.log.failed_to_read_template_image_template_path": {
+    "kind": "dynamic_template",
+    "template_id": null,
+    "msgid": null,
+    "source_template": "Failed to read template image: {template_path}",
+    "fields": [
+      "template_path"
+    ],
+    "field_details": {
+      "template_path": {
+        "format_spec": "",
+        "conversion": ""
+      }
+    },
+    "owner_scope": "framework",
+    "owner_module": null,
+    "file_path": "app/framework/infra/vision/matcher.py",
+    "line": 135,
+    "col": 35,
+    "function_name": "match",
+    "class_name": "Matcher",
+    "context": "log",
+    "source_language": "en",
+    "template_hash": "da80b3c7d9b742d05d9d786eadf11457fdcb0eeb",
+    "callsite_key": "app/framework/infra/vision/matcher.py:135:35",
     "is_runtime_visible": true,
     "mixed_source_template": false
   },
@@ -502,6 +579,149 @@
     "is_runtime_visible": true,
     "mixed_source_template": false
   },
+  "framework.log.game_path_is_not_configured_please_set_it_up_according_to_the_tutorial_first": {
+    "kind": "dynamic_template",
+    "template_id": null,
+    "msgid": null,
+    "source_template": "Game path is not configured. Please set it up according to the tutorial first.",
+    "fields": [],
+    "field_details": {},
+    "owner_scope": "framework",
+    "owner_module": null,
+    "file_path": "app/framework/ui/views/main_window.py",
+    "line": 470,
+    "col": 35,
+    "function_name": "_finalize_startup",
+    "class_name": "MainWindow",
+    "context": "log",
+    "source_language": "en",
+    "template_hash": "2b2d21527813b56efb1a0f1790670f7cd9bc5b5d",
+    "callsite_key": "app/framework/ui/views/main_window.py:470:35",
+    "is_runtime_visible": true,
+    "mixed_source_template": false
+  },
+  "framework.log.github_api_connection_error_e": {
+    "kind": "dynamic_template",
+    "template_id": null,
+    "msgid": null,
+    "source_template": "GitHub API Connection Error: {e}",
+    "fields": [
+      "e"
+    ],
+    "field_details": {
+      "e": {
+        "format_spec": "",
+        "conversion": ""
+      }
+    },
+    "owner_scope": "framework",
+    "owner_module": null,
+    "file_path": "app/features/utils/updater.py",
+    "line": 210,
+    "col": 25,
+    "function_name": "get_github_release_channels",
+    "class_name": null,
+    "context": "log",
+    "source_language": "en",
+    "template_hash": "eaf98897489818f8936a74f9db9427943ab17ec2",
+    "callsite_key": "app/features/utils/updater.py:210:25",
+    "is_runtime_visible": true,
+    "mixed_source_template": false
+  },
+  "framework.log.github_api_error_response_status_code_response_text": {
+    "kind": "dynamic_template",
+    "template_id": null,
+    "msgid": null,
+    "source_template": "GitHub API Error {response_status_code}: {response_text}",
+    "fields": [
+      "response_status_code",
+      "response_text"
+    ],
+    "field_details": {
+      "response_status_code": {
+        "format_spec": "",
+        "conversion": ""
+      },
+      "response_text": {
+        "format_spec": "",
+        "conversion": ""
+      }
+    },
+    "owner_scope": "framework",
+    "owner_module": null,
+    "file_path": "app/features/utils/updater.py",
+    "line": 207,
+    "col": 29,
+    "function_name": "get_github_release_channels",
+    "class_name": null,
+    "context": "log",
+    "source_language": "en",
+    "template_hash": "89cbf8012da0a304ccd7e392f3790428431e8253",
+    "callsite_key": "app/features/utils/updater.py:207:29",
+    "is_runtime_visible": true,
+    "mixed_source_template": false
+  },
+  "framework.log.github_api_response_status_code_rate_limit_hit_using_fallback": {
+    "kind": "dynamic_template",
+    "template_id": null,
+    "msgid": null,
+    "source_template": "GitHub API {response_status_code} Rate Limit hit! Using fallback.",
+    "fields": [
+      "response_status_code"
+    ],
+    "field_details": {
+      "response_status_code": {
+        "format_spec": "",
+        "conversion": ""
+      }
+    },
+    "owner_scope": "framework",
+    "owner_module": null,
+    "file_path": "app/features/utils/updater.py",
+    "line": 205,
+    "col": 29,
+    "function_name": "get_github_release_channels",
+    "class_name": null,
+    "context": "log",
+    "source_language": "en",
+    "template_hash": "c70bac70518ebc17bb171f443817b4c32074be54",
+    "callsite_key": "app/features/utils/updater.py:205:29",
+    "is_runtime_visible": true,
+    "mixed_source_template": false
+  },
+  "framework.log.image_recognition_error_in_template_file_name_value_2": {
+    "kind": "dynamic_template",
+    "template_id": null,
+    "msgid": null,
+    "source_template": "Image recognition error in template ({file_name}): {value_2}",
+    "fields": [
+      "file_name",
+      "value_2"
+    ],
+    "field_details": {
+      "file_name": {
+        "format_spec": "",
+        "conversion": ""
+      },
+      "value_2": {
+        "format_spec": "",
+        "conversion": ""
+      }
+    },
+    "owner_scope": "framework",
+    "owner_module": null,
+    "file_path": "app/framework/infra/vision/matcher.py",
+    "line": 221,
+    "col": 29,
+    "function_name": "match",
+    "class_name": "Matcher",
+    "context": "log",
+    "source_language": "en",
+    "template_hash": "ff900ef594a6cb14bdc0c2d3361025abbffe61ac",
+    "callsite_key": "app/framework/infra/vision/matcher.py:221:29",
+    "is_runtime_visible": true,
+    "mixed_source_template": false
+  },
   "framework.log.interrupt_detected_stopping_automatic_task_reaso": {
     "kind": "dynamic_template",
     "template_id": "interrupt_detected_stopping_automatic_task_reaso",
@@ -519,14 +739,14 @@
     "owner_scope": "framework",
     "owner_module": null,
     "file_path": "app/framework/core/task_engine/threads.py",
-    "line": 59,
+    "line": 60,
     "col": 16,
     "function_name": "stop",
     "class_name": "TaskQueueThread",
     "context": "log",
     "source_language": "en",
     "template_hash": "5d2222b1ac3479b9dfc71717513df5cd8d6b9f90",
-    "callsite_key": "app/framework/core/task_engine/threads.py:59:16",
+    "callsite_key": "app/framework/core/task_engine/threads.py:60:16",
     "is_runtime_visible": true,
     "mixed_source_template": false
   },
@@ -674,14 +894,42 @@
     "owner_scope": "framework",
     "owner_module": null,
     "file_path": "app/framework/core/task_engine/threads.py",
-    "line": 347,
+    "line": 348,
     "col": 28,
     "function_name": "run",
     "class_name": "TaskQueueThread",
     "context": "log",
     "source_language": "en",
     "template_hash": "115a700620a48990beb050eae29a99c319e75dde",
-    "callsite_key": "app/framework/core/task_engine/threads.py:347:28",
+    "callsite_key": "app/framework/core/task_engine/threads.py:348:28",
+    "is_runtime_visible": true,
+    "mixed_source_template": false
+  },
+  "framework.log.obtained_update_information_online_data": {
+    "kind": "dynamic_template",
+    "template_id": null,
+    "msgid": null,
+    "source_template": "Obtained update information: {online_data}",
+    "fields": [
+      "online_data"
+    ],
+    "field_details": {
+      "online_data": {
+        "format_spec": "",
+        "conversion": ""
+      }
+    },
+    "owner_scope": "framework",
+    "owner_module": null,
+    "file_path": "app/features/utils/network.py",
+    "line": 335,
+    "col": 39,
+    "function_name": "handle_update_logic",
+    "class_name": null,
+    "context": "log",
+    "source_language": "en",
+    "template_hash": "9b3b94c21a5ba8cbceb182a6732d560857ba9d8e",
+    "callsite_key": "app/features/utils/network.py:335:39",
     "is_runtime_visible": true,
     "mixed_source_template": false
   },
@@ -915,14 +1163,52 @@
     "owner_scope": "framework",
     "owner_module": null,
     "file_path": "app/framework/core/task_engine/threads.py",
-    "line": 135,
+    "line": 136,
     "col": 16,
     "function_name": "_telemetry_periodic",
     "class_name": "TaskQueueThread",
     "context": "log",
     "source_language": "en",
     "template_hash": "703c4b788b8000dbe47512c29214acebde3a2af3",
-    "callsite_key": "app/framework/core/task_engine/threads.py:135:16",
+    "callsite_key": "app/framework/core/task_engine/threads.py:136:16",
+    "is_runtime_visible": true,
+    "mixed_source_template": false
+  },
+  "framework.log.prefix_error_suffix": {
+    "kind": "dynamic_template",
+    "template_id": null,
+    "msgid": null,
+    "source_template": "{prefix}{error}{suffix}",
+    "fields": [
+      "prefix",
+      "error",
+      "suffix"
+    ],
+    "field_details": {
+      "prefix": {
+        "format_spec": "",
+        "conversion": ""
+      },
+      "error": {
+        "format_spec": "",
+        "conversion": ""
+      },
+      "suffix": {
+        "format_spec": "",
+        "conversion": ""
+      }
+    },
+    "owner_scope": "framework",
+    "owner_module": null,
+    "file_path": "app/framework/core/observability/reporting.py",
+    "line": 13,
+    "col": 17,
+    "function_name": "capture_exception",
+    "class_name": null,
+    "context": "log",
+    "source_language": "en",
+    "template_hash": "978bce4037070c84fb0729d6799c0af59d06dba5",
+    "callsite_key": "app/framework/core/observability/reporting.py:13:17",
     "is_runtime_visible": true,
     "mixed_source_template": false
   },
@@ -943,14 +1229,14 @@
     "owner_scope": "framework",
     "owner_module": null,
     "file_path": "app/framework/core/task_engine/threads.py",
-    "line": 283,
+    "line": 284,
     "col": 24,
     "function_name": "run",
     "class_name": "TaskQueueThread",
     "context": "log",
     "source_language": "en",
     "template_hash": "0539492f7322bb51448a7a4b34e2badf863ac801",
-    "callsite_key": "app/framework/core/task_engine/threads.py:283:24",
+    "callsite_key": "app/framework/core/task_engine/threads.py:284:24",
     "is_runtime_visible": true,
     "mixed_source_template": false
   },
@@ -999,14 +1285,35 @@
     "owner_scope": "framework",
     "owner_module": null,
     "file_path": "app/framework/core/task_engine/threads.py",
-    "line": 271,
+    "line": 272,
     "col": 24,
     "function_name": "run",
     "class_name": "TaskQueueThread",
     "context": "log",
     "source_language": "en",
     "template_hash": "aee46c5c83054a0fd89816f2e22b14bc6fcd5cad",
-    "callsite_key": "app/framework/core/task_engine/threads.py:271:24",
+    "callsite_key": "app/framework/core/task_engine/threads.py:272:24",
+    "is_runtime_visible": true,
+    "mixed_source_template": false
+  },
+  "framework.log.starting_daily_tasks_automatically": {
+    "kind": "dynamic_template",
+    "template_id": null,
+    "msgid": null,
+    "source_template": "Starting daily tasks automatically",
+    "fields": [],
+    "field_details": {},
+    "owner_scope": "framework",
+    "owner_module": null,
+    "file_path": "app/framework/ui/views/main_window.py",
+    "line": 472,
+    "col": 32,
+    "function_name": "_finalize_startup",
+    "class_name": "MainWindow",
+    "context": "log",
+    "source_language": "en",
+    "template_hash": "f868deb42c413aa668dae47a4aee6107d85972f0",
+    "callsite_key": "app/framework/ui/views/main_window.py:472:32",
     "is_runtime_visible": true,
     "mixed_source_template": false
   },
@@ -1027,14 +1334,14 @@
     "owner_scope": "framework",
     "owner_module": null,
     "file_path": "app/framework/core/task_engine/threads.py",
-    "line": 447,
+    "line": 448,
     "col": 20,
     "function_name": "run",
     "class_name": "ModuleTaskThread",
     "context": "log",
     "source_language": "en",
     "template_hash": "a8f9a8ea5d0561766743bd18fc0c89be39b9668f",
-    "callsite_key": "app/framework/core/task_engine/threads.py:447:20",
+    "callsite_key": "app/framework/core/task_engine/threads.py:448:20",
     "is_runtime_visible": true,
     "mixed_source_template": false
   },
@@ -1187,14 +1494,14 @@
     "owner_scope": "framework",
     "owner_module": null,
     "file_path": "app/framework/core/task_engine/threads.py",
-    "line": 316,
+    "line": 317,
     "col": 28,
     "function_name": "run",
     "class_name": "TaskQueueThread",
     "context": "log",
     "source_language": "en",
     "template_hash": "56002b375011d806017d4203b5329171c844a0dd",
-    "callsite_key": "app/framework/core/task_engine/threads.py:316:28",
+    "callsite_key": "app/framework/core/task_engine/threads.py:317:28",
     "is_runtime_visible": true,
     "mixed_source_template": false
   },
@@ -1215,14 +1522,14 @@
     "owner_scope": "framework",
     "owner_module": null,
     "file_path": "app/framework/core/task_engine/threads.py",
-    "line": 287,
+    "line": 288,
     "col": 28,
     "function_name": "run",
     "class_name": "TaskQueueThread",
     "context": "log",
     "source_language": "en",
     "template_hash": "b10479460c221d757f68a7a890bf5511052be4a2",
-    "callsite_key": "app/framework/core/task_engine/threads.py:287:28",
+    "callsite_key": "app/framework/core/task_engine/threads.py:288:28",
     "is_runtime_visible": true,
     "mixed_source_template": false
   },
@@ -1243,14 +1550,14 @@
     "owner_scope": "framework",
     "owner_module": null,
     "file_path": "app/framework/core/task_engine/threads.py",
-    "line": 259,
+    "line": 260,
     "col": 16,
     "function_name": "run",
     "class_name": "TaskQueueThread",
     "context": "log",
     "source_language": "en",
     "template_hash": "91ff9fae04134485bffb4060a5e83322cd4c4766",
-    "callsite_key": "app/framework/core/task_engine/threads.py:259:16",
+    "callsite_key": "app/framework/core/task_engine/threads.py:260:16",
     "is_runtime_visible": true,
     "mixed_source_template": false
   },
@@ -1271,14 +1578,14 @@
     "owner_scope": "framework",
     "owner_module": null,
     "file_path": "app/framework/core/task_engine/threads.py",
-    "line": 290,
+    "line": 291,
     "col": 28,
     "function_name": "run",
     "class_name": "TaskQueueThread",
     "context": "log",
     "source_language": "en",
     "template_hash": "8bf35a1c8db1de501217cba13ee848a2af72c5dc",
-    "callsite_key": "app/framework/core/task_engine/threads.py:290:28",
+    "callsite_key": "app/framework/core/task_engine/threads.py:291:28",
     "is_runtime_visible": true,
     "mixed_source_template": false
   },
@@ -1304,14 +1611,14 @@
     "owner_scope": "framework",
     "owner_module": null,
     "file_path": "app/framework/core/task_engine/threads.py",
-    "line": 426,
+    "line": 427,
     "col": 20,
     "function_name": "run",
     "class_name": "ModuleTaskThread",
     "context": "log",
     "source_language": "en",
     "template_hash": "0aa69efa6c933bed2e66ab5fd05c00ba7fafdbd9",
-    "callsite_key": "app/framework/core/task_engine/threads.py:426:20",
+    "callsite_key": "app/framework/core/task_engine/threads.py:427:20",
     "is_runtime_visible": true,
     "mixed_source_template": false
   },
@@ -1340,397 +1647,6 @@
     "source_language": "en",
     "template_hash": "896e21b10875307465273209478f948b4a7eaf71",
     "callsite_key": "app/features/utils/network.py:398:24",
-    "is_runtime_visible": true,
-    "mixed_source_template": false
-  },
-  "framework.log.tmpl_195e71b6c071": {
-    "kind": "dynamic_template",
-    "template_id": "tmpl_195e71b6c071",
-    "msgid": "tmpl_195e71b6c071",
-    "source_template": "Exception occurred during image matching: {e}",
-    "fields": [
-      "e"
-    ],
-    "field_details": {
-      "e": {
-        "format_spec": "",
-        "conversion": ""
-      }
-    },
-    "owner_scope": "framework",
-    "owner_module": null,
-    "file_path": "app/framework/infra/vision/image.py",
-    "line": 159,
-    "col": 29,
-    "function_name": "match_template",
-    "class_name": "ImageUtils",
-    "context": "log",
-    "source_language": "en",
-    "template_hash": "195e71b6c071a11003ccda26697f53daa99c80cd",
-    "callsite_key": "app/framework/infra/vision/image.py:159:29",
-    "is_runtime_visible": true,
-    "mixed_source_template": false
-  },
-  "framework.log.tmpl_2b2d21527813": {
-    "kind": "dynamic_template",
-    "template_id": "tmpl_2b2d21527813",
-    "msgid": "tmpl_2b2d21527813",
-    "source_template": "Game path is not configured. Please set it up according to the tutorial first.",
-    "fields": [],
-    "field_details": {},
-    "owner_scope": "framework",
-    "owner_module": null,
-    "file_path": "app/framework/ui/views/main_window.py",
-    "line": 470,
-    "col": 35,
-    "function_name": "_finalize_startup",
-    "class_name": "MainWindow",
-    "context": "log",
-    "source_language": "en",
-    "template_hash": "2b2d21527813b56efb1a0f1790670f7cd9bc5b5d",
-    "callsite_key": "app/framework/ui/views/main_window.py:470:35",
-    "is_runtime_visible": true,
-    "mixed_source_template": false
-  },
-  "framework.log.tmpl_666fc20e834f": {
-    "kind": "dynamic_template",
-    "template_id": "tmpl_666fc20e834f",
-    "msgid": "tmpl_666fc20e834f",
-    "source_template": "Window tracking failed: {value_1}",
-    "fields": [
-      "value_1"
-    ],
-    "field_details": {
-      "value_1": {
-        "format_spec": "",
-        "conversion": ""
-      }
-    },
-    "owner_scope": "framework",
-    "owner_module": null,
-    "file_path": "app/framework/infra/automation/window_tracker.py",
-    "line": 292,
-    "col": 30,
-    "function_name": "align_target_to_cursor",
-    "class_name": "WindowTracker",
-    "context": "log",
-    "source_language": "en",
-    "template_hash": "666fc20e834f10690e4bd5c491a20ecab4add82e",
-    "callsite_key": "app/framework/infra/automation/window_tracker.py:292:30",
-    "is_runtime_visible": true,
-    "mixed_source_template": false
-  },
-  "framework.log.tmpl_89cbf8012da0": {
-    "kind": "dynamic_template",
-    "template_id": "tmpl_89cbf8012da0",
-    "msgid": "tmpl_89cbf8012da0",
-    "source_template": "GitHub API Error {response_status_code}: {response_text}",
-    "fields": [
-      "response_status_code",
-      "response_text"
-    ],
-    "field_details": {
-      "response_status_code": {
-        "format_spec": "",
-        "conversion": ""
-      },
-      "response_text": {
-        "format_spec": "",
-        "conversion": ""
-      }
-    },
-    "owner_scope": "framework",
-    "owner_module": null,
-    "file_path": "app/features/utils/updater.py",
-    "line": 207,
-    "col": 29,
-    "function_name": "get_github_release_channels",
-    "class_name": null,
-    "context": "log",
-    "source_language": "en",
-    "template_hash": "89cbf8012da0a304ccd7e392f3790428431e8253",
-    "callsite_key": "app/features/utils/updater.py:207:29",
-    "is_runtime_visible": true,
-    "mixed_source_template": false
-  },
-  "framework.log.tmpl_978bce403707": {
-    "kind": "dynamic_template",
-    "template_id": "tmpl_978bce403707",
-    "msgid": "tmpl_978bce403707",
-    "source_template": "{prefix}{error}{suffix}",
-    "fields": [
-      "prefix",
-      "error",
-      "suffix"
-    ],
-    "field_details": {
-      "prefix": {
-        "format_spec": "",
-        "conversion": ""
-      },
-      "error": {
-        "format_spec": "",
-        "conversion": ""
-      },
-      "suffix": {
-        "format_spec": "",
-        "conversion": ""
-      }
-    },
-    "owner_scope": "framework",
-    "owner_module": null,
-    "file_path": "app/framework/core/observability/reporting.py",
-    "line": 13,
-    "col": 17,
-    "function_name": "capture_exception",
-    "class_name": null,
-    "context": "log",
-    "source_language": "en",
-    "template_hash": "978bce4037070c84fb0729d6799c0af59d06dba5",
-    "callsite_key": "app/framework/core/observability/reporting.py:13:17",
-    "is_runtime_visible": true,
-    "mixed_source_template": false
-  },
-  "framework.log.tmpl_9b3b94c21a5b": {
-    "kind": "dynamic_template",
-    "template_id": "tmpl_9b3b94c21a5b",
-    "msgid": "tmpl_9b3b94c21a5b",
-    "source_template": "Obtained update information: {online_data}",
-    "fields": [
-      "online_data"
-    ],
-    "field_details": {
-      "online_data": {
-        "format_spec": "",
-        "conversion": ""
-      }
-    },
-    "owner_scope": "framework",
-    "owner_module": null,
-    "file_path": "app/features/utils/network.py",
-    "line": 335,
-    "col": 39,
-    "function_name": "handle_update_logic",
-    "class_name": null,
-    "context": "log",
-    "source_language": "en",
-    "template_hash": "9b3b94c21a5ba8cbceb182a6732d560857ba9d8e",
-    "callsite_key": "app/features/utils/network.py:335:39",
-    "is_runtime_visible": true,
-    "mixed_source_template": false
-  },
-  "framework.log.tmpl_c70bac70518e": {
-    "kind": "dynamic_template",
-    "template_id": "tmpl_c70bac70518e",
-    "msgid": "tmpl_c70bac70518e",
-    "source_template": "GitHub API {response_status_code} Rate Limit hit! Using fallback.",
-    "fields": [
-      "response_status_code"
-    ],
-    "field_details": {
-      "response_status_code": {
-        "format_spec": "",
-        "conversion": ""
-      }
-    },
-    "owner_scope": "framework",
-    "owner_module": null,
-    "file_path": "app/features/utils/updater.py",
-    "line": 205,
-    "col": 29,
-    "function_name": "get_github_release_channels",
-    "class_name": null,
-    "context": "log",
-    "source_language": "en",
-    "template_hash": "c70bac70518ebc17bb171f443817b4c32074be54",
-    "callsite_key": "app/features/utils/updater.py:205:29",
-    "is_runtime_visible": true,
-    "mixed_source_template": false
-  },
-  "framework.log.tmpl_d33be1ec822c": {
-    "kind": "dynamic_template",
-    "template_id": "tmpl_d33be1ec822c",
-    "msgid": "tmpl_d33be1ec822c",
-    "source_template": "\"Auto login\" is not checked",
-    "fields": [],
-    "field_details": {},
-    "owner_scope": "framework",
-    "owner_module": null,
-    "file_path": "app/framework/ui/views/main_window.py",
-    "line": 475,
-    "col": 31,
-    "function_name": "_finalize_startup",
-    "class_name": "MainWindow",
-    "context": "log",
-    "source_language": "en",
-    "template_hash": "d33be1ec822cd039f5e79d08eb908821d8bfb6ac",
-    "callsite_key": "app/framework/ui/views/main_window.py:475:31",
-    "is_runtime_visible": true,
-    "mixed_source_template": false
-  },
-  "framework.log.tmpl_da80b3c7d9b7": {
-    "kind": "dynamic_template",
-    "template_id": "tmpl_da80b3c7d9b7",
-    "msgid": "tmpl_da80b3c7d9b7",
-    "source_template": "Failed to read template image: {template_path}",
-    "fields": [
-      "template_path"
-    ],
-    "field_details": {
-      "template_path": {
-        "format_spec": "",
-        "conversion": ""
-      }
-    },
-    "owner_scope": "framework",
-    "owner_module": null,
-    "file_path": "app/framework/infra/vision/matcher.py",
-    "line": 135,
-    "col": 35,
-    "function_name": "match",
-    "class_name": "Matcher",
-    "context": "log",
-    "source_language": "en",
-    "template_hash": "da80b3c7d9b742d05d9d786eadf11457fdcb0eeb",
-    "callsite_key": "app/framework/infra/vision/matcher.py:135:35",
-    "is_runtime_visible": true,
-    "mixed_source_template": false
-  },
-  "framework.log.tmpl_eaf988974898": {
-    "kind": "dynamic_template",
-    "template_id": "tmpl_eaf988974898",
-    "msgid": "tmpl_eaf988974898",
-    "source_template": "GitHub API Connection Error: {e}",
-    "fields": [
-      "e"
-    ],
-    "field_details": {
-      "e": {
-        "format_spec": "",
-        "conversion": ""
-      }
-    },
-    "owner_scope": "framework",
-    "owner_module": null,
-    "file_path": "app/features/utils/updater.py",
-    "line": 210,
-    "col": 25,
-    "function_name": "get_github_release_channels",
-    "class_name": null,
-    "context": "log",
-    "source_language": "en",
-    "template_hash": "eaf98897489818f8936a74f9db9427943ab17ec2",
-    "callsite_key": "app/features/utils/updater.py:210:25",
-    "is_runtime_visible": true,
-    "mixed_source_template": false
-  },
-  "framework.log.tmpl_ef3a54ca5e6f": {
-    "kind": "dynamic_template",
-    "template_id": "tmpl_ef3a54ca5e6f",
-    "msgid": "tmpl_ef3a54ca5e6f",
-    "source_template": "Window restoration failed: {value_1}",
-    "fields": [
-      "value_1"
-    ],
-    "field_details": {
-      "value_1": {
-        "format_spec": "",
-        "conversion": ""
-      }
-    },
-    "owner_scope": "framework",
-    "owner_module": null,
-    "file_path": "app/framework/infra/automation/window_tracker.py",
-    "line": 372,
-    "col": 32,
-    "function_name": "restore_window_position",
-    "class_name": "WindowTracker",
-    "context": "log",
-    "source_language": "en",
-    "template_hash": "ef3a54ca5e6f856b79caffcf4b6584f95b5b5e60",
-    "callsite_key": "app/framework/infra/automation/window_tracker.py:372:32",
-    "is_runtime_visible": true,
-    "mixed_source_template": false
-  },
-  "framework.log.tmpl_f3769c553f17": {
-    "kind": "dynamic_template",
-    "template_id": "tmpl_f3769c553f17",
-    "msgid": "tmpl_f3769c553f17",
-    "source_template": "Window out of view area failed: {value_1}",
-    "fields": [
-      "value_1"
-    ],
-    "field_details": {
-      "value_1": {
-        "format_spec": "",
-        "conversion": ""
-      }
-    },
-    "owner_scope": "framework",
-    "owner_module": null,
-    "file_path": "app/framework/infra/automation/window_tracker.py",
-    "line": 338,
-    "col": 32,
-    "function_name": "hide_window_offscreen",
-    "class_name": "WindowTracker",
-    "context": "log",
-    "source_language": "en",
-    "template_hash": "f3769c553f17ac3614cdf5723b77522681fae0dd",
-    "callsite_key": "app/framework/infra/automation/window_tracker.py:338:32",
-    "is_runtime_visible": true,
-    "mixed_source_template": false
-  },
-  "framework.log.tmpl_f868deb42c41": {
-    "kind": "dynamic_template",
-    "template_id": "tmpl_f868deb42c41",
-    "msgid": "tmpl_f868deb42c41",
-    "source_template": "Starting daily tasks automatically",
-    "fields": [],
-    "field_details": {},
-    "owner_scope": "framework",
-    "owner_module": null,
-    "file_path": "app/framework/ui/views/main_window.py",
-    "line": 472,
-    "col": 32,
-    "function_name": "_finalize_startup",
-    "class_name": "MainWindow",
-    "context": "log",
-    "source_language": "en",
-    "template_hash": "f868deb42c413aa668dae47a4aee6107d85972f0",
-    "callsite_key": "app/framework/ui/views/main_window.py:472:32",
-    "is_runtime_visible": true,
-    "mixed_source_template": false
-  },
-  "framework.log.tmpl_ff900ef594a6": {
-    "kind": "dynamic_template",
-    "template_id": "tmpl_ff900ef594a6",
-    "msgid": "tmpl_ff900ef594a6",
-    "source_template": "Image recognition error in template ({file_name}): {value_2}",
-    "fields": [
-      "file_name",
-      "value_2"
-    ],
-    "field_details": {
-      "file_name": {
-        "format_spec": "",
-        "conversion": ""
-      },
-      "value_2": {
-        "format_spec": "",
-        "conversion": ""
-      }
-    },
-    "owner_scope": "framework",
-    "owner_module": null,
-    "file_path": "app/framework/infra/vision/matcher.py",
-    "line": 221,
-    "col": 29,
-    "function_name": "match",
-    "class_name": "Matcher",
-    "context": "log",
-    "source_language": "en",
-    "template_hash": "ff900ef594a6cb14bdc0c2d3361025abbffe61ac",
-    "callsite_key": "app/framework/infra/vision/matcher.py:221:29",
     "is_runtime_visible": true,
     "mixed_source_template": false
   },
@@ -2047,14 +1963,14 @@
     "owner_scope": "framework",
     "owner_module": null,
     "file_path": "app/framework/core/task_engine/threads.py",
-    "line": 357,
+    "line": 358,
     "col": 20,
     "function_name": "run",
     "class_name": "TaskQueueThread",
     "context": "log",
     "source_language": "en",
     "template_hash": "dd15864f5e7bb74716281f4864ec7c36941ca839",
-    "callsite_key": "app/framework/core/task_engine/threads.py:357:20",
+    "callsite_key": "app/framework/core/task_engine/threads.py:358:20",
     "is_runtime_visible": true,
     "mixed_source_template": false
   },
@@ -2121,6 +2037,118 @@
     "source_language": "en",
     "template_hash": "a86ab56543c1a1e4a19370738ee11381b54eae62",
     "callsite_key": "app/framework/infra/automation/input.py:554:16",
+    "is_runtime_visible": true,
+    "mixed_source_template": false
+  },
+  "framework.log.window_out_of_view_area_failed_value_1": {
+    "kind": "dynamic_template",
+    "template_id": null,
+    "msgid": null,
+    "source_template": "Window out of view area failed: {value_1}",
+    "fields": [
+      "value_1"
+    ],
+    "field_details": {
+      "value_1": {
+        "format_spec": "",
+        "conversion": ""
+      }
+    },
+    "owner_scope": "framework",
+    "owner_module": null,
+    "file_path": "app/framework/infra/automation/window_tracker.py",
+    "line": 338,
+    "col": 32,
+    "function_name": "hide_window_offscreen",
+    "class_name": "WindowTracker",
+    "context": "log",
+    "source_language": "en",
+    "template_hash": "f3769c553f17ac3614cdf5723b77522681fae0dd",
+    "callsite_key": "app/framework/infra/automation/window_tracker.py:338:32",
+    "is_runtime_visible": true,
+    "mixed_source_template": false
+  },
+  "framework.log.window_restoration_failed_value_1": {
+    "kind": "dynamic_template",
+    "template_id": null,
+    "msgid": null,
+    "source_template": "Window restoration failed: {value_1}",
+    "fields": [
+      "value_1"
+    ],
+    "field_details": {
+      "value_1": {
+        "format_spec": "",
+        "conversion": ""
+      }
+    },
+    "owner_scope": "framework",
+    "owner_module": null,
+    "file_path": "app/framework/infra/automation/window_tracker.py",
+    "line": 372,
+    "col": 32,
+    "function_name": "restore_window_position",
+    "class_name": "WindowTracker",
+    "context": "log",
+    "source_language": "en",
+    "template_hash": "ef3a54ca5e6f856b79caffcf4b6584f95b5b5e60",
+    "callsite_key": "app/framework/infra/automation/window_tracker.py:372:32",
+    "is_runtime_visible": true,
+    "mixed_source_template": false
+  },
+  "framework.log.window_tracking_failed_value_1": {
+    "kind": "dynamic_template",
+    "template_id": null,
+    "msgid": null,
+    "source_template": "Window tracking failed: {value_1}",
+    "fields": [
+      "value_1"
+    ],
+    "field_details": {
+      "value_1": {
+        "format_spec": "",
+        "conversion": ""
+      }
+    },
+    "owner_scope": "framework",
+    "owner_module": null,
+    "file_path": "app/framework/infra/automation/window_tracker.py",
+    "line": 292,
+    "col": 30,
+    "function_name": "align_target_to_cursor",
+    "class_name": "WindowTracker",
+    "context": "log",
+    "source_language": "en",
+    "template_hash": "666fc20e834f10690e4bd5c491a20ecab4add82e",
+    "callsite_key": "app/framework/infra/automation/window_tracker.py:292:30",
+    "is_runtime_visible": true,
+    "mixed_source_template": false
+  },
+  "framework.ui.a_fatal_error_occurred_error_msg": {
+    "kind": "dynamic_template",
+    "template_id": null,
+    "msgid": null,
+    "source_template": "A fatal error occurred:\n{error_msg}",
+    "fields": [
+      "error_msg"
+    ],
+    "field_details": {
+      "error_msg": {
+        "format_spec": "",
+        "conversion": ""
+      }
+    },
+    "owner_scope": "framework",
+    "owner_module": null,
+    "file_path": "app/framework/ui/views/main_window.py",
+    "line": 847,
+    "col": 14,
+    "function_name": "handle_exception",
+    "class_name": null,
+    "context": "ui",
+    "source_language": "en",
+    "template_hash": "1f50b0e8dda5eb351e8d85b85303239e144f63e5",
+    "callsite_key": "app/framework/ui/views/main_window.py:847:14",
     "is_runtime_visible": true,
     "mixed_source_template": false
   },
@@ -2533,49 +2561,21 @@
     "owner_scope": "framework",
     "owner_module": null,
     "file_path": "app/framework/core/task_engine/threads.py",
-    "line": 325,
+    "line": 326,
     "col": 30,
     "function_name": "run",
     "class_name": "TaskQueueThread",
     "context": "ui",
     "source_language": "en",
     "template_hash": "9a1c1f1e4af63ac005480c794a6ac20621b223ed",
-    "callsite_key": "app/framework/core/task_engine/threads.py:325:30",
+    "callsite_key": "app/framework/core/task_engine/threads.py:326:30",
     "is_runtime_visible": true,
     "mixed_source_template": false
   },
-  "framework.ui.tmpl_1f50b0e8dda5": {
+  "framework.ui.the_program_has_encountered_an_uncaught_critical_exception_the_error_has_been_sa": {
     "kind": "dynamic_template",
-    "template_id": "tmpl_1f50b0e8dda5",
-    "msgid": "tmpl_1f50b0e8dda5",
-    "source_template": "A fatal error occurred:\n{error_msg}",
-    "fields": [
-      "error_msg"
-    ],
-    "field_details": {
-      "error_msg": {
-        "format_spec": "",
-        "conversion": ""
-      }
-    },
-    "owner_scope": "framework",
-    "owner_module": null,
-    "file_path": "app/framework/ui/views/main_window.py",
-    "line": 847,
-    "col": 14,
-    "function_name": "handle_exception",
-    "class_name": null,
-    "context": "ui",
-    "source_language": "en",
-    "template_hash": "1f50b0e8dda5eb351e8d85b85303239e144f63e5",
-    "callsite_key": "app/framework/ui/views/main_window.py:847:14",
-    "is_runtime_visible": true,
-    "mixed_source_template": false
-  },
-  "framework.ui.tmpl_6238eeb8fbf4": {
-    "kind": "dynamic_template",
-    "template_id": "tmpl_6238eeb8fbf4",
-    "msgid": "tmpl_6238eeb8fbf4",
+    "template_id": null,
+    "msgid": null,
     "source_template": "The program has encountered an uncaught critical exception. The error has been saved to crash.log. Please take a screenshot and report it to the group admin:\n\n{exc_value}",
     "fields": [
       "exc_value"

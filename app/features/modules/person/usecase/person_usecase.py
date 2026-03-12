@@ -10,17 +10,17 @@ from app.framework.core.module_system import Field, on_demand_module, periodic_m
 
 
 _PERSON_FIELDS = {
-    "CheckBox_is_use_chip": Field(id="auto_use_2_chips_when_not_enough"),
-    "LineEdit_c1": Field(id="c1"),
-    "LineEdit_c2": Field(id="c2"),
-    "LineEdit_c3": Field(id="c3"),
-    "LineEdit_c4": Field(id="c4"),
+    "CheckBox_is_use_chip": Field(),
+    "LineEdit_c1": Field(),
+    "LineEdit_c2": Field(),
+    "LineEdit_c3": Field(),
+    "LineEdit_c4": Field(),
 }
 
 @periodic_module(
-    "Character Shards",
+    "角色碎片",
     fields=_PERSON_FIELDS,
-    description="### Tips\n* Automatically farms character shards from Personal Stories.\n* Input the names of characters you want to farm.\n* Enable 'Use Memory Chip' if you want to use chips when out of attempts.",
+    description="### 提示\n* 自动刷取个人故事角色碎片。\n* 填写需要刷取的角色名称。\n* 体力不足时可勾选使用忆片自动补充次数。",
 )
 class PersonModule:
     def __init__(

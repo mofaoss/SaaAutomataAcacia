@@ -1,14 +1,14 @@
 {
-  "module.person.log.tmpl_390dbaa45eb2": {
+  "module.person.log.ocr结果为空或结构异常_result_2": {
     "kind": "dynamic_template",
-    "template_id": "tmpl_390dbaa45eb2",
-    "msgid": "tmpl_390dbaa45eb2",
-    "source_template": "记忆嵌片更新失败：{norm}",
+    "template_id": null,
+    "msgid": null,
+    "source_template": "OCR结果为空或结构异常: {result}",
     "fields": [
-      "norm"
+      "result"
     ],
     "field_details": {
-      "norm": {
+      "result": {
         "format_spec": "",
         "conversion": ""
       }
@@ -16,21 +16,54 @@
     "owner_scope": "module",
     "owner_module": "person",
     "file_path": "app/features/modules/person/usecase/person_usecase.py",
-    "line": 279,
-    "col": 33,
+    "line": 265,
+    "col": 36,
     "function_name": "update_power_times",
     "class_name": "PersonModule",
     "context": "log",
     "source_language": "zh_CN",
-    "template_hash": "390dbaa45eb244080425f6ec2b1f49d28795ce98",
-    "callsite_key": "app/features/modules/person/usecase/person_usecase.py:279:33",
+    "template_hash": "fcdeab45261c2a3730e1906d379d4afc3f858d91",
+    "callsite_key": "app/features/modules/person/usecase/person_usecase.py:265:36",
     "is_runtime_visible": true,
     "mixed_source_template": true
   },
-  "module.person.log.tmpl_643e755089c6": {
+  "module.person.log.找到对应的_速战_pos_min_distance_2": {
     "kind": "dynamic_template",
-    "template_id": "tmpl_643e755089c6",
-    "msgid": "tmpl_643e755089c6",
+    "template_id": null,
+    "msgid": null,
+    "source_template": "找到对应的“速战”：({pos},{min_distance})",
+    "fields": [
+      "pos",
+      "min_distance"
+    ],
+    "field_details": {
+      "pos": {
+        "format_spec": "",
+        "conversion": ""
+      },
+      "min_distance": {
+        "format_spec": "",
+        "conversion": ""
+      }
+    },
+    "owner_scope": "module",
+    "owner_module": "person",
+    "file_path": "app/features/modules/person/usecase/person_usecase.py",
+    "line": 166,
+    "col": 33,
+    "function_name": "find_quick_fight",
+    "class_name": "PersonModule",
+    "context": "log",
+    "source_language": "zh_CN",
+    "template_hash": "f06c790d515a121208b51d86bd47352bc6fef6f8",
+    "callsite_key": "app/features/modules/person/usecase/person_usecase.py:166:33",
+    "is_runtime_visible": true,
+    "mixed_source_template": true
+  },
+  "module.person.log.未找到对应速战_检查是否已刷取或是否解锁_person_name_的速战_2": {
+    "kind": "dynamic_template",
+    "template_id": null,
+    "msgid": null,
     "source_template": "未找到对应速战，检查是否已刷取或是否解锁{person_name}的速战",
     "fields": [
       "person_name"
@@ -55,10 +88,38 @@
     "is_runtime_visible": true,
     "mixed_source_template": true
   },
-  "module.person.log.tmpl_7f9f9f9c32c2": {
+  "module.person.log.记忆嵌片更新失败_norm_2": {
     "kind": "dynamic_template",
-    "template_id": "tmpl_7f9f9f9c32c2",
-    "msgid": "tmpl_7f9f9f9c32c2",
+    "template_id": null,
+    "msgid": null,
+    "source_template": "记忆嵌片更新失败：{norm}",
+    "fields": [
+      "norm"
+    ],
+    "field_details": {
+      "norm": {
+        "format_spec": "",
+        "conversion": ""
+      }
+    },
+    "owner_scope": "module",
+    "owner_module": "person",
+    "file_path": "app/features/modules/person/usecase/person_usecase.py",
+    "line": 279,
+    "col": 33,
+    "function_name": "update_power_times",
+    "class_name": "PersonModule",
+    "context": "log",
+    "source_language": "zh_CN",
+    "template_hash": "390dbaa45eb244080425f6ec2b1f49d28795ce98",
+    "callsite_key": "app/features/modules/person/usecase/person_usecase.py:279:33",
+    "is_runtime_visible": true,
+    "mixed_source_template": true
+  },
+  "module.person.log.记忆嵌片更新成功_times_2": {
+    "kind": "dynamic_template",
+    "template_id": null,
+    "msgid": null,
     "source_template": "记忆嵌片更新成功：{times}",
     "fields": [
       "times"
@@ -83,10 +144,10 @@
     "is_runtime_visible": true,
     "mixed_source_template": true
   },
-  "module.person.log.tmpl_c74a30a87c08": {
+  "module.person.log.速战_距离大于_value_1_pos_min_distance_不是_person_name_的速战_2": {
     "kind": "dynamic_template",
-    "template_id": "tmpl_c74a30a87c08",
-    "msgid": "tmpl_c74a30a87c08",
+    "template_id": null,
+    "msgid": null,
     "source_template": "“速战”距离大于{value_1}：({pos},{min_distance})，不是{person_name}的速战",
     "fields": [
       "value_1",
@@ -123,67 +184,6 @@
     "source_language": "zh_CN",
     "template_hash": "c74a30a87c088586e95eaff1dbee24c473682502",
     "callsite_key": "app/features/modules/person/usecase/person_usecase.py:169:36",
-    "is_runtime_visible": true,
-    "mixed_source_template": true
-  },
-  "module.person.log.tmpl_f06c790d515a": {
-    "kind": "dynamic_template",
-    "template_id": "tmpl_f06c790d515a",
-    "msgid": "tmpl_f06c790d515a",
-    "source_template": "找到对应的“速战”：({pos},{min_distance})",
-    "fields": [
-      "pos",
-      "min_distance"
-    ],
-    "field_details": {
-      "pos": {
-        "format_spec": "",
-        "conversion": ""
-      },
-      "min_distance": {
-        "format_spec": "",
-        "conversion": ""
-      }
-    },
-    "owner_scope": "module",
-    "owner_module": "person",
-    "file_path": "app/features/modules/person/usecase/person_usecase.py",
-    "line": 166,
-    "col": 33,
-    "function_name": "find_quick_fight",
-    "class_name": "PersonModule",
-    "context": "log",
-    "source_language": "zh_CN",
-    "template_hash": "f06c790d515a121208b51d86bd47352bc6fef6f8",
-    "callsite_key": "app/features/modules/person/usecase/person_usecase.py:166:33",
-    "is_runtime_visible": true,
-    "mixed_source_template": true
-  },
-  "module.person.log.tmpl_fcdeab45261c": {
-    "kind": "dynamic_template",
-    "template_id": "tmpl_fcdeab45261c",
-    "msgid": "tmpl_fcdeab45261c",
-    "source_template": "OCR结果为空或结构异常: {result}",
-    "fields": [
-      "result"
-    ],
-    "field_details": {
-      "result": {
-        "format_spec": "",
-        "conversion": ""
-      }
-    },
-    "owner_scope": "module",
-    "owner_module": "person",
-    "file_path": "app/features/modules/person/usecase/person_usecase.py",
-    "line": 265,
-    "col": 36,
-    "function_name": "update_power_times",
-    "class_name": "PersonModule",
-    "context": "log",
-    "source_language": "zh_CN",
-    "template_hash": "fcdeab45261c2a3730e1906d379d4afc3f858d91",
-    "callsite_key": "app/features/modules/person/usecase/person_usecase.py:265:36",
     "is_runtime_visible": true,
     "mixed_source_template": true
   }

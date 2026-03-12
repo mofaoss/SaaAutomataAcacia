@@ -1,5 +1,7 @@
 {
-  "module.maze.log.txt_349be3359a9a": "zh_CN",
-  "module.maze.log.txt_db0376a9c8ea": "zh_CN",
-  "module.maze.title": "en"
+  "module.maze.log.今日的迷宫次数已经一滴都不剩了_2": "zh_CN",
+  "module.maze.log.迷宫超时_2": "zh_CN",
+  "module.maze.title": "zh_CN",
+  "module.maze.ui.repeat_run": "zh_CN",
+  "module.maze.ui.single_run": "zh_CN"
 }

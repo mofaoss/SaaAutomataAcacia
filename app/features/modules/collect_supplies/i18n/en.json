@@ -1,6 +1,8 @@
 {
-  "module.collect_supplies.title": "Collect Supplies",
   "module.collect_supplies.ui.reset_successful": "Reset Successful",
   "module.collect_supplies.ui.successfully_reset_import_and_display_content": "Successfully reset import and display {content}",
-  "module.collect_supplies.log.redeem_code_start": "Start redeeming code {code}"
+  "module.collect_supplies.log.redeem_code_start": "Start redeeming code {code}",
+  "module.collect_supplies.action.on_import_codes_click.label": "Import",
+  "module.collect_supplies.action.on_reset_codes_click.label": "Reset",
+  "module.collect_supplies.title": "Collect Supplies"
 }

@@ -1,10 +1,10 @@
 {
-  "module.shopping.ui.select_items_to_buy": "Select items to buy",
-  "module.shopping.title": "Shop",
   "module.shopping.log.open_shop_timeout": "Open shop timeout",
   "module.shopping.log.purchase_timeout": "Purchase timeout",
   "module.shopping.log.shop_scroll_failed_all_fallback_points_were_ineffective": "Shop scroll failed: all fallback points were ineffective",
   "module.shopping.log.insufficient_currency": "Insufficient currency",
-  "module.shopping.ui.txt_803484431571": "{var_0} not found, retry after scrolling ({var_1}/{var_2})",
-  "module.shopping.ui.txt_180e5eb94754": "{var_0} not found in shop"
+  "module.shopping.ui.var_0_not_found_retry_after_scrolling_var_1_var_2": "{var_0} not found, retry after scrolling ({var_1}/{var_2})",
+  "module.shopping.ui.var_0_not_found_in_shop": "{var_0} not found in shop",
+  "module.shopping.title": "Shop",
+  "module.shopping.ui.select_items_to_buy": "Select items to buy"
 }

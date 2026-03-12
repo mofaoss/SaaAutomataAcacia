@@ -1,14 +1,13 @@
 {
-  "module.upgrade.log.txt_0acb8fb21993": "zh_CN",
-  "module.upgrade.log.txt_22a9f1e6e089": "zh_CN",
-  "module.upgrade.log.txt_26cf00442b85": "zh_CN",
-  "module.upgrade.log.txt_3fe9de1b8ad2": "zh_CN",
-  "module.upgrade.log.txt_43a7ddf310b5": "zh_CN",
-  "module.upgrade.log.txt_8fbe0a892229": "zh_CN",
-  "module.upgrade.log.txt_a145517a49f4": "zh_CN",
-  "module.upgrade.log.txt_c11c3dc51e16": "zh_CN",
-  "module.upgrade.log.txt_ccd91a348c2d": "zh_CN",
-  "module.upgrade.log.txt_e688c14cbc54": "zh_CN",
-  "module.upgrade.log.txt_ed2323f4b9af": "zh_CN",
-  "module.weapon_upgrade.title": "en"
+  "module.upgrade.log.发现空的强化槽_点击_号打开材料选择面板_2": "zh_CN",
+  "module.upgrade.log.开始武器强化流程_2": "zh_CN",
+  "module.upgrade.log.成功进入枪械培养界面_2": "zh_CN",
+  "module.upgrade.log.未找到背包按钮_中止_2": "zh_CN",
+  "module.upgrade.log.正在打开背包并筛选武器_2": "zh_CN",
+  "module.upgrade.log.武器升级流程达到最长执行时间_超时_2": "zh_CN",
+  "module.upgrade.log.武器等级已满_停止升级流程_2": "zh_CN",
+  "module.upgrade.log.经验不足_持续添加强化材料_2": "zh_CN",
+  "module.upgrade.log.经验值已足够_点击_升级_按钮_2": "zh_CN",
+  "module.upgrade.log.触发_等级提升_点击空白处关闭弹窗_2": "zh_CN",
+  "module.weapon_upgrade.title": "zh_CN"
 }

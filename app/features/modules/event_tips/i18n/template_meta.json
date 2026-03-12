@@ -16,14 +16,47 @@
     "owner_scope": "module",
     "owner_module": "event_tips",
     "file_path": "app/features/modules/event_tips/usecase/event_tips_usecase.py",
-    "line": 244,
+    "line": 246,
     "col": 31,
     "function_name": "refresh_tips",
     "class_name": "EventTipsActions",
     "context": "log",
     "source_language": "en",
     "template_hash": "a43e644f1119101f6bb8cb13e23c36ed07bfa862",
-    "callsite_key": "app/features/modules/event_tips/usecase/event_tips_usecase.py:244:31",
+    "callsite_key": "app/features/modules/event_tips/usecase/event_tips_usecase.py:246:31",
+    "is_runtime_visible": true,
+    "mixed_source_template": false
+  },
+  "module.event_tips.ui.event_status_display_with_title": {
+    "kind": "dynamic_template",
+    "template_id": "event_status_display_with_title",
+    "msgid": "event_status_display_with_title",
+    "source_template": "{title}: {status}",
+    "fields": [
+      "title",
+      "status"
+    ],
+    "field_details": {
+      "title": {
+        "format_spec": "",
+        "conversion": ""
+      },
+      "status": {
+        "format_spec": "",
+        "conversion": ""
+      }
+    },
+    "owner_scope": "module",
+    "owner_module": "event_tips",
+    "file_path": "app/features/modules/event_tips/usecase/event_tips_usecase.py",
+    "line": 101,
+    "col": 14,
+    "function_name": "compose_event_status_display",
+    "class_name": null,
+    "context": "ui",
+    "source_language": "en",
+    "template_hash": "d1117e9f1a30c447b8fe4e2adfa138c74bbacd59",
+    "callsite_key": "app/features/modules/event_tips/usecase/event_tips_usecase.py:101:14",
     "is_runtime_visible": true,
     "mixed_source_template": false
   }

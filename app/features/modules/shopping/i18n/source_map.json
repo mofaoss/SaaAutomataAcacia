@@ -3,8 +3,8 @@
   "module.shopping.log.open_shop_timeout": "en",
   "module.shopping.log.purchase_timeout": "en",
   "module.shopping.log.shop_scroll_failed_all_fallback_points_were_ineffective": "en",
-  "module.shopping.title": "en",
-  "module.shopping.ui.select_items_to_buy": "en",
-  "module.shopping.ui.txt_180e5eb94754": "en",
-  "module.shopping.ui.txt_803484431571": "en"
+  "module.shopping.title": "zh_CN",
+  "module.shopping.ui.select_items_to_buy": "zh_CN",
+  "module.shopping.ui.var_0_not_found_in_shop": "en",
+  "module.shopping.ui.var_0_not_found_retry_after_scrolling_var_1_var_2": "en"
 }

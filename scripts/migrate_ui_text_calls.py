@@ -15,7 +15,7 @@ if str(ROOT) not in sys.path:
 from PerfectBuild.ast_i18n_transformer import I18nFStringTransformer
 
 TARGET_FUNC_NAMES = {"ui_text", "_ui_text"}
-EN_KEYWORDS = {"en", "en_text", "english"}
+ZH_KEYWORDS = {"zh", "zh_text", "cn", "cn_text", "chinese"}
 
 
 @dataclass
@@ -72,58 +72,57 @@ def _is_wrapped_by_gettext(node: ast.Call, parents: dict[ast.AST, ast.AST]) -> b
     return any(arg is node for arg in parent.args)
 
 
-def _extract_en_arg(node: ast.Call) -> ast.AST | None:
+def _extract_source_arg(node: ast.Call) -> ast.AST | None:
     for kw in node.keywords:
-        if kw.arg in EN_KEYWORDS:
+        if kw.arg in ZH_KEYWORDS:
             return kw.value
-    if len(node.args) >= 2:
-        return node.args[1]
-    if len(node.args) == 1:
+    # ui_text/_ui_text legacy shape is usually (zh, en), so prefer arg[0].
+    if len(node.args) >= 1:
         return node.args[0]
     return None
 
 
-def _build_replacement_expr(en_arg: ast.AST) -> ast.AST:
-    if isinstance(en_arg, ast.Constant) and isinstance(en_arg.value, str) and en_arg.value == "":
+def _build_replacement_expr(source_arg: ast.AST) -> ast.AST:
+    if isinstance(source_arg, ast.Constant) and isinstance(source_arg.value, str) and source_arg.value == "":
         return ast.Constant(value="")
 
     # Legacy intermediate form: _(zh, en) or _(zh, en).format(...)
     if (
-        isinstance(en_arg, ast.Call)
-        and isinstance(en_arg.func, ast.Name)
-        and en_arg.func.id == "_"
-        and len(en_arg.args) >= 2
+        isinstance(source_arg, ast.Call)
+        and isinstance(source_arg.func, ast.Name)
+        and source_arg.func.id == "_"
+        and len(source_arg.args) >= 1
     ):
-        return _build_replacement_expr(en_arg.args[1])
+        return _build_replacement_expr(source_arg.args[0])
 
     if (
-        isinstance(en_arg, ast.Call)
-        and isinstance(en_arg.func, ast.Attribute)
-        and en_arg.func.attr == "format"
-        and isinstance(en_arg.func.value, ast.Call)
-        and isinstance(en_arg.func.value.func, ast.Name)
-        and en_arg.func.value.func.id == "_"
-        and len(en_arg.func.value.args) >= 2
+        isinstance(source_arg, ast.Call)
+        and isinstance(source_arg.func, ast.Attribute)
+        and source_arg.func.attr == "format"
+        and isinstance(source_arg.func.value, ast.Call)
+        and isinstance(source_arg.func.value.func, ast.Name)
+        and source_arg.func.value.func.id == "_"
+        and len(source_arg.func.value.args) >= 1
     ):
-        base = _build_replacement_expr(en_arg.func.value.args[1])
+        base = _build_replacement_expr(source_arg.func.value.args[0])
         return ast.Call(
             func=ast.Attribute(value=base, attr="format", ctx=ast.Load()),
-            args=[copy.deepcopy(arg) for arg in en_arg.args],
-            keywords=[copy.deepcopy(kw) for kw in en_arg.keywords],
+            args=[copy.deepcopy(arg) for arg in source_arg.args],
+            keywords=[copy.deepcopy(kw) for kw in source_arg.keywords],
         )
 
-    if isinstance(en_arg, ast.Call) and isinstance(en_arg.func, ast.Name) and en_arg.func.id == "_":
-        return copy.deepcopy(en_arg)
+    if isinstance(source_arg, ast.Call) and isinstance(source_arg.func, ast.Name) and source_arg.func.id == "_":
+        return copy.deepcopy(source_arg)
 
     base_call = ast.Call(
         func=ast.Name(id="_", ctx=ast.Load()),
-        args=[copy.deepcopy(en_arg)],
+        args=[copy.deepcopy(source_arg)],
         keywords=[],
     )
 
-    if isinstance(en_arg, (ast.JoinedStr, ast.BinOp)):
+    if isinstance(source_arg, (ast.JoinedStr, ast.BinOp)):
         helper = I18nFStringTransformer()
-        rewritten = helper._rewrite_i18n_dynamic_call(base_call, copy.deepcopy(en_arg))
+        rewritten = helper._rewrite_i18n_dynamic_call(base_call, copy.deepcopy(source_arg))
         if isinstance(rewritten, ast.Call):
             return rewritten
 
@@ -144,15 +143,15 @@ def _collect_edits(source: str, tree: ast.AST) -> tuple[list[Edit], int]:
         if _is_wrapped_by_gettext(node, parents):
             skipped += 1
             continue
-        en_arg = _extract_en_arg(node)
-        if en_arg is None:
+        source_arg = _extract_source_arg(node)
+        if source_arg is None:
             skipped += 1
             continue
         if not hasattr(node, "end_lineno") or not hasattr(node, "end_col_offset"):
             skipped += 1
             continue
 
-        replacement_expr = _build_replacement_expr(en_arg)
+        replacement_expr = _build_replacement_expr(source_arg)
         replacement_text = ast.unparse(replacement_expr)
 
         start = _to_offset(offsets, int(node.lineno), int(node.col_offset))

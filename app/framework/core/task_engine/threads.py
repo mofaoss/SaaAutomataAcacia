@@ -1,4 +1,4 @@
-﻿# coding:utf-8
+# coding:utf-8
 import inspect
 import sys
 import types
@@ -7,7 +7,8 @@ from typing import Callable
 
 from PySide6.QtCore import QThread, Signal
 
-from app.framework.infra.config.app_config import config, is_non_chinese_ui_language
+from app.framework.application.modules.name_resolver import resolve_task_display_name
+from app.framework.infra.config.app_config import config
 from app.framework.core.task_engine.runtime_session import RuntimeAutomationSession
 from app.framework.i18n import _
 
@@ -240,12 +241,12 @@ class TaskQueueThread(QThread):
         normal_stop_flag = True
         try:
             if not self.tasks_to_run:
-                self.logger.warning(_('No tasks queued; skipping execution', msgid='no_tasks_queued_skipping_execution'))
+                self.logger.warning(_('任务队列为空，跳过执行', msgid='no_tasks_queued_skipping_execution'))
                 normal_stop_flag = False
                 return
 
             if not self.session.prepare():
-                self.logger.error(_('Runtime automation session initialization failed; tasks skipped', msgid='runtime_automation_session_initialization_failed'))
+                self.logger.error(_('运行时自动化会话初始化失败，任务已跳过', msgid='runtime_automation_session_initialization_failed'))
                 normal_stop_flag = False
                 return
 
@@ -253,7 +254,7 @@ class TaskQueueThread(QThread):
             queue_names = []
             for queued_task_id in self.tasks_to_run:
                 queued_meta = self.task_registry.get(queued_task_id, {})
-                queued_name = queued_meta.get('en_name', queued_task_id) if is_non_chinese_ui_language() else queued_meta.get('zh_name', queued_task_id)
+                queued_name = resolve_task_display_name(queued_meta, queued_task_id)
                 queue_names.append(queued_name)
             self.logger.info(
                 _("Task queue resolved: {tasks}", msgid='task_queue_resolved', tasks=', '.join(queue_names))
@@ -262,7 +263,7 @@ class TaskQueueThread(QThread):
             for task_id in self.tasks_to_run:
                 if not self._is_running:
                     normal_stop_flag = False
-                    self.logger.debug(_('Execution interrupted before task start', msgid='execution_interrupted_before_task_start'))
+                    self.logger.debug(_('任务启动前执行被中断', msgid='execution_interrupted_before_task_start'))
                     break
 
                 meta = self.task_registry.get(task_id)
@@ -272,7 +273,7 @@ class TaskQueueThread(QThread):
                     )
                     continue
 
-                task_name = meta['en_name'] if is_non_chinese_ui_language() else meta['zh_name']
+                task_name = resolve_task_display_name(meta, task_id)
                 self.logger.info(_("Current task: {task_name}", msgid='current_task_task_name', task_name=task_name))
                 self.task_started_signal.emit(task_id)
 

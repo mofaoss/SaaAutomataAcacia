@@ -1,36 +1,8 @@
 {
-  "module.use_power.log.tmpl_02eb1da91013": {
+  "module.use_power.log.第_attempt_次未找到活动任务入口_准备重试_2": {
     "kind": "dynamic_template",
-    "template_id": "tmpl_02eb1da91013",
-    "msgid": "tmpl_02eb1da91013",
-    "source_template": "第{attempt}次进入活动页面失败，准备重试",
-    "fields": [
-      "attempt"
-    ],
-    "field_details": {
-      "attempt": {
-        "format_spec": "",
-        "conversion": ""
-      }
-    },
-    "owner_scope": "module",
-    "owner_module": "use_power",
-    "file_path": "app/features/modules/use_power/usecase/use_power_usecase.py",
-    "line": 288,
-    "col": 44,
-    "function_name": "open_activity_reward_page",
-    "class_name": "UsePowerModule",
-    "context": "log",
-    "source_language": "zh_CN",
-    "template_hash": "02eb1da910132705a7d323f85ae188d9b5fd47a7",
-    "callsite_key": "app/features/modules/use_power/usecase/use_power_usecase.py:288:44",
-    "is_runtime_visible": true,
-    "mixed_source_template": true
-  },
-  "module.use_power.log.tmpl_8944b1b1045d": {
-    "kind": "dynamic_template",
-    "template_id": "tmpl_8944b1b1045d",
-    "msgid": "tmpl_8944b1b1045d",
+    "template_id": null,
+    "msgid": null,
     "source_template": "第{attempt}次未找到活动任务入口，准备重试",
     "fields": [
       "attempt"
@@ -44,21 +16,21 @@
     "owner_scope": "module",
     "owner_module": "use_power",
     "file_path": "app/features/modules/use_power/usecase/use_power_usecase.py",
-    "line": 297,
+    "line": 300,
     "col": 36,
     "function_name": "open_activity_reward_page",
     "class_name": "UsePowerModule",
     "context": "log",
     "source_language": "zh_CN",
     "template_hash": "8944b1b1045d384659ae534172dfb898f0533d71",
-    "callsite_key": "app/features/modules/use_power/usecase/use_power_usecase.py:297:36",
+    "callsite_key": "app/features/modules/use_power/usecase/use_power_usecase.py:300:36",
     "is_runtime_visible": true,
     "mixed_source_template": true
   },
-  "module.use_power.log.tmpl_e0d704465eda": {
+  "module.use_power.log.第_attempt_次活动奖励页面未打开_准备重试_2": {
     "kind": "dynamic_template",
-    "template_id": "tmpl_e0d704465eda",
-    "msgid": "tmpl_e0d704465eda",
+    "template_id": null,
+    "msgid": null,
     "source_template": "第{attempt}次活动奖励页面未打开，准备重试",
     "fields": [
       "attempt"
@@ -72,14 +44,42 @@
     "owner_scope": "module",
     "owner_module": "use_power",
     "file_path": "app/features/modules/use_power/usecase/use_power_usecase.py",
-    "line": 309,
+    "line": 312,
     "col": 32,
     "function_name": "open_activity_reward_page",
     "class_name": "UsePowerModule",
     "context": "log",
     "source_language": "zh_CN",
     "template_hash": "e0d704465edaab89d68c2fcd8805bd72d814532d",
-    "callsite_key": "app/features/modules/use_power/usecase/use_power_usecase.py:309:32",
+    "callsite_key": "app/features/modules/use_power/usecase/use_power_usecase.py:312:32",
+    "is_runtime_visible": true,
+    "mixed_source_template": true
+  },
+  "module.use_power.log.第_attempt_次进入活动页面失败_准备重试_2": {
+    "kind": "dynamic_template",
+    "template_id": null,
+    "msgid": null,
+    "source_template": "第{attempt}次进入活动页面失败，准备重试",
+    "fields": [
+      "attempt"
+    ],
+    "field_details": {
+      "attempt": {
+        "format_spec": "",
+        "conversion": ""
+      }
+    },
+    "owner_scope": "module",
+    "owner_module": "use_power",
+    "file_path": "app/features/modules/use_power/usecase/use_power_usecase.py",
+    "line": 291,
+    "col": 44,
+    "function_name": "open_activity_reward_page",
+    "class_name": "UsePowerModule",
+    "context": "log",
+    "source_language": "zh_CN",
+    "template_hash": "02eb1da910132705a7d323f85ae188d9b5fd47a7",
+    "callsite_key": "app/features/modules/use_power/usecase/use_power_usecase.py:291:44",
     "is_runtime_visible": true,
     "mixed_source_template": true
   }

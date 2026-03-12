@@ -4,7 +4,7 @@ import re
 from functools import lru_cache
 
 from app.framework.i18n import tr
-from app.framework.i18n.runtime import get_catalog
+from app.framework.i18n.runtime import _resolve_lang, get_catalog
 from app.framework.core.module_system.models import SchemaField
 
 
@@ -53,6 +53,21 @@ class AutoPageI18nMixin:
                 continue
             rendered = tr(key)
             if rendered != key and not AutoPageI18nMixin._is_unusable_translated_text(rendered):
+                return rendered
+        return ""
+
+    @staticmethod
+    def _first_translated_in_current_lang(candidates: list[str]) -> str:
+        lang = _resolve_lang()
+        catalog = get_catalog(lang)
+        zh_cn_catalog = get_catalog("zh_CN") if lang == "zh_HK" else {}
+        for key in candidates:
+            if not key:
+                continue
+            rendered = catalog.get(key)
+            if rendered is None and lang == "zh_HK":
+                rendered = zh_cn_catalog.get(key)
+            if rendered and not AutoPageI18nMixin._is_unusable_translated_text(rendered):
                 return rendered
         return ""
 

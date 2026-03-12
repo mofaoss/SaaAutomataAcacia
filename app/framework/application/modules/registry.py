@@ -2,42 +2,6 @@ from __future__ import annotations
 
 from app.framework.application.modules.contracts import ModuleSpec, ModuleUiBindings
 from app.framework.core.module_system import ModuleHost, get_modules_by_host, make_module_class
-from app.framework.core.module_system.naming import humanize_name
-from app.framework.i18n.runtime import get_catalog
-
-
-def _fallback_title_from_module_id(module_id: str) -> str:
-    normalized = str(module_id or "").strip()
-    if normalized.startswith("task_"):
-        normalized = normalized[len("task_"):]
-    readable = humanize_name(normalized)
-    return readable or (module_id or "")
-
-
-def _resolve_localized_titles(meta) -> tuple[str, str]:
-    key = f"module.{meta.id}.title"
-    legacy_key = "module.dummy.title"
-    en_catalog = get_catalog("en")
-    zh_cn_catalog = get_catalog("zh_CN")
-    zh_hk_catalog = get_catalog("zh_HK")
-
-    fallback_title = _fallback_title_from_module_id(meta.id)
-    en_name = (
-        en_catalog.get(key)
-        or en_catalog.get(legacy_key)
-        or meta.en_name
-        or meta.name
-        or fallback_title
-    ).strip()
-    zh_name = (
-        zh_cn_catalog.get(key)
-        or zh_hk_catalog.get(key)
-        or zh_cn_catalog.get(legacy_key)
-        or zh_hk_catalog.get(legacy_key)
-        or en_name
-    ).strip()
-
-    return zh_name, en_name
 
 
 def _meta_to_spec(meta, host: ModuleHost) -> ModuleSpec:
@@ -58,11 +22,11 @@ def _meta_to_spec(meta, host: ModuleHost) -> ModuleSpec:
         )
 
     module_class = meta.module_class or make_module_class(meta)
-    zh_name, en_name = _resolve_localized_titles(meta)
+    resolved_name_msgid = str(getattr(meta, "name_msgid", "") or f"module.{meta.id}.title").strip()
     return ModuleSpec(
         id=meta.id,
-        zh_name=zh_name,
-        en_name=en_name,
+        name=str(getattr(meta, "name", "") or ""),
+        name_msgid=resolved_name_msgid,
         order=meta.order,
         hosts=(host,),
         ui_factory=meta.ui_factory,

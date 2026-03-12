@@ -14,14 +14,27 @@ foundation of their MIT-licensed pipeline files.
 
 import time
 import cv2
-from app.framework.i18n.runtime import _
+from app.framework.i18n import _
 
-from app.framework.core.module_system import on_demand_module, periodic_module
+from app.framework.core.module_system import Field, periodic_module
 from app.framework.infra.automation.timer import Timer
 from app.features.utils.home_navigation import back_to_home
 
 
-@periodic_module("Shard Exchange")
+@periodic_module(
+    "信源碎片",
+    fields={
+        "enable_receive_shards": Field(
+            "接收碎片",
+        ),
+        "enable_gift_shards": Field(
+            "赠送碎片",
+        ),
+        "enable_recycle_shards": Field(
+            "信源回收",
+        ),
+    },
+)
 class ShardExchangeModule:
     def __init__(
         self,
@@ -271,7 +284,3 @@ class ShardExchangeModule:
             remaining -= take
 
         return new_recyclable
-
-
-
-

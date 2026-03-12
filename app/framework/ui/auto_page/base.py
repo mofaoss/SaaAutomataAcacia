@@ -60,7 +60,8 @@ class AutoPageBase(AutoPageActionsMixin, AutoPageI18nMixin, QWidget):
         self.textBrowser_log: QTextBrowser | None = None
 
         module_id = getattr(module_meta, 'id', 'unknown')
-        self.setObjectName(f"page_{module_id}")
+        binding_id = getattr(module_meta, "binding_id", module_id) or module_id
+        self.setObjectName(f"page_{binding_id}")
 
         self.main_layout = QVBoxLayout(self)
         self.main_layout.setContentsMargins(0, 0, 0, 0)
@@ -88,11 +89,11 @@ class AutoPageBase(AutoPageActionsMixin, AutoPageI18nMixin, QWidget):
         self.main_layout.addWidget(self.actions_bar)
 
         if self._should_show_start_button():
-            self.PushButton_start = self._create_start_button(module_id)
+            self.PushButton_start = self._create_start_button(str(binding_id))
             self.main_layout.addWidget(self.PushButton_start)
 
         if self._should_show_log_panel():
-            self.SimpleCardWidget_log = self._create_log_panel(module_id)
+            self.SimpleCardWidget_log = self._create_log_panel(str(binding_id))
             self.main_layout.addWidget(self.SimpleCardWidget_log)
 
         self._build_from_schema(getattr(module_meta, "config_schema", []))
@@ -218,6 +219,12 @@ class AutoPageBase(AutoPageActionsMixin, AutoPageI18nMixin, QWidget):
         raise AttributeError(f"'{type(self).__name__}' object has no attribute '{name}'")
 
     def _label_for(self, field: SchemaField) -> str:
+        if bool(getattr(field, "label_declared", False)):
+            localized = self._first_translated_in_current_lang(self._field_label_candidates(field))
+            if localized:
+                return localized
+            return str(field.label_default)
+
         translated = self._first_translated(self._field_label_candidates(field))
         if translated:
             return translated

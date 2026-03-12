@@ -11,13 +11,12 @@ from app.framework.i18n import _
 
 
 @periodic_module(
-    "Execute Exit",
-    description="### Tips\n"
-                "* Closes the game, proxy, or shuts down the system after all tasks are completed.",
+    "执行退出",
+    description="### 提示\n* 全部任务执行完后，可选择关闭游戏、关闭代理或关机。",
     fields={
-        "CheckBox_close_game": Field("Exit Game"),
-        "CheckBox_shutdown": Field("Shutdown System"),
-        "CheckBox_close_proxy": Field("Exit Application"),
+        "CheckBox_close_game": Field("退出游戏"),
+        "CheckBox_shutdown": Field("关机"),
+        "CheckBox_close_proxy": Field("退出助手"),
     }
 )
 class CloseGameModule:
@@ -55,5 +54,3 @@ class CloseGameModule:
         if self.close_proxy_enabled:
             self.logger.info(_('Exiting Application...', msgid='exiting_application'))
             signalBus.requestExitApp.emit()
-
-

@@ -55,7 +55,7 @@ def _classify_value_lang(value: str) -> str | None:
         return None
     has_han = bool(HAN_RE.search(value))
     has_latin = bool(LATIN_RE.search(value))
-    if has_han and not has_latin:
+    if has_han:
         return "zh_CN"
     if has_latin and not has_han:
         return "en"
@@ -63,12 +63,21 @@ def _classify_value_lang(value: str) -> str | None:
 
 
 def _snake_from_text(value: str) -> str:
-    lowered = value.strip().lower()
-    lowered = NON_ALNUM_RE.sub("_", lowered)
-    lowered = re.sub(r"_+", "_", lowered).strip("_")
+    raw = value.strip().lower()
+    chars: list[str] = []
+    for ch in raw:
+        code = ord(ch)
+        if ("a" <= ch <= "z") or ("0" <= ch <= "9"):
+            chars.append(ch)
+            continue
+        if 0x4E00 <= code <= 0x9FFF:
+            chars.append(ch)
+            continue
+        chars.append("_")
+    lowered = re.sub(r"_+", "_", "".join(chars)).strip("_")
     if not lowered:
         return ""
-    if not re.match(r"^[a-z]", lowered):
+    if not re.match(r"^[a-z\u4e00-\u9fff]", lowered):
         lowered = f"text_{lowered}"
     return lowered[:80]
 
@@ -106,9 +115,12 @@ def _module_id_to_owner() -> dict[str, str]:
 
 def _semantic_suffix(key: str, all_lang_maps: dict[str, dict[str, str]], used: set[str], seq: int) -> tuple[str, int]:
     en_val = all_lang_maps["en"].get(key, "")
+    zh_val = all_lang_maps["zh_CN"].get(key, "")
     suffix = ""
     if _classify_value_lang(en_val) == "en":
         suffix = _snake_from_text(en_val)
+    elif _classify_value_lang(zh_val) == "zh_CN":
+        suffix = _snake_from_text(zh_val)
 
     if not suffix:
         suffix = f"cn_text_{seq:04d}"

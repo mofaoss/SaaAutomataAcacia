@@ -139,7 +139,7 @@ class OnDemandTasksPage(QFrame, BaseInterface):
             self.ui.add_page(
                 page,
                 page_name,
-                _(spec.en_name),
+                spec.get_display_name(),
             )
 
             bindings = spec.ui_bindings
@@ -168,8 +168,8 @@ class OnDemandTasksPage(QFrame, BaseInterface):
 
             self._task_metadata[spec.id] = {
                 "module_class": spec.module_class,
-                "zh_name": spec.zh_name,
-                "en_name": spec.en_name,
+                "name": spec.name,
+                "name_msgid": spec.name_msgid,
                 "page_attr": bindings.page_attr,
                 "start_button_attr": bindings.start_button_attr,
                 "card_widget_attr": bindings.card_widget_attr,
@@ -303,7 +303,7 @@ class OnDemandTasksPage(QFrame, BaseInterface):
             module_class,
             logger_instance=logger,
             task_id=task_id,
-            task_name=_(meta.get('en_name', task_id)),
+            task_name=self._task_display_name(meta, task_id),
         )
 
     def _is_background_task_running(self, task_id: str) -> bool:
@@ -435,8 +435,8 @@ class OnDemandTasksPage(QFrame, BaseInterface):
         meta_dict = self._get_task_metadata()
         running_task_id = self.on_demand_runner.state.current_task_id
         external_running = bool(getattr(self, "is_global_running", False))
-        external_zh = getattr(self, "_external_running_zh_name", "")
-        external_en = getattr(self, "_external_running_en_name", "")
+        external_name = getattr(self, "_external_running_name", "")
+        external_name_msgid = getattr(self, "_external_running_name_msgid", "")
 
         for task_id, meta in meta_dict.items():
             page = getattr(self, meta["page_attr"], None)
@@ -447,34 +447,36 @@ class OnDemandTasksPage(QFrame, BaseInterface):
 
             policy = self._execution_policy(meta)
             if policy == "background":
+                current_name = self._task_display_name(meta, task_id)
                 if self._is_background_task_running(task_id):
-                    btn.setText(_('Stop {var_0} (F8)').format(var_0=meta['en_name']))
+                    btn.setText(_('Stop {var_0} (F8)').format(var_0=current_name))
                     if card is not None:
                         self.set_simple_card_enable(card, False)
                 else:
-                    btn.setText(_('Start {var_0}').format(var_0=meta['en_name']))
+                    btn.setText(_('Start {var_0}').format(var_0=current_name))
                     if card is not None:
                         self.set_simple_card_enable(card, True)
                 continue
 
             if external_running:
-                stop_zh = external_zh or meta["zh_name"]
-                stop_en = external_en or meta["en_name"]
-                btn.setText(_('Stop {stop_en} (F8)').format(stop_en=stop_en))
+                if str(external_name or "").strip():
+                    stop_name = self._state_display_name(external_name, external_name_msgid, source="external")
+                else:
+                    stop_name = self._task_display_name(meta, task_id)
+                btn.setText(_('Stop {stop_name} (F8)').format(stop_name=stop_name))
                 if card is not None:
                     self.set_simple_card_enable(card, False)
                 continue
 
             if running_task_id is not None:
                 running_meta = meta_dict.get(running_task_id, {})
-                running_zh = running_meta.get("zh_name", running_task_id)
-                running_en = running_meta.get("en_name", running_task_id)
-                btn.setText(_('Stop {running_en} (F8)').format(running_en=running_en))
+                running_name = self._task_display_name(running_meta, running_task_id)
+                btn.setText(_('Stop {running_name} (F8)').format(running_name=running_name))
                 if card is not None:
                     self.set_simple_card_enable(card, False)
                 continue
 
-            btn.setText(_('Start {var_0}').format(var_0=meta['en_name']))
+            btn.setText(_('Start {var_0}').format(var_0=self._task_display_name(meta, task_id)))
             if card is not None:
                 self.set_simple_card_enable(card, True)
 
@@ -483,9 +485,13 @@ class OnDemandTasksPage(QFrame, BaseInterface):
         running_task_id = self.on_demand_runner.state.current_task_id
         if is_running and running_task_id is not None:
             running_meta = meta_dict.get(running_task_id, {})
-            zh = running_meta.get("zh_name", running_task_id)
-            en = running_meta.get("en_name", running_task_id)
-            self.task_coordinator.publish_state(True, zh, en, "on_demand")
+            name = self._task_display_name(running_meta, running_task_id)
+            self.task_coordinator.publish_state(
+                True,
+                name,
+                str(running_meta.get("name_msgid", "") or ""),
+                "on_demand",
+            )
         else:
             self.task_coordinator.publish_state(False, "", "", "on_demand")
             self.on_demand_runner.clear()
@@ -512,12 +518,12 @@ class OnDemandTasksPage(QFrame, BaseInterface):
 
         self._handle_universal_start_stop(task_id)
 
-    def _on_global_state_changed(self, is_running: bool, zh_name: str, en_name: str, source: str):
+    def _on_global_state_changed(self, is_running: bool, task_name: str, task_name_msgid: str, source: str):
         if source in {"on_demand", "additional"}:
             return
         self.is_global_running = is_running
-        self._external_running_zh_name = zh_name
-        self._external_running_en_name = en_name
+        self._external_running_name = task_name
+        self._external_running_name_msgid = task_name_msgid
         self._refresh_task_ui()
 
     def _on_global_stop_request(self):

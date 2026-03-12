@@ -4,12 +4,19 @@ from app.framework.i18n.runtime import _
 from app.framework.infra.automation.timer import Timer
 from app.features.utils.home_navigation import back_to_home
 
-from app.framework.core.module_system import on_demand_module, periodic_module
+from app.framework.core.module_system import Field, periodic_module
+
+
+_GET_REWARD_FIELDS: dict[str, Field] = {}
 
 
 @periodic_module(
-    "Claim Rewards",
-    description="### Tips\n* Automatically claims daily/weekly task rewards and battle pass (Credential) rewards.",
+    "领取奖励",
+    fields=_GET_REWARD_FIELDS,
+    description=(
+        "### 提示\n"
+        "* 自动领取日常和周常任务奖励与通行证奖励。"
+    ),
 )
 class GetRewardModule:
     def __init__(self, auto, logger, isLog: bool = False):

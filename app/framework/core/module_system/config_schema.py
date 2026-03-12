@@ -76,32 +76,18 @@ def _resolve_field_meta(
     param_name: str,
     type_hint: Any,
     default_val: Any,
-    field_decl: str | Field | None,
-) -> tuple[str, str, str | None, str, str, str | None, str, str | None, str | None, tuple[Any, ...] | None]:
+    field_decl: Field | None,
+) -> tuple[str, str, bool, str | None, str, str, str | None, str, str | None, str | None, tuple[Any, ...] | None]:
 
     # Default Inference
     inf_group, inf_layout = _infer_layout_and_group(param_name, type_hint, default_val)
 
     if isinstance(field_decl, Field):
-        declared_id = field_decl.id
-        declared_label = field_decl.label
-
-        # Backward compatibility: Field("Some Label") should be treated as
-        # label-only declaration, not as an unstable field id.
-        if (
-            declared_label is None
-            and isinstance(declared_id, str)
-            and declared_id
-            and re.fullmatch(r"^[A-Za-z_][A-Za-z0-9_]*$", declared_id) is None
-        ):
-            declared_label = declared_id
-            declared_id = None
-
-        field_id = declared_id or param_name
-        # Developer ergonomics: when `label` is omitted, reuse resolved id as
-        # the humanized label seed before falling back to param name.
-        label_seed = declared_label or field_id or param_name
+        field_id = str(field_decl.field_id or "").strip() or param_name
+        field_msgid = str(field_decl.msgid or "").strip() or field_id
+        label_seed = field_decl.name or field_id or param_name
         label_default = _clean_label(label_seed)
+        label_declared = bool(str(field_decl.name or "").strip())
         help_default = field_decl.help
         group = field_decl.group or inf_group
         layout = field_decl.layout
@@ -110,7 +96,9 @@ def _resolve_field_meta(
         options = tuple(field_decl.options) if field_decl.options is not None else None
     else:
         field_id = param_name
-        label_default = field_decl if isinstance(field_decl, str) else _clean_label(param_name)
+        field_msgid = field_id
+        label_default = _clean_label(param_name)
+        label_declared = False
         help_default = None
         group = inf_group
         layout = inf_layout
@@ -118,21 +106,21 @@ def _resolve_field_meta(
         description_md = None
         options = None
 
-    label_key = f"module.{module_id}.field.{field_id}.label"
-    help_key = f"module.{module_id}.field.{field_id}.help"
-    return field_id, label_default, help_default, label_key, help_key, group, layout, icon, description_md, options
+    label_key = f"module.{module_id}.field.{field_msgid}.label"
+    help_key = f"module.{module_id}.field.{field_msgid}.help"
+    return field_id, label_default, label_declared, help_default, label_key, help_key, group, layout, icon, description_md, options
 
 
 def build_config_schema(
     func,
     *,
     module_id: str,
-    fields: dict[str, str | Field] | None = None,
+    fields: dict[str, Field] | None = None,
 ) -> list[SchemaField]:
     sig = inspect.signature(func)
     schema: list[SchemaField] = []
     explicit_fields = fields is not None
-    field_defs: dict[str, str | Field] = fields or {}
+    field_defs: dict[str, Field] = fields or {}
 
     for name, param in sig.parameters.items():
         if name in RUNTIME_PARAMS or name.startswith("_") or name.lower() in {"auto", "logger", "islog", "app_config", "automation", "config_provider", "cancel_token", "task_context"}:
@@ -153,7 +141,7 @@ def build_config_schema(
         if type_hint is inspect._empty and default_val is not None:
             type_hint = type(default_val)
 
-        field_id, label_default, help_default, label_key, help_key, group, layout, icon, description_md, options = _resolve_field_meta(
+        field_id, label_default, label_declared, help_default, label_key, help_key, group, layout, icon, description_md, options = _resolve_field_meta(
             module_id=module_id,
             param_name=name,
             type_hint=type_hint,
@@ -171,6 +159,7 @@ def build_config_schema(
                 label_key=label_key,
                 help_key=help_key,
                 label_default=label_default,
+                label_declared=label_declared,
                 help_default=help_default,
                 group=group,
                 layout=layout,

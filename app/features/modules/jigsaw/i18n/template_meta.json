@@ -1,14 +1,14 @@
 {
-  "module.jigsaw.log.tmpl_0d7ba5dbcfa4": {
+  "module.jigsaw.log.寻找到最大碎片数量为_max_val_准备点击选中该碎片_2": {
     "kind": "dynamic_template",
-    "template_id": "tmpl_0d7ba5dbcfa4",
-    "msgid": "tmpl_0d7ba5dbcfa4",
-    "source_template": "计算完毕，待回收碎片数量分布: {recycle_amounts}",
+    "template_id": null,
+    "msgid": null,
+    "source_template": "寻找到最大碎片数量为: {max_val}，准备点击选中该碎片。",
     "fields": [
-      "recycle_amounts"
+      "max_val"
     ],
     "field_details": {
-      "recycle_amounts": {
+      "max_val": {
         "format_spec": "",
         "conversion": ""
       }
@@ -16,21 +16,105 @@
     "owner_scope": "module",
     "owner_module": "jigsaw",
     "file_path": "app/features/modules/jigsaw/usecase/shard_exchange_usecase.py",
-    "line": 223,
+    "line": 199,
+    "col": 29,
+    "function_name": "execute_custom_getting_max",
+    "class_name": "ShardExchangeModule",
+    "context": "log",
+    "source_language": "zh_CN",
+    "template_hash": "bfadd614ce6a412a57c430b4c4a3189c789c5b60",
+    "callsite_key": "app/features/modules/jigsaw/usecase/shard_exchange_usecase.py:199:29",
+    "is_runtime_visible": true,
+    "mixed_source_template": true
+  },
+  "module.jigsaw.log.开始扫描碎片数量_每种至少保留_min_retain_个_2": {
+    "kind": "dynamic_template",
+    "template_id": null,
+    "msgid": null,
+    "source_template": "开始扫描碎片数量，每种至少保留 {min_retain} 个...",
+    "fields": [
+      "min_retain"
+    ],
+    "field_details": {
+      "min_retain": {
+        "format_spec": "",
+        "conversion": ""
+      }
+    },
+    "owner_scope": "module",
+    "owner_module": "jigsaw",
+    "file_path": "app/features/modules/jigsaw/usecase/shard_exchange_usecase.py",
+    "line": 212,
     "col": 25,
     "function_name": "execute_custom_puzzle_recycle",
     "class_name": "ShardExchangeModule",
     "context": "log",
     "source_language": "zh_CN",
-    "template_hash": "0d7ba5dbcfa47c9accd6d93b55a35d7fd796e7eb",
-    "callsite_key": "app/features/modules/jigsaw/usecase/shard_exchange_usecase.py:223:25",
+    "template_hash": "28f2e1b754f9acf92ec3eaeb385ae81921e8fae5",
+    "callsite_key": "app/features/modules/jigsaw/usecase/shard_exchange_usecase.py:212:25",
     "is_runtime_visible": true,
     "mixed_source_template": true
   },
-  "module.jigsaw.log.tmpl_13c9e1a5d3c1": {
+  "module.jigsaw.log.当前信源碎片数量总计_puzzle_counts_2": {
     "kind": "dynamic_template",
-    "template_id": "tmpl_13c9e1a5d3c1",
-    "msgid": "tmpl_13c9e1a5d3c1",
+    "template_id": null,
+    "msgid": null,
+    "source_template": "当前信源碎片数量总计: {puzzle_counts}",
+    "fields": [
+      "puzzle_counts"
+    ],
+    "field_details": {
+      "puzzle_counts": {
+        "format_spec": "",
+        "conversion": ""
+      }
+    },
+    "owner_scope": "module",
+    "owner_module": "jigsaw",
+    "file_path": "app/features/modules/jigsaw/usecase/shard_exchange_usecase.py",
+    "line": 233,
+    "col": 25,
+    "function_name": "execute_custom_puzzle_recycle",
+    "class_name": "ShardExchangeModule",
+    "context": "log",
+    "source_language": "zh_CN",
+    "template_hash": "4738088a366033ed0df895f0c40ae6b05e68dc90",
+    "callsite_key": "app/features/modules/jigsaw/usecase/shard_exchange_usecase.py:233:25",
+    "is_runtime_visible": true,
+    "mixed_source_template": true
+  },
+  "module.jigsaw.log.成功找到第_value_1_个方案_2": {
+    "kind": "dynamic_template",
+    "template_id": null,
+    "msgid": null,
+    "source_template": "成功找到第{value_1}个方案",
+    "fields": [
+      "value_1"
+    ],
+    "field_details": {
+      "value_1": {
+        "format_spec": "",
+        "conversion": ""
+      }
+    },
+    "owner_scope": "module",
+    "owner_module": "jigsaw",
+    "file_path": "app/features/modules/jigsaw/usecase/jigsaw_usecase.py",
+    "line": 414,
+    "col": 41,
+    "function_name": "dfs",
+    "class_name": "JigsawModule",
+    "context": "log",
+    "source_language": "zh_CN",
+    "template_hash": "f45708f1f4c3d1a349524a799f731efd3c2fc677",
+    "callsite_key": "app/features/modules/jigsaw/usecase/jigsaw_usecase.py:414:41",
+    "is_runtime_visible": true,
+    "mixed_source_template": true
+  },
+  "module.jigsaw.log.方案_value_1_得分_value_2_2": {
+    "kind": "dynamic_template",
+    "template_id": null,
+    "msgid": null,
     "source_template": "-------方案{value_1}，得分：{value_2}-------",
     "fields": [
       "value_1",
@@ -60,127 +144,10 @@
     "is_runtime_visible": true,
     "mixed_source_template": true
   },
-  "module.jigsaw.log.tmpl_28f2e1b754f9": {
+  "module.jigsaw.log.最优方案为_方案_value_1_2": {
     "kind": "dynamic_template",
-    "template_id": "tmpl_28f2e1b754f9",
-    "msgid": "tmpl_28f2e1b754f9",
-    "source_template": "开始扫描碎片数量，每种至少保留 {min_retain} 个...",
-    "fields": [
-      "min_retain"
-    ],
-    "field_details": {
-      "min_retain": {
-        "format_spec": "",
-        "conversion": ""
-      }
-    },
-    "owner_scope": "module",
-    "owner_module": "jigsaw",
-    "file_path": "app/features/modules/jigsaw/usecase/shard_exchange_usecase.py",
-    "line": 199,
-    "col": 25,
-    "function_name": "execute_custom_puzzle_recycle",
-    "class_name": "ShardExchangeModule",
-    "context": "log",
-    "source_language": "zh_CN",
-    "template_hash": "28f2e1b754f9acf92ec3eaeb385ae81921e8fae5",
-    "callsite_key": "app/features/modules/jigsaw/usecase/shard_exchange_usecase.py:199:25",
-    "is_runtime_visible": true,
-    "mixed_source_template": true
-  },
-  "module.jigsaw.log.tmpl_4738088a3660": {
-    "kind": "dynamic_template",
-    "template_id": "tmpl_4738088a3660",
-    "msgid": "tmpl_4738088a3660",
-    "source_template": "当前信源碎片数量总计: {puzzle_counts}",
-    "fields": [
-      "puzzle_counts"
-    ],
-    "field_details": {
-      "puzzle_counts": {
-        "format_spec": "",
-        "conversion": ""
-      }
-    },
-    "owner_scope": "module",
-    "owner_module": "jigsaw",
-    "file_path": "app/features/modules/jigsaw/usecase/shard_exchange_usecase.py",
-    "line": 220,
-    "col": 25,
-    "function_name": "execute_custom_puzzle_recycle",
-    "class_name": "ShardExchangeModule",
-    "context": "log",
-    "source_language": "zh_CN",
-    "template_hash": "4738088a366033ed0df895f0c40ae6b05e68dc90",
-    "callsite_key": "app/features/modules/jigsaw/usecase/shard_exchange_usecase.py:220:25",
-    "is_runtime_visible": true,
-    "mixed_source_template": true
-  },
-  "module.jigsaw.log.tmpl_868bc408e732": {
-    "kind": "dynamic_template",
-    "template_id": "tmpl_868bc408e732",
-    "msgid": "tmpl_868bc408e732",
-    "source_template": "选中碎片类型 [{value_1}]，准备回收 {count} 个。",
-    "fields": [
-      "value_1",
-      "count"
-    ],
-    "field_details": {
-      "value_1": {
-        "format_spec": "",
-        "conversion": ""
-      },
-      "count": {
-        "format_spec": "",
-        "conversion": ""
-      }
-    },
-    "owner_scope": "module",
-    "owner_module": "jigsaw",
-    "file_path": "app/features/modules/jigsaw/usecase/shard_exchange_usecase.py",
-    "line": 231,
-    "col": 29,
-    "function_name": "execute_custom_puzzle_recycle",
-    "class_name": "ShardExchangeModule",
-    "context": "log",
-    "source_language": "zh_CN",
-    "template_hash": "868bc408e732ac027ad652b6b57da7223e09bafa",
-    "callsite_key": "app/features/modules/jigsaw/usecase/shard_exchange_usecase.py:231:29",
-    "is_runtime_visible": true,
-    "mixed_source_template": true
-  },
-  "module.jigsaw.log.tmpl_bfadd614ce6a": {
-    "kind": "dynamic_template",
-    "template_id": "tmpl_bfadd614ce6a",
-    "msgid": "tmpl_bfadd614ce6a",
-    "source_template": "寻找到最大碎片数量为: {max_val}，准备点击选中该碎片。",
-    "fields": [
-      "max_val"
-    ],
-    "field_details": {
-      "max_val": {
-        "format_spec": "",
-        "conversion": ""
-      }
-    },
-    "owner_scope": "module",
-    "owner_module": "jigsaw",
-    "file_path": "app/features/modules/jigsaw/usecase/shard_exchange_usecase.py",
-    "line": 186,
-    "col": 29,
-    "function_name": "execute_custom_getting_max",
-    "class_name": "ShardExchangeModule",
-    "context": "log",
-    "source_language": "zh_CN",
-    "template_hash": "bfadd614ce6a412a57c430b4c4a3189c789c5b60",
-    "callsite_key": "app/features/modules/jigsaw/usecase/shard_exchange_usecase.py:186:29",
-    "is_runtime_visible": true,
-    "mixed_source_template": true
-  },
-  "module.jigsaw.log.tmpl_e220043fb9e3": {
-    "kind": "dynamic_template",
-    "template_id": "tmpl_e220043fb9e3",
-    "msgid": "tmpl_e220043fb9e3",
+    "template_id": null,
+    "msgid": null,
     "source_template": "最优方案为：方案{value_1}",
     "fields": [
       "value_1"
@@ -205,31 +172,64 @@
     "is_runtime_visible": true,
     "mixed_source_template": true
   },
-  "module.jigsaw.log.tmpl_f45708f1f4c3": {
+  "module.jigsaw.log.计算完毕_待回收碎片数量分布_recycle_amounts_2": {
     "kind": "dynamic_template",
-    "template_id": "tmpl_f45708f1f4c3",
-    "msgid": "tmpl_f45708f1f4c3",
-    "source_template": "成功找到第{value_1}个方案",
+    "template_id": null,
+    "msgid": null,
+    "source_template": "计算完毕，待回收碎片数量分布: {recycle_amounts}",
     "fields": [
-      "value_1"
+      "recycle_amounts"
     ],
     "field_details": {
-      "value_1": {
+      "recycle_amounts": {
         "format_spec": "",
         "conversion": ""
       }
     },
     "owner_scope": "module",
     "owner_module": "jigsaw",
-    "file_path": "app/features/modules/jigsaw/usecase/jigsaw_usecase.py",
-    "line": 414,
-    "col": 41,
-    "function_name": "dfs",
-    "class_name": "JigsawModule",
+    "file_path": "app/features/modules/jigsaw/usecase/shard_exchange_usecase.py",
+    "line": 236,
+    "col": 25,
+    "function_name": "execute_custom_puzzle_recycle",
+    "class_name": "ShardExchangeModule",
     "context": "log",
     "source_language": "zh_CN",
-    "template_hash": "f45708f1f4c3d1a349524a799f731efd3c2fc677",
-    "callsite_key": "app/features/modules/jigsaw/usecase/jigsaw_usecase.py:414:41",
+    "template_hash": "0d7ba5dbcfa47c9accd6d93b55a35d7fd796e7eb",
+    "callsite_key": "app/features/modules/jigsaw/usecase/shard_exchange_usecase.py:236:25",
+    "is_runtime_visible": true,
+    "mixed_source_template": true
+  },
+  "module.jigsaw.log.选中碎片类型_value_1_准备回收_count_个_2": {
+    "kind": "dynamic_template",
+    "template_id": null,
+    "msgid": null,
+    "source_template": "选中碎片类型 [{value_1}]，准备回收 {count} 个。",
+    "fields": [
+      "value_1",
+      "count"
+    ],
+    "field_details": {
+      "value_1": {
+        "format_spec": "",
+        "conversion": ""
+      },
+      "count": {
+        "format_spec": "",
+        "conversion": ""
+      }
+    },
+    "owner_scope": "module",
+    "owner_module": "jigsaw",
+    "file_path": "app/features/modules/jigsaw/usecase/shard_exchange_usecase.py",
+    "line": 244,
+    "col": 29,
+    "function_name": "execute_custom_puzzle_recycle",
+    "class_name": "ShardExchangeModule",
+    "context": "log",
+    "source_language": "zh_CN",
+    "template_hash": "868bc408e732ac027ad652b6b57da7223e09bafa",
+    "callsite_key": "app/features/modules/jigsaw/usecase/shard_exchange_usecase.py:244:29",
     "is_runtime_visible": true,
     "mixed_source_template": true
   }

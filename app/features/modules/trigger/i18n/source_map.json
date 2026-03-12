@@ -1,9 +1,9 @@
 {
-  "module.trigger.field.auto_f.help": "en",
-  "module.trigger.field.auto_f.label": "en",
-  "module.trigger.field.nita_auto_e.help": "en",
-  "module.trigger.field.nita_auto_e.label": "en",
+  "module.trigger.field.CheckBox_trigger_auto_e.help": "zh_CN",
+  "module.trigger.field.CheckBox_trigger_auto_e.label": "en",
+  "module.trigger.field.CheckBox_trigger_auto_f.help": "zh_CN",
+  "module.trigger.field.CheckBox_trigger_auto_f.label": "en",
   "module.trigger.log.trigger_skipped_all_options_disabled": "en",
   "module.trigger.log.trigger_started_in_background_mode": "en",
-  "module.trigger.title": "en"
+  "module.trigger.title": "zh_CN"
 }

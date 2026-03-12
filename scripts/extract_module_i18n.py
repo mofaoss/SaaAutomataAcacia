@@ -29,7 +29,6 @@ MODULES_ROOT = APP_ROOT / "features" / "modules"
 FRAMEWORK_ROOT = APP_ROOT / "framework"
 SUPPORTED_SOURCE_LANGS = ["en", "zh_CN"]
 
-_EN_DECL_RE = re.compile(r"^[\x20-\x7E]+$")
 LOG_METHODS = {"debug", "info", "warning", "error", "exception", "critical"}
 PERCENT_TOKEN_RE = re.compile(
     r"%(?:\((?P<named>[A-Za-z_][A-Za-z0-9_]*)\))?"
@@ -59,6 +58,30 @@ def _canonicalize_template_structure(template: str) -> str:
     return "".join(chunks)
 
 
+def _safe_source_lang(text: str, *, default: str = "en") -> str:
+    raw = str(text or "")
+    try:
+        lang = classify_source_language(raw)
+    except Exception:
+        has_han = any("\u4e00" <= ch <= "\u9fff" for ch in raw)
+        return "zh_CN" if has_han else default
+    return lang if lang in SUPPORTED_SOURCE_LANGS else default
+
+
+def _safe_source_lang_with_mixed(text: str, *, default: str = "en") -> tuple[str, bool]:
+    raw = str(text or "")
+    try:
+        lang = classify_source_language(raw)
+        if lang not in SUPPORTED_SOURCE_LANGS:
+            lang = default
+        return lang, False
+    except Exception:
+        has_han = any("\u4e00" <= ch <= "\u9fff" for ch in raw)
+        has_latin = bool(re.search(r"[A-Za-z]", raw))
+        lang = "zh_CN" if has_han else default
+        return lang, bool(has_han and has_latin)
+
+
 def _template_spec_score(template: str) -> tuple[int, int]:
     formatter = string.Formatter()
     spec_count = 0
@@ -80,15 +103,6 @@ def _key_semantic_score(key: str, template: str) -> tuple[int, int, int, int]:
     return (is_semantic, spec_count, field_count, -generic_field_penalty)
 
 
-def _validate_english_declaration(text: str, *, field: str) -> None:
-    if not isinstance(text, str) or not text.strip():
-        raise ValueError(f"{field} must be a non-empty English string")
-    if not _EN_DECL_RE.fullmatch(text):
-        raise ValueError(
-            f"{field} must use English ASCII declaration text only (found unsupported chars): {text!r}"
-        )
-
-
 def _clean_widget_label(param_name: str) -> str:
     cleaned = re.sub(r"^(SpinBox|ComboBox|CheckBox|LineEdit|DoubleSpinBox|Slider|TextEdit)_", "", str(param_name or ""))
     return humanize_name(cleaned)
@@ -97,6 +111,35 @@ def _clean_widget_label(param_name: str) -> str:
 def _literal(node: ast.AST) -> Any:
     if isinstance(node, ast.Constant):
         return node.value
+    return None
+
+
+def _translatable_literal(node: ast.AST) -> str | None:
+    value = _literal(node)
+    if isinstance(value, str):
+        text = value.strip()
+        return text or None
+
+    if not isinstance(node, ast.Call) or not isinstance(node.func, ast.Name):
+        return None
+    helper = node.func.id
+
+    if helper == "_" and node.args:
+        inner = _literal(node.args[0])
+        if isinstance(inner, str):
+            text = inner.strip()
+            return text or None
+        return None
+
+    if helper in {"ui_text", "_ui_text"}:
+        if node.args:
+            zh_raw = _literal(node.args[0])
+            if isinstance(zh_raw, str) and zh_raw.strip():
+                return zh_raw.strip()
+        if len(node.args) >= 2:
+            en_raw = _literal(node.args[1])
+            if isinstance(en_raw, str) and en_raw.strip():
+                return en_raw.strip()
     return None
 
 
@@ -114,9 +157,8 @@ def _extract_fields(fields_node: ast.AST) -> dict[str, dict[str, str | None]]:
         label = _clean_widget_label(param_name)
         help_text = None
 
-        value = _literal(value_node)
+        value = _translatable_literal(value_node)
         if isinstance(value, str):
-            _validate_english_declaration(value, field=f"fields[{param_name}] label")
             label = value
         elif isinstance(value_node, ast.Call) and isinstance(value_node.func, ast.Name) and value_node.func.id == "Field":
             label_explicit = False
@@ -126,15 +168,13 @@ def _extract_fields(fields_node: ast.AST) -> dict[str, dict[str, str | None]]:
                     if isinstance(v, str) and v.strip():
                         field_id = v.strip()
                 elif kw.arg == "label":
-                    v = _literal(kw.value)
+                    v = _translatable_literal(kw.value)
                     if isinstance(v, str) and v.strip():
-                        _validate_english_declaration(v.strip(), field=f"fields[{param_name}] label")
                         label = v.strip()
                         label_explicit = True
                 elif kw.arg == "help":
-                    v = _literal(kw.value)
+                    v = _translatable_literal(kw.value)
                     if isinstance(v, str) and v.strip():
-                        _validate_english_declaration(v.strip(), field=f"fields[{param_name}] help")
                         help_text = v.strip()
             if not label_explicit:
                 label = _clean_widget_label(field_id)
@@ -153,6 +193,39 @@ def _target_name(node: ast.AST) -> str:
     if isinstance(node, ast.ClassDef):
         return node.name
     return "module"
+
+
+def _extract_actions(actions_node: ast.AST) -> list[tuple[str, str]]:
+    result: list[tuple[str, str]] = []
+    if not isinstance(actions_node, ast.Dict):
+        return result
+
+    for key_node, value_node in zip(actions_node.keys, actions_node.values):
+        label = _translatable_literal(key_node)
+        if not isinstance(label, str) or not label.strip():
+            continue
+
+        method_name = ""
+        raw_value = _literal(value_node)
+        if isinstance(raw_value, str):
+            method_name = raw_value.strip()
+        elif isinstance(value_node, ast.Dict):
+            for inner_key_node, inner_value_node in zip(value_node.keys, value_node.values):
+                inner_key = _literal(inner_key_node)
+                if inner_key in {"method", "name"}:
+                    inner_val = _literal(inner_value_node)
+                    if isinstance(inner_val, str):
+                        method_name = inner_val.strip()
+                        break
+
+        if not method_name or re.fullmatch(r"^[A-Za-z_][A-Za-z0-9_]*$", method_name) is None:
+            continue
+        result.append((label.strip(), method_name))
+    return result
+
+
+def _declaration_title_key(node: ast.AST, module_id: str) -> str:
+    return f"module.{module_id}.title"
 
 
 def _owner_from_file(path: Path) -> tuple[str, str | None]:
@@ -197,10 +270,9 @@ def _extract_declarations_from_file(path: Path, tree: ast.AST) -> list[tuple[str
             title = _literal(deco.args[0]) if deco.args else None
             if not isinstance(title, str):
                 continue
-            _validate_english_declaration(title, field=f"{path}: decorator title")
-
             module_id = None
             fields: dict[str, dict[str, str | None]] = {}
+            actions: list[tuple[str, str]] = []
             for kw in deco.keywords:
                 if kw.arg == "module_id":
                     v = _literal(kw.value)
@@ -208,34 +280,53 @@ def _extract_declarations_from_file(path: Path, tree: ast.AST) -> list[tuple[str
                         module_id = v.strip()
                 elif kw.arg == "fields":
                     fields = _extract_fields(kw.value)
+                elif kw.arg == "actions":
+                    actions = _extract_actions(kw.value)
 
             if not module_id:
                 name = _target_name(node)
                 dummy = type(name, (), {})
                 module_id = infer_module_id(dummy)
 
-            out.append((owner_scope, owner_module, f"module.{module_id}.title", title, "en"))
+            source_lang = _safe_source_lang(title, default="en")
+
+            out.append((owner_scope, owner_module, _declaration_title_key(node, module_id), title, source_lang))
             for param_name, meta in fields.items():
                 field_id = meta["field_id"] or param_name
+                field_label = str(meta["label"] or _clean_widget_label(field_id))
+                field_label_lang = _safe_source_lang(field_label, default="en")
                 out.append(
                     (
                         owner_scope,
                         owner_module,
                         f"module.{module_id}.field.{field_id}.label",
-                        meta["label"] or _clean_widget_label(field_id),
-                        "en",
+                        field_label,
+                        field_label_lang,
                     )
                 )
                 if meta.get("help"):
+                    help_text = str(meta["help"])
+                    help_lang = _safe_source_lang(help_text, default="en")
                     out.append(
                         (
                             owner_scope,
                             owner_module,
                             f"module.{module_id}.field.{field_id}.help",
-                            str(meta["help"]),
-                            "en",
+                            help_text,
+                            help_lang,
                         )
                     )
+            for action_label, method_name in actions:
+                action_lang = _safe_source_lang(action_label, default="en")
+                out.append(
+                    (
+                        owner_scope,
+                        owner_module,
+                        f"module.{module_id}.action.{method_name}.label",
+                        action_label,
+                        action_lang,
+                    )
+                )
     return out
 
 
@@ -569,14 +660,8 @@ def _extract_marked_strings_from_file(
 
         if literal_dynamic is not None:
             template, fields = literal_dynamic
-            dynamic_msgid = msgid or f"tmpl_{hashlib.sha1(template.encode('utf-8')).hexdigest()[:12]}"
-            try:
-                source_lang = classify_source_language(template)
-                mixed_source_template = False
-            except Exception:
-                has_han = any("\u4e00" <= ch <= "\u9fff" for ch in template)
-                source_lang = "zh_CN" if has_han else "en"
-                mixed_source_template = True
+            dynamic_msgid = msgid
+            source_lang, mixed_source_template = _safe_source_lang_with_mixed(template, default="en")
             message = TranslatableMessage(
                 source_text=template,
                 source_lang=source_lang,
@@ -636,8 +721,8 @@ def _extract_marked_strings_from_file(
             if not text.strip():
                 # Ignore intentionally empty placeholders like _("").
                 continue
-            static_msgid = msgid or f"txt_{hashlib.sha1(text.encode('utf-8')).hexdigest()[:12]}"
-            source_lang = classify_source_language(text)
+            static_msgid = msgid
+            source_lang = _safe_source_lang(text, default="en")
             message = TranslatableMessage(
                 source_text=text,
                 source_lang=source_lang,
@@ -666,14 +751,8 @@ def _extract_marked_strings_from_file(
         extracted_dynamic = _extract_dynamic_template_from_expr(first_arg, parents)
         if extracted_dynamic is not None:
             template, fields = extracted_dynamic
-            dynamic_msgid = msgid or f"tmpl_{hashlib.sha1(template.encode('utf-8')).hexdigest()[:12]}"
-            try:
-                source_lang = classify_source_language(template)
-                mixed_source_template = False
-            except Exception:
-                has_han = any("\u4e00" <= ch <= "\u9fff" for ch in template)
-                source_lang = "zh_CN" if has_han else "en"
-                mixed_source_template = True
+            dynamic_msgid = msgid
+            source_lang, mixed_source_template = _safe_source_lang_with_mixed(template, default="en")
             message = TranslatableMessage(
                 source_text=template,
                 source_lang=source_lang,

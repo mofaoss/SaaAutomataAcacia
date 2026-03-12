@@ -8,18 +8,14 @@ from app.framework.core.module_system import Field, on_demand_module
 
 _ALIEN_FIELDS = {
     "ComboBox_mode": Field(
-        id="run_mode",
         options=((0, "Endless Mode"), (1, "Stage Mode")),
     ),
 }
 
 @on_demand_module(
-    "Alien Guardian",
+    "异星守护",
     fields=_ALIEN_FIELDS,
-    description="### Tips\n"
-                "* Click Start after battle begins\n"
-                "* Recommended support pals: Steel Shot and Blazing Pitcher\n"
-                "* Stage mode is semi-automatic: manual shooting and manual next-stage selection are required",
+    description="### 提示\n* 请在战斗开始后点击开始。\n* 推荐支援角色：钢铁射手、炽焰投手。\n* 关卡模式为半自动：需要手动射击与手动选择下一关。",
 )
 class AlienGuardianModule:
     def __init__(self, auto, logger, ComboBox_mode: int = 0):
@@ -143,3 +139,4 @@ class AlienGuardianModule:
             if timeout.reached():
                 self.logger.error(_("异星守护战斗超时"))
                 break
+

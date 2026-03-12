@@ -34,7 +34,7 @@ def _build_module_class_by_task_id() -> dict[str, type]:
 def _build_module_text_by_task_id() -> dict[str, tuple[str, str]]:
     mapping: dict[str, tuple[str, str]] = {}
     for spec in get_periodic_module_specs():
-        mapping[spec.id] = (spec.zh_name, spec.en_name)
+        mapping[spec.id] = (spec.name, spec.name_msgid)
     return mapping
 
 
@@ -49,13 +49,13 @@ def _build_task_registry() -> dict[str, dict]:
         module_class = module_class_by_task_id.get(task_id)
         if module_class is None:
             continue
-        zh_name, en_name = module_text_by_task_id.get(task_id, ("", ""))
+        name, name_msgid = module_text_by_task_id.get(task_id, ("", ""))
         registry[task_id] = {
             "module_class": module_class,
             "ui_page_index": spec.get("ui_page_index"),
             "option_key": spec.get("option_key"),
-            "zh_name": zh_name,
-            "en_name": en_name,
+            "name": name,
+            "name_msgid": name_msgid,
             "requires_home_sync": spec.get("requires_home_sync", True),
             "is_mandatory": spec.get("is_mandatory", False),
             "force_first": spec.get("force_first", False),

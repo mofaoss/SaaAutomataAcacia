@@ -7,7 +7,6 @@ import threading
 import time
 from pathlib import Path
 from typing import Any, Callable
-from app.framework.i18n.runtime import _
 
 from PySide6.QtCore import Qt
 from PySide6.QtWidgets import QFileDialog
@@ -27,17 +26,24 @@ _launch_lock = threading.Lock()
 _last_game_process = None
 _last_launch_ts = 0.0
 
+_ENTER_GAME_FIELDS = {
+    "CheckBox_open_game_directly": Field("自动拉起游戏", group="启动设置"),
+    "LineEdit_game_directory": Field("游戏目录", group="启动设置"),
+}
+
 
 @periodic_module(
-    "Auto Login",
-    description="### Tips\n* Select your server in Settings first\n* Enable \"Auto open game\" to let scheduler launch the game automatically\n* Fill in the game installation path shown in your launcher settings",
-    fields={
-        "CheckBox_open_game_directly": Field(),
-        "LineEdit_game_directory": Field(),
-    },
+    "自动登录",
+    fields=_ENTER_GAME_FIELDS,
+    description=(
+        "### 提示\n"
+        "* 请先在设置中选择服务器。\n"
+        "* 启用自动打开游戏后，定时任务可自动拉起游戏。\n"
+        "* 请填写启动器中显示的游戏安装路径。"
+    ),
     actions={
-        "Tutorial": "show_path_tutorial",
-        "Browse": "select_game_directory",
+        "教程": "show_path_tutorial",
+        "浏览": "select_game_directory",
     },
 )
 class EnterGameModule:
@@ -62,20 +68,13 @@ class EnterGameModule:
 
     @staticmethod
     def build_path_tutorial_payload(is_non_chinese_ui: bool) -> dict[str, str]:
-        title = "How to find the game path" if is_non_chinese_ui else "\u5982\u4f55\u67e5\u627e\u5bf9\u5e94\u6e38\u620f\u8def\u5f84"
+        title = "How to find the game path" if is_non_chinese_ui else "如何查找对应游戏路径"
         content = (
-            "No matter which server/channel you play, first select your server in Settings.\n"
-            "For global server, choose a path like \"E:\\SteamLibrary\\steamapps\\common\\SNOWBREAK\".\n"
-            "For CN/Bilibili server, open the Snowbreak launcher and find launcher settings.\n"
-            "Then choose the game installation path shown there."
-            if is_non_chinese_ui
-            else
-            "\u4e0d\u7ba1\u4f60\u662f\u54ea\u4e2a\u6e20\u9053\u670d\u73a9\u5bb6\uff0c\u7b2c\u4e00\u6b65\u90fd\u5e94\u8be5\u5148\u53bb\u8bbe\u7f6e\u91cc\u9009\u670d\u3002\n"
-            "\u56fd\u9645\u670d\u53ef\u9009\u62e9\u7c7b\u4f3c \"E:\\SteamLibrary\\steamapps\\common\\SNOWBREAK\" \u7684\u76ee\u5f55\u3002\n"
-            "\u5b98\u670d\u548c B \u670d\u8bf7\u5148\u6253\u5f00\u5c18\u767d\u542f\u52a8\u5668\uff0c\u5728\u542f\u52a8\u5668\u8bbe\u7f6e\u4e2d\u67e5\u770b\u6e38\u620f\u5b89\u88c5\u76ee\u5f55\u3002\n"
-            "\u7136\u540e\u5728\u4e0b\u65b9\u8def\u5f84\u4e2d\u9009\u62e9\u8be5\u76ee\u5f55\u5373\u53ef\u3002"
+            _("不管你是哪个渠道服玩家，第一步都应该先去设置里选服。\n"
+            "国际服可选择类似 \"E:\\SteamLibrary\\steamapps\\common\\SNOWBREAK\" 的目录。\n"
+            "官服和 B 服请先打开尘白启动器，在启动器设置中查看游戏安装目录。\n"
+            "然后在下方路径中选择该目录即可。")
         )
-
         module_root = Path(__file__).resolve().parents[1]
         image_candidates = [
             module_root / "assets" / "images" / "path_tutorial.png",
@@ -83,8 +82,8 @@ class EnterGameModule:
         ]
         image_path = next((str(p) for p in image_candidates if p.exists()), str(image_candidates[0]))
         return {
-            "title": title,
-            "content": content,
+            "title": str(title),
+            "content": str(content),
             "image": image_path,
         }
     def show_path_tutorial(self, *, host=None, page=None, button=None, **_kwargs):
@@ -411,9 +410,9 @@ class EnterGameService(IGameEnvironment):
             payload = EnterGameModule.build_path_tutorial_payload(getattr(host, "_is_non_chinese_ui", False))
 
         view = FlyoutView(
-            title=payload.get("title", ""),
-            content=payload.get("content", ""),
-            image=payload.get("image", ""),
+            title=str(payload.get("title", "") or ""),
+            content=str(payload.get("content", "") or ""),
+            image=str(payload.get("image", "") or ""),
             isClosable=True,
         )
         view.widgetLayout.insertSpacing(1, 5)
@@ -423,7 +422,7 @@ class EnterGameService(IGameEnvironment):
 
     @staticmethod
     def select_game_directory(parent, current_directory: str) -> str | None:
-        folder = QFileDialog.getExistingDirectory(parent, "\u9009\u62e9\u6e38\u620f\u6587\u4ef6\u5939", "./")
+        folder = QFileDialog.getExistingDirectory(parent, str("选择游戏文件夹"), "./")
         if not folder or str(folder) == str(current_directory):
             return None
         return folder
@@ -441,7 +440,9 @@ class EnterGameService(IGameEnvironment):
         action = "将" if state == 2 else "不会"
         InfoBar.success(
             title=status,
-            content=_(f"Clicking the 'Start' button will {action}automatically launch the game", msgid='clicking_the_start_button_will_action_automatica'),
+            content=str(
+                _(f"Clicking the 'Start' button will {action}automatically launch the game", msgid='clicking_the_start_button_will_action_automatica')
+            ),
             orient=Qt.Orientation.Horizontal,
             isClosable=True,
             position=InfoBarPosition.TOP_RIGHT,

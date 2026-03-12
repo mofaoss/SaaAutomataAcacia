@@ -1,11 +1,11 @@
-﻿import time
+import time
 from dataclasses import dataclass
 from app.framework.i18n.runtime import _
 
 import cv2
 from app.framework.infra.automation.timer import Timer
 
-from app.framework.core.module_system import on_demand_module, periodic_module
+from app.framework.core.module_system import Field, on_demand_module
 
 
 @dataclass
@@ -29,20 +29,42 @@ class _SyncState:
         return float(self.profile.patrol_refresh_interval_sec if self.mode == 1 else self.profile.fixed_interval_sec)
 
 
+_CAPTURE_PALS_FIELDS = {
+    "CheckBox_capture_pals_partner": Field("伙伴岛"),
+    "CheckBox_capture_pals_adventure": Field("探险岛"),
+    "CheckBox_capture_pals_sync": Field("双岛同步模式"),
+    "SpinBox_capture_pals_partner_fixed_interval": Field("伙伴岛定点间隔(秒)", group="伙伴岛设置"),
+    "SpinBox_capture_pals_partner_patrol_interval": Field("伙伴岛巡逻刷新间隔(秒)", group="伙伴岛设置"),
+    "ComboBox_capture_pals_partner_mode": Field(
+        "伙伴岛模式",
+        group="伙伴岛设置",
+        options=((0, "定点循环"), (1, "巡逻刷新")),
+    ),
+    "SpinBox_capture_pals_adventure_fixed_interval": Field("探险岛定点间隔(秒)", group="探险岛设置"),
+    "SpinBox_capture_pals_adventure_patrol_interval": Field("探险岛巡逻刷新间隔(秒)", group="探险岛设置"),
+    "ComboBox_capture_pals_adventure_mode": Field(
+        "探险岛模式",
+        group="探险岛设置",
+        options=((0, "定点循环"), (1, "巡逻刷新")),
+    ),
+}
+
+
 @on_demand_module(
-    "Capture Pals",
-    description="### Tips\n"
-                "* Auto-capture pals based on community strategy\n"
-                "* Configure support skill key to C before running\n"
-                "* Ensure full-screen 16:9 and stay on Partner/Adventure island selection page\n"
-                "* Patrol mode exits and re-enters map each cycle to refresh targets\n"
-                "* Fixed Point: Press C then F at intervals\n"
-                "* Patrol: Exit and re-enter map after each capture",
+    "抓帕鲁",
+    fields=_CAPTURE_PALS_FIELDS,
+    description="### 提示\n"
+            "* 通过视频BV1SV8wzjEpE和BV1SV8wzjEpE的抓捕思路实现\n"
+            "* 需要携带有高伤害满级召雷+碎冰冰/布防的帕鲁如武装，爆破会员来秒杀\n"
+            "* 抓帕鲁前请确保已在游戏内设置好狂猎支援技快捷键为 C 键\n"
+            "* 启动前请确保当前是全屏模式16：9并且界面在选择伙伴岛/探险岛页面\n"
+            "* 定点抓帕鲁：进图后按狂猎支援技C再尝试按 F 进行抓取；按设定间隔循环\n"
+            "* 巡逻抓帕鲁：每次抓完会 ESC 退出地图并重新进入，以刷新巡逻帕鲁\n"
+            "* 同步抓帕鲁：双岛同时勾选，按“各自周期”在两岛间切换；一岛结束会只刷另一岛\n"
 )
 class CapturePalsModule:
     """
     尘白抓帕鲁模块
-    目标：保持功能与行为语义不变，但结构更清晰、稳定、易维护。
     """
 
     ENTER_WAIT_SEC = 6
@@ -690,5 +712,3 @@ class CapturePalsModule:
                 return
 
             time.sleep(min(float(tick), remaining))
-
-

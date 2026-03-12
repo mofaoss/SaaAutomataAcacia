@@ -1,25 +1,40 @@
 ﻿import time
 from datetime import datetime
-from app.framework.i18n.runtime import _
 
 from PySide6.QtCore import Qt
 from qfluentwidgets import InfoBar, InfoBarPosition
 
+from app.framework.infra.config.app_config import config
 from app.framework.infra.config.data_models import parse_config_update_data
 from app.features.utils.network import get_cloudflare_data
 from app.framework.infra.automation.timer import Timer
 from app.features.utils.home_navigation import back_to_home
 
-from app.framework.core.module_system import on_demand_module, periodic_module
+from app.framework.core.module_system import Field, periodic_module
 from app.framework.i18n import _
+from app.framework.ui.widgets.custom_message_box import CustomMessageBox
+
+
+_COLLECT_SUPPLIES_FIELDS = {
+    "CheckBox_mail": Field("邮箱奖励", group="补给领取"),
+    "CheckBox_fish_bait": Field("鱼饵奖励", group="补给领取"),
+    "CheckBox_dormitory": Field("宿舍碎片", group="补给领取"),
+    "CheckBox_redeem_code": Field("自动兑换码", group="补给领取"),
+    "TextEdit_import_codes": Field("导入兑换码列表", group="兑换码设置"),
+}
 
 
 @periodic_module(
-    "Collect Supplies",
-    description="### Tips \n* Default: Always claim Supply Station stamina and friend stamina \n* Enable \"Redeem Code\" to fetch and redeem online codes automatically\n* Online codes are maintained by developers and may not always be updated in time\n* You can import a txt file for batch redeem (one code per line)",
+    "领取补给",
+    fields=_COLLECT_SUPPLIES_FIELDS,
+    description="""### 提示
+        * 默认会领取补给站体力和好友体力。
+        * 启用兑换码后可自动获取并兑换网络兑换码。
+        * 在线兑换码由开发者维护，可能存在更新延迟。
+        * 支持导入 txt 批量兑换（每行一个兑换码）""",
     actions={
-        "Import": "on_import_codes_click",
-        "Reset": "on_reset_codes_click",
+        "导入兑换码": "on_import_codes_click",
+        "重置兑换码": "on_reset_codes_click",
     }
 )
 class CollectSuppliesModule:
@@ -38,8 +53,7 @@ class CollectSuppliesModule:
         update_data: str = '',
         used_codes: list = None,
         import_codes: list = None,
-        redeem_codes_usecase=None,
-        redeem_codes_view=None,
+        settings_usecase=None,
     ):
         self.auto = auto
         self.logger = logger
@@ -53,8 +67,8 @@ class CollectSuppliesModule:
         self.update_data = update_data
         self.used_codes = list(used_codes or [])
         self.import_codes = list(import_codes or [])
-        self.redeem_codes_usecase = redeem_codes_usecase
-        self.redeem_codes_view = redeem_codes_view
+        self.settings_usecase = settings_usecase
+        self._is_import_dialog_open = False
         super().__init__()
 
     def run(self):
@@ -73,14 +87,102 @@ class CollectSuppliesModule:
         self.friends_power()
         self.station_power()
 
-    def on_reset_codes_click(self, page=None, **_kwargs):
-        if self.redeem_codes_usecase is None:
-            # Try to get from page if possible (legacy fallback)
-            # raise RuntimeError("redeem_codes_usecase is not configured")
+    @staticmethod
+    def _resolve_text_edit(*, page=None, text_edit=None):
+        if text_edit is not None:
+            return text_edit
+        if page is None:
+            return None
+        return getattr(page, "TextEdit_import_codes", None)
+
+    @staticmethod
+    def _set_text_edit_value(text_edit, value: str) -> None:
+        if text_edit is None:
             return
-        
-        text_edit = getattr(page, "TextEdit_import_codes", None) if page else None
-        content = self.redeem_codes_usecase.reset_codes(text_edit)
+        if hasattr(text_edit, "setPlainText"):
+            text_edit.setPlainText(str(value))
+            return
+        if hasattr(text_edit, "setText"):
+            text_edit.setText(str(value))
+
+    @staticmethod
+    def _read_text_edit_value(text_edit) -> str:
+        if text_edit is None:
+            return ""
+        if hasattr(text_edit, "toPlainText"):
+            return str(text_edit.toPlainText() or "")
+        if hasattr(text_edit, "text"):
+            return str(text_edit.text() or "")
+        return ""
+
+    def _reset_redeem_codes(self) -> str:
+        if self.settings_usecase is not None and hasattr(self.settings_usecase, "reset_redeem_codes"):
+            return str(self.settings_usecase.reset_redeem_codes() or "")
+
+        app_cfg = self.app_config or config
+        content = ""
+        import_item = getattr(app_cfg, "import_codes", None)
+        used_item = getattr(app_cfg, "used_codes", None)
+        if import_item is not None and getattr(import_item, "value", None):
+            app_cfg.set(import_item, [])
+            content += " 导入 "
+        if used_item is not None and getattr(used_item, "value", None):
+            app_cfg.set(used_item, [])
+            content += " 已使用 "
+        return content
+
+    @staticmethod
+    def _fallback_parse_import_codes(raw_text: str) -> list[str]:
+        lines = (raw_text or "").splitlines()
+        result: list[str] = []
+        for line in lines:
+            stripped = line.strip()
+            if not stripped:
+                continue
+            if ":" in stripped:
+                result.append(stripped.split(":")[-1].strip())
+            elif "：" in stripped:
+                result.append(stripped.split("：")[-1].strip())
+            else:
+                result.append(stripped)
+        return result
+
+    def _parse_import_codes(self, raw_text: str) -> list[str]:
+        if self.settings_usecase is not None and hasattr(self.settings_usecase, "parse_import_codes"):
+            return list(self.settings_usecase.parse_import_codes(raw_text))
+        return self._fallback_parse_import_codes(raw_text)
+
+    def _save_import_codes(self, codes: list[str]) -> None:
+        self.import_codes = list(codes)
+        if self.settings_usecase is not None and hasattr(self.settings_usecase, "save_import_codes"):
+            self.settings_usecase.save_import_codes(codes)
+            return
+
+        app_cfg = self.app_config or config
+        import_item = getattr(app_cfg, "import_codes", None)
+        if import_item is not None:
+            app_cfg.set(import_item, list(codes))
+
+    def _prompt_import_codes(self, parent):
+        if self._is_import_dialog_open:
+            return None
+
+        self._is_import_dialog_open = True
+        try:
+            dialog = CustomMessageBox(parent, _("导入兑换码"), "text_edit")
+            dialog.content.setEnabled(True)
+            dialog.content.setPlaceholderText(_("每行一个兑换码", msgid="one_code_per_line"))
+            if dialog.exec():
+                return str(dialog.content.toPlainText() or "")
+            return None
+        finally:
+            self._is_import_dialog_open = False
+
+    def on_reset_codes_click(self, page=None, host=None, text_edit=None, **_kwargs):
+        text_edit = self._resolve_text_edit(page=page, text_edit=text_edit)
+        if self._read_text_edit_value(text_edit):
+            self._set_text_edit_value(text_edit, "")
+        content = self._reset_redeem_codes()
         InfoBar.success(
             title=_('Reset Successful', msgid='reset_successful'),
             content=_(f'Successfully reset import and display {content}', msgid='successfully_reset_import_and_display_content'),
@@ -88,23 +190,19 @@ class CollectSuppliesModule:
             isClosable=True,
             position=InfoBarPosition.TOP_RIGHT,
             duration=2000,
-            parent=page,
+            parent=host or page,
         )
 
-    def on_import_codes_click(self, page=None, **_kwargs):
-        if self.redeem_codes_view is None:
-            # raise RuntimeError("redeem_codes_view is not configured")
-            return
-        if self.redeem_codes_usecase is None:
-            # raise RuntimeError("redeem_codes_usecase is not configured")
-            return
-            
-        raw_codes = self.redeem_codes_view.prompt_import_codes(page)
+    def on_import_codes_click(self, page=None, host=None, text_edit=None, **_kwargs):
+        raw_codes = self._prompt_import_codes(page or host)
         if raw_codes is None:
             return
-            
-        text_edit = getattr(page, "TextEdit_import_codes", None) if page else None
-        self.redeem_codes_usecase.import_codes(raw_codes, text_edit)
+
+        codes = self._parse_import_codes(raw_codes)
+        self._save_import_codes(codes)
+
+        text_edit = self._resolve_text_edit(page=page, text_edit=text_edit)
+        self._set_text_edit_value(text_edit, "\n".join(codes))
 
     def friends_power(self):
         timeout = Timer(30).start()
@@ -362,8 +460,9 @@ class CollectSuppliesModule:
                 new_used_codes = old_used_codes.copy()
                 new_used_codes.append(codes[index])
                 self.used_codes = new_used_codes
-                if self.app_config is not None and hasattr(self.app_config, "used_codes"):
-                    self.app_config.set(self.app_config.used_codes, new_used_codes)
+                app_cfg = self.app_config or config
+                if hasattr(app_cfg, "used_codes"):
+                    app_cfg.set(app_cfg.used_codes, new_used_codes)
                 index += 1
                 time.sleep(1)
                 continue
@@ -398,6 +497,3 @@ class CollectSuppliesModule:
                 self.logger.error(_("兑换兑换码超时"))
                 break
         back_to_home(self.auto, self.logger)
-
-
-

@@ -19,10 +19,6 @@ from app.features.modules.event_tips.usecase.event_tips_usecase import (
     EventTipsActions,
     EventTipsUseCase,
 )
-from app.features.modules.redeem_codes.ui.ui_view import RedeemCodesView
-from app.features.modules.redeem_codes.usecase.redeem_codes_usecase import (
-    RedeemCodesUseCase,
-)
 from app.features.modules.shopping.usecase.shopping_usecase import ShoppingSelectionUseCase
 from app.features.utils.home_navigation import back_to_home
 from app.features.utils.network import start_cloudflare_update
@@ -40,9 +36,9 @@ class SnowbreakMainWindowBridge(MainWindowFeatureBridge):
     def create_home_interface(self, window):
         from app.framework.core.module_system.registry import get_module
         from app.features.modules.shopping.ui.shop_periodic_page import ShopPage
-        
+
         enter_game_service = EnterGameService(window._is_non_chinese_ui, app_config=config)
-        
+
         # 独立接入：在接线层将业务依赖注入到 UI 工厂中
         shop_meta = get_module("task_shop")
         if shop_meta:
@@ -58,11 +54,12 @@ class SnowbreakMainWindowBridge(MainWindowFeatureBridge):
             task_profile_provider=get_periodic_task_profile,
             create_enter_game_actions=lambda _game_environment: enter_game_service,
             create_collect_supplies_actions=lambda settings_usecase: CollectSuppliesModule(
-                redeem_codes_usecase=RedeemCodesUseCase(settings_usecase),
-                redeem_codes_view=RedeemCodesView(),
+                app_config=config,
+                settings_usecase=settings_usecase,
             ),
             create_event_tips_actions=lambda settings_usecase, _is_non_chinese_ui, _ui_text_fn: EventTipsActions(
                 EventTipsUseCase(settings_usecase)
+
             ),
             startup_update_hook=start_cloudflare_update,
         )
@@ -88,4 +85,3 @@ class SnowbreakMainWindowBridge(MainWindowFeatureBridge):
 
 def build_main_window_bridge() -> MainWindowFeatureBridge:
     return SnowbreakMainWindowBridge()
-

@@ -8,15 +8,16 @@ from app.framework.core.module_system import Field, on_demand_module, periodic_m
 
 _MAZE_FIELDS = {
     "ComboBox_mode_maze": Field(
-        id="run_mode",
-        options=((0, "Single Run"), (1, "Repeat Run")),
+        name="模式",
+        layout="full",
+        options=((0, _("单次", msgid="single_run")), (1, _("重复", msgid="repeat_run"))),
     ),
 }
 
 @on_demand_module(
-    "Maze",
+    "迷宫",
     fields=_MAZE_FIELDS,
-    description="### Tips\n* Automatically performs Paradoxical Labyrinth (Maze) battles.\n* Choose between single run or multi-run modes.\n* Start from the maze entrance or difficulty selection screen.",
+    description="### 提示\n* 自动执行悖论迷宫战斗。\n* 支持单次与重复刷取两种模式。\n* 请从迷宫入口或难度选择界面开始。",
 )
 class MazeModule:
     def __init__(self, auto, logger, isLog: bool = False, ComboBox_mode_maze: int = 0):
@@ -111,5 +112,3 @@ class MazeModule:
             if timeout.reached():
                 self.logger.error(_("迷宫超时"))
                 break
-
-

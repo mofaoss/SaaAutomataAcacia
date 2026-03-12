@@ -2,6 +2,10 @@ import logging
 
 from PySide6.QtWidgets import QSizePolicy, QVBoxLayout, QWidget
 
+from app.framework.application.modules.name_resolver import (
+    resolve_state_display_name,
+    resolve_task_display_name,
+)
 from app.framework.infra.config.app_config import is_non_chinese_ui_language
 
 
@@ -26,6 +30,14 @@ class BaseInterface:
                 return translate(zh_text)
 
         return zh_text
+
+    @staticmethod
+    def _task_display_name(meta: dict, task_id: str) -> str:
+        return resolve_task_display_name(meta, task_id)
+
+    @staticmethod
+    def _state_display_name(task_name: str, task_name_msgid: str, source: str = "") -> str:
+        return resolve_state_display_name(task_name, task_name_msgid, source=source)
 
     def load_config(self):
         """Load configuration into UI elements. Override in subclass."""

@@ -7,7 +7,6 @@ from app.framework.core.module_system import Field, on_demand_module
 
 _MASSAGING_FIELDS = {
     "ComboBox_wife": Field(
-        id="wife",
         options=((0, "Character 1"), (1, "Character 2"), (2, "Character 3"), (3, "Character 4"), (4, "Character 5")),
     ),
 }

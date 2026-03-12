@@ -3,6 +3,8 @@ from __future__ import annotations
 
 from typing import Callable, Iterable
 
+from app.framework.application.modules.name_resolver import resolve_task_display_name
+
 
 def collect_checked_tasks(
     task_order: list[str],
@@ -151,11 +153,7 @@ def build_active_schedule_lines(
             continue
 
         meta = task_registry.get(task_id, {})
-        task_name = (
-            meta.get("en_name", task_id)
-            if is_non_chinese_ui
-            else meta.get("zh_name", task_id)
-        )
+        task_name = resolve_task_display_name(meta, task_id)
 
         rule_strs: list[str] = []
         for rule in rules:

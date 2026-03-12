@@ -1,4 +1,5 @@
 {
+  "module.close_game.title": "执行退出",
   "module.close_game.log.exiting_application": "正在退出应用...",
   "module.close_game.log.exiting_game": "正在退出游戏...",
   "module.close_game.log.system_will_shut_down_in_60s": "系统将在 60 秒后关机..."

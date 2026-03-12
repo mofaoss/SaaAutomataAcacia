@@ -264,7 +264,7 @@ def _scan_file(path: Path, *, allowed_lines: set[int] | None = None) -> list[Fin
                             "warning",
                             str(path.relative_to(ROOT)),
                             node.lineno,
-                            "Legacy ui_text/_ui_text call detected. Prefer _('English') and use .format(...) for dynamic values.",
+                            "Legacy ui_text/_ui_text call detected. Prefer _('中文') and use .format(...) for dynamic values.",
                         )
                     )
 

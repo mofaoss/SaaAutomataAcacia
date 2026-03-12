@@ -225,15 +225,15 @@ class PeriodicTasksPage(QFrame, BaseInterface):
     def _build_setting_name_list(self) -> list[str]:
         ordered_metas = sorted(
             (
-                meta
-                for meta in self.task_registry.values()
+                (task_id, meta)
+                for task_id, meta in self.task_registry.items()
                 if meta.get("ui_page_index") is not None
             ),
-            key=lambda item: item.get("ui_page_index", 0),
+            key=lambda item: item[1].get("ui_page_index", 0),
         )
         return [
-            _(meta.get('en_name', ''))
-            for meta in ordered_metas
+            self._task_display_name(meta, task_id)
+            for task_id, meta in ordered_metas
         ]
 
     def _on_init_sync(self):
@@ -357,7 +357,7 @@ class PeriodicTasksPage(QFrame, BaseInterface):
 
         self.ui.PopUpAniStackedWidget.setCurrentIndex(0)
         self.ui.TitleLabel_setting.setText(
-            _('Settings') + "-" + self.setting_name_list[
+            _('设置') + "-" + self.setting_name_list[
                 self.ui.PopUpAniStackedWidget.currentIndex()])
 
         self._load_config()
@@ -393,7 +393,7 @@ class PeriodicTasksPage(QFrame, BaseInterface):
             header = "<b>当前已激活的自动执行日程表：</b>" if not self._is_non_chinese_ui else "<b>Active Schedules:</b>"
             self.logger.info(_(f"{header}<br/>" + "<br/>".join(schedule_logs), msgid="periodic_active_schedule_output"))
         else:
-            self.logger.info(_('No active schedules.'))
+            self.logger.info(_('当前无激活日程。'))
 
     def _auto_adjust_after_use_action(self, sequence=None):
         # 检查当前是否在全局执行状态
@@ -436,8 +436,7 @@ class PeriodicTasksPage(QFrame, BaseInterface):
 
             task_item = TaskItemWidget(
                 task_id=task_id,
-                zh_name=meta["zh_name"],
-                en_name=meta["en_name"],
+                task_name=self._task_display_name(meta, task_id),
                 is_enabled=bool(task_cfg.get("enabled", True)),
                 is_non_chinese_ui=self._is_non_chinese_ui,
                 parent=self.ui.taskListWidget,
@@ -681,8 +680,14 @@ class PeriodicTasksPage(QFrame, BaseInterface):
         self.task_coordinator.stop_requested.connect(self._on_global_stop_request)
         self._connect_to_save_changed()
 
-    def _on_global_state_changed(self, is_running: bool, zh_name: str, en_name: str, source: str):
-        PeriodicRuntimeActions.on_global_state_changed(self, is_running, zh_name, en_name, source)
+    def _on_global_state_changed(self, is_running: bool, task_name: str, task_name_msgid: str, source: str):
+        PeriodicRuntimeActions.on_global_state_changed(
+            self,
+            is_running,
+            task_name,
+            task_name_msgid,
+            source,
+        )
 
     # 【新增】响应全局的停止请求 (F8)
     def _on_global_stop_request(self):
@@ -737,7 +742,7 @@ class PeriodicTasksPage(QFrame, BaseInterface):
     def start_from_homepage(self):
         """专供首页快捷卡片调用：如果已经在运行，则什么都不做，绝不终止任务"""
         if self.is_running or self.is_launch_pending:
-            self.logger.info(_('Task is already running, ignoring homepage launch request.'))
+            self.logger.info(_('任务已在运行，忽略首页启动请求。'))
             return
 
         # 如果空闲，则复用普通的立即执行逻辑
@@ -754,7 +759,7 @@ class PeriodicTasksPage(QFrame, BaseInterface):
             if index < 0 or index >= len(self.setting_name_list):
                 return
             self.ui.TitleLabel_setting.setText(
-                _('Settings') + "-" +
+                _('设置') + "-" +
                 self.setting_name_list[index])
             self.ui.PopUpAniStackedWidget.setCurrentIndex(index)
         except Exception as e:

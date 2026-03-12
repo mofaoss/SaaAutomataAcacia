@@ -8,7 +8,7 @@ from PySide6.QtCore import Qt
 from qfluentwidgets import BodyLabel, InfoBar, InfoBarPosition, ProgressBar
 
 from app.features.utils.network import calculate_time_difference, get_date_from_api
-from app.framework.i18n import _, tr
+from app.framework.i18n import _
 from app.framework.i18n import runtime as i18n_runtime
 
 _REMAINING_DAYS_RE = re.compile(r"^\s*(\d+)\s*(?:d\(s\)|d|day|days|ds)\s*left\s*$", re.IGNORECASE)
@@ -17,12 +17,13 @@ _REMAINING_HOURS_RE = re.compile(r"^\s*(\d+)\s*(?:h|hour|hours)\s*left\s*$", re.
 _REMAINING_MINUTES_RE = re.compile(r"^\s*(\d+)\s*(?:m|min|minute|minutes)\s*left\s*$", re.IGNORECASE)
 _STARTS_IN_DAYS_RE = re.compile(r"^\s*in\s+(\d+)\s*(?:d\(s\)|d|day|days)\s*$", re.IGNORECASE)
 
-I18N_EVENT_STATUS_FINISHED = "module.event_tips.ui.event_status_finished"
-I18N_EVENT_STATUS_REMAINING_DAYS = "module.event_tips.ui.event_status_remaining_days"
-I18N_EVENT_STATUS_REMAINING_HOURS = "module.event_tips.ui.event_status_remaining_hours"
-I18N_EVENT_STATUS_REMAINING_MINUTES = "module.event_tips.ui.event_status_remaining_minutes"
-I18N_EVENT_STATUS_STARTS_IN_DAYS = "module.event_tips.ui.event_status_starts_in_days"
-I18N_EVENT_STATUS_DISPLAY_WITH_TITLE = "module.event_tips.ui.event_status_display_with_title"
+EVENT_STATUS_TRANSLATION_SPEC: dict[str, tuple[str, str]] = {
+    "finished": ("Finished", "event_status_finished"),
+    "remaining_days": ("{days} days left", "event_status_remaining_days"),
+    "remaining_hours": ("{hours} hours left", "event_status_remaining_hours"),
+    "remaining_minutes": ("{minutes} minutes left", "event_status_remaining_minutes"),
+    "starts_in_days": ("Starts in {days} days", "event_status_starts_in_days"),
+}
 
 
 @dataclass(slots=True)
@@ -77,28 +78,29 @@ def parse_external_status_text(text: str) -> EventStatus:
 def format_localized_status(status: EventStatus) -> str:
     kind = status.kind
     value = int(status.value or 0)
-
-    if kind == "finished":
-        localized = tr(I18N_EVENT_STATUS_FINISHED, fallback="Finished")
-    elif kind == "remaining_days":
-        localized = tr(I18N_EVENT_STATUS_REMAINING_DAYS, fallback="{days} days remaining", days=value)
-    elif kind == "remaining_hours":
-        localized = tr(I18N_EVENT_STATUS_REMAINING_HOURS, fallback="{hours} hours remaining", hours=value)
-    elif kind == "remaining_minutes":
-        localized = tr(I18N_EVENT_STATUS_REMAINING_MINUTES, fallback="{minutes} minutes remaining", minutes=value)
-    elif kind == "starts_in_days":
-        localized = tr(I18N_EVENT_STATUS_STARTS_IN_DAYS, fallback="Starts in {days} days", days=value)
-    else:
+    spec = EVENT_STATUS_TRANSLATION_SPEC.get(kind)
+    if spec is None:
         localized = status.raw_text
+    else:
+        template, msgid = spec
+        format_kwargs: dict[str, int] = {}
+        if kind in {"remaining_days", "starts_in_days"}:
+            format_kwargs["days"] = value
+        elif kind == "remaining_hours":
+            format_kwargs["hours"] = value
+        elif kind == "remaining_minutes":
+            format_kwargs["minutes"] = value
+
+        localized = _(template, msgid=msgid, **format_kwargs)
 
     i18n_runtime.report_i18n_event("event_status_localized", f"{status.kind}:{localized}")
     return localized
 
 
 def compose_event_status_display(title: str, localized_status: str) -> str:
-    display = tr(
-        I18N_EVENT_STATUS_DISPLAY_WITH_TITLE,
-        fallback="{title}: {status}",
+    display = _(
+        "{title}: {status}",
+        msgid="event_status_display_with_title",
         title=title,
         status=localized_status,
     )

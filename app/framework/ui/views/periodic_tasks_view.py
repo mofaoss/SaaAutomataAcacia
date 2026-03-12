@@ -224,8 +224,7 @@ class TaskItemWidget(QWidget):
     def __init__(
         self,
         task_id,
-        zh_name,
-        en_name,
+        task_name,
         is_enabled,
         is_non_chinese_ui,
         parent=None,
@@ -236,7 +235,7 @@ class TaskItemWidget(QWidget):
         super().__init__(parent)
         self.task_id = task_id
         self._is_non_chinese_ui = is_non_chinese_ui
-        self._original_text = en_name if is_non_chinese_ui else zh_name
+        self._original_text = str(task_name or task_id)
         self.current_state = 'idle'  # 记录内部状态
         self.is_scheduled = False    # 独立记录是否启用了计划
 
@@ -886,18 +885,18 @@ class PeriodicTasksView(ScrollArea):
 
     def _apply_ui_settings(self):
         self.BodyLabel_preset.setText(
-            _('Task Preset:'))
-        self.PushButton_add_preset.setToolTip(_('Create New Preset'))
-        self.PushButton_save_preset.setToolTip(_('Save current selection to preset'))
-        self.PushButton_delete_preset.setToolTip(_('Delete current preset'))
+            _('任务勾选记录：'))
+        self.PushButton_add_preset.setToolTip(_('新建预设'))
+        self.PushButton_save_preset.setToolTip(_('保存当前勾选到预设'))
+        self.PushButton_delete_preset.setToolTip(_('删除当前预设'))
         self.PushButton_start.setText(_('Execute Now (F8)'))
         self.PushButton_start.setToolTip(
             _('Shortcut: F8'))
 
-        self.TitleLabel.setText(_('Log'))
-        self.PushButton_select_all.setText(_('All'))
-        self.PushButton_no_select.setText(_('Clear'))
-        self.hint_label.setText(_('Drag to sort'))
-        self.TitleLabel_3.setText(_('Event Reminder'))
+        self.TitleLabel.setText(_('日志'))
+        self.PushButton_select_all.setText(_('全选'))
+        self.PushButton_no_select.setText(_('清空'))
+        self.hint_label.setText(_('拖动调整顺序'))
+        self.TitleLabel_3.setText(_('日程提醒'))
 
 

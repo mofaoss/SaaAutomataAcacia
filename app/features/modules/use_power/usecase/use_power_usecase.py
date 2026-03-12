@@ -14,9 +14,8 @@ from app.framework.core.module_system import Field, on_demand_module, periodic_m
 
 
 _USE_POWER_FIELDS = {
-    "CheckBox_is_use_power": Field(id="auto_use_expiring"),
+    "CheckBox_is_use_power": Field(),
     "ComboBox_power_day": Field(
-        id="day_potion",
         options=(
             (-1, "No Potion"),
             (0, "Day 1"),
@@ -28,15 +27,19 @@ _USE_POWER_FIELDS = {
         ),
     ),
     "ComboBox_power_usage": Field(
-        id="stamina_usage_mode",
         options=((0, "Event Stages"), (1, "Operation Logistics")),
     ),
 }
 
 @periodic_module(
-    "Use Stamina",
+    "消耗体力",
     fields=_USE_POWER_FIELDS,
-    description="### Tips\n* Automatically consumes Presence (Stamina) by running missions.\n* Can automatically use Stamina medicines (Memory Chips).\n* Supports Event stages or Tactical Drill (Routine Logistics) stages.",
+    description=(
+        "### 提示\n"
+        "* 自动消耗体力进行战斗。\n"
+        "* 支持自动使用体力药和忆片。\n"
+        "* 支持活动关卡与常规后勤关卡。"
+    ),
 )
 class UsePowerModule:
     def __init__(

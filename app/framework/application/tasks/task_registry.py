@@ -16,8 +16,8 @@ def _build_periodic_tasks() -> list[TaskDefinition]:
             TaskDefinition(
                 id=spec.id,
                 module_class=spec.module_class,
-                zh_name=spec.zh_name,
-                en_name=spec.en_name,
+                name=spec.name,
+                name_msgid=spec.name_msgid,
                 domain=TaskDomain.PERIODIC,
                 ui_page_index=None,
                 option_key=None,
@@ -40,8 +40,8 @@ def _build_on_demand_tasks() -> list[TaskDefinition]:
             TaskDefinition(
                 id=spec.id,
                 module_class=spec.module_class,
-                zh_name=spec.zh_name,
-                en_name=spec.en_name,
+                name=spec.name,
+                name_msgid=spec.name_msgid,
                 domain=TaskDomain.ON_DEMAND,
                 page_attr=bindings.page_attr,
                 card_widget_attr=bindings.card_widget_attr,

@@ -7,8 +7,8 @@ from PySide6.QtCore import QObject, Signal
 @dataclass(frozen=True)
 class GlobalTaskState:
     is_running: bool
-    zh_name: str
-    en_name: str
+    task_name: str
+    task_name_msgid: str
     source: str
 
 
@@ -26,9 +26,14 @@ class GlobalTaskBus(QObject):
     def state(self) -> GlobalTaskState:
         return self._state
 
-    def publish_state(self, is_running: bool, zh_name: str, en_name: str, source: str):
-        self._state = GlobalTaskState(bool(is_running), zh_name, en_name, source)
-        self.state_changed.emit(self._state.is_running, self._state.zh_name, self._state.en_name, self._state.source)
+    def publish_state(self, is_running: bool, task_name: str, task_name_msgid: str, source: str):
+        self._state = GlobalTaskState(bool(is_running), task_name, task_name_msgid, source)
+        self.state_changed.emit(
+            self._state.is_running,
+            self._state.task_name,
+            self._state.task_name_msgid,
+            self._state.source,
+        )
 
     def request_stop(self):
         self.stop_requested.emit()

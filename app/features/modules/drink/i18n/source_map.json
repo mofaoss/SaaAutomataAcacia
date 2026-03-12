@@ -1,9 +1,9 @@
 {
-  "module.drink.log.tmpl_21fa4542d160": "zh_CN",
-  "module.drink.log.tmpl_ecb14feb15e6": "zh_CN",
-  "module.drink.log.txt_d7864bb02c44": "zh_CN",
-  "module.drink.log.txt_d97288de7e1e": "zh_CN",
-  "module.drink.log.txt_e663ae4a386c": "zh_CN",
-  "module.drink.log.txt_f85dd903b70f": "zh_CN",
-  "module.drink.title": "en"
+  "module.drink.log.已完成_value_1_次猜心对局_2": "zh_CN",
+  "module.drink.log.开始第_count_次猜心对局_2": "zh_CN",
+  "module.drink.log.玩法未解锁_2": "zh_CN",
+  "module.drink.log.进入酒馆超时_2": "zh_CN",
+  "module.drink.log.酒馆对局超时_2": "zh_CN",
+  "module.drink.log.重进对局超时_2": "zh_CN",
+  "module.drink.title": "zh_CN"
 }

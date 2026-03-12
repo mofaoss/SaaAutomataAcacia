@@ -1,36 +1,8 @@
 {
-  "module.drink.log.tmpl_21fa4542d160": {
+  "module.drink.log.已完成_value_1_次猜心对局_2": {
     "kind": "dynamic_template",
-    "template_id": "tmpl_21fa4542d160",
-    "msgid": "tmpl_21fa4542d160",
-    "source_template": "开始第{count}次猜心对局",
-    "fields": [
-      "count"
-    ],
-    "field_details": {
-      "count": {
-        "format_spec": "",
-        "conversion": ""
-      }
-    },
-    "owner_scope": "module",
-    "owner_module": "drink",
-    "file_path": "app/features/modules/drink/usecase/drink_usecase.py",
-    "line": 50,
-    "col": 37,
-    "function_name": "run",
-    "class_name": "DrinkModule",
-    "context": "log",
-    "source_language": "zh_CN",
-    "template_hash": "21fa4542d160f6b858f86ddf35e363433615d973",
-    "callsite_key": "app/features/modules/drink/usecase/drink_usecase.py:50:37",
-    "is_runtime_visible": true,
-    "mixed_source_template": true
-  },
-  "module.drink.log.tmpl_ecb14feb15e6": {
-    "kind": "dynamic_template",
-    "template_id": "tmpl_ecb14feb15e6",
-    "msgid": "tmpl_ecb14feb15e6",
+    "template_id": null,
+    "msgid": null,
     "source_template": "已完成{value_1}次猜心对局",
     "fields": [
       "value_1"
@@ -44,14 +16,42 @@
     "owner_scope": "module",
     "owner_module": "drink",
     "file_path": "app/features/modules/drink/usecase/drink_usecase.py",
-    "line": 59,
+    "line": 56,
     "col": 33,
     "function_name": "run",
     "class_name": "DrinkModule",
     "context": "log",
     "source_language": "zh_CN",
     "template_hash": "ecb14feb15e6952bbe53b0fb97837fee92f6cdc8",
-    "callsite_key": "app/features/modules/drink/usecase/drink_usecase.py:59:33",
+    "callsite_key": "app/features/modules/drink/usecase/drink_usecase.py:56:33",
+    "is_runtime_visible": true,
+    "mixed_source_template": true
+  },
+  "module.drink.log.开始第_count_次猜心对局_2": {
+    "kind": "dynamic_template",
+    "template_id": null,
+    "msgid": null,
+    "source_template": "开始第{count}次猜心对局",
+    "fields": [
+      "count"
+    ],
+    "field_details": {
+      "count": {
+        "format_spec": "",
+        "conversion": ""
+      }
+    },
+    "owner_scope": "module",
+    "owner_module": "drink",
+    "file_path": "app/features/modules/drink/usecase/drink_usecase.py",
+    "line": 47,
+    "col": 37,
+    "function_name": "run",
+    "class_name": "DrinkModule",
+    "context": "log",
+    "source_language": "zh_CN",
+    "template_hash": "21fa4542d160f6b858f86ddf35e363433615d973",
+    "callsite_key": "app/features/modules/drink/usecase/drink_usecase.py:47:37",
     "is_runtime_visible": true,
     "mixed_source_template": true
   }

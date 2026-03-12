@@ -4,15 +4,20 @@ from app.framework.i18n.runtime import _
 from app.features.utils.randoms import random_rectangle_point
 from app.framework.infra.automation.timer import Timer
 
-from app.framework.core.module_system import on_demand_module, periodic_module, Field
+from app.framework.core.module_system import Field, on_demand_module
+
+
+_DRINK_FIELDS = {
+    "SpinBox_drink_times": Field("对局次数(-1无限)"),
+    "ComboBox_card_mode": Field("对局模式", options=((0, "模式一"), (1, "模式二"))),
+    "CheckBox_is_speed_up": Field("开启二倍速"),
+}
 
 
 @on_demand_module(
-    "Card Match",
-    description="### Tips\n"
-                "* Automated card matching for drink rewards.\n"
-                "* Ensure you are in the tavern before starting.\n"
-                "* Supports multiple game modes and automatic repeats.",
+    "猜心对局",
+    fields=_DRINK_FIELDS,
+    description="### 提示\n* 自动执行猜心对局领取酒馆奖励。\n* 开始前请确保已进入酒馆界面。\n* 支持多种模式与自动重复执行。",
 )
 class DrinkModule:
     def __init__(
@@ -270,3 +275,4 @@ class DrinkModule:
             if timeout.reached():
                 self.logger.error(_("重进对局超时"))
                 break
+

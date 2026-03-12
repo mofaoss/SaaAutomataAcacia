@@ -1,3 +1,6 @@
 {
+  "module.shard_exchange.field.enable_receive_shards.label": "Enable Receive Shards",
+  "module.shard_exchange.field.enable_gift_shards.label": "Enable Gift Shards",
+  "module.shard_exchange.field.enable_recycle_shards.label": "Enable Recycle Shards",
   "module.shard_exchange.title": "Shard Exchange"
 }

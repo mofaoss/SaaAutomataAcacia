@@ -302,8 +302,8 @@ def handle_update_logic(raw_data: Dict[str, Any], online_data: Dict[str, Any], r
         )
         _refresh_tips(parent, url=url)
         InfoBar.success(
-            title=_('Update Successful', msgid='update_successful'),
-            content=_('New redeem code event information detected', msgid='new_redeem_code_event_information_detected'),
+            title=_('更新成功', msgid='update_successful'),
+            content=_('检测到新的兑换码活动信息', msgid='new_redeem_code_event_information_detected'),
             orient=Qt.Orientation.Horizontal,
             isClosable=True,
             position=InfoBarPosition.TOP_RIGHT,
@@ -339,7 +339,7 @@ def handle_update_logic(raw_data: Dict[str, Any], online_data: Dict[str, Any], r
                 url = f"https://www.cbjq.com/api.php?op=search_api&action=get_article_detail&catid={response.data.updateData.linkCatId}&id={response.data.updateData.linkId}"
                 _refresh_tips(parent, url=url)
                 InfoBar.success(
-                    title=_('Update Successful'),
+                    title=_('更新成功'),
                     content=_(f'New {content} detected', msgid='new_content_detected'),
                     orient=Qt.Orientation.Horizontal,
                     isClosable=True,
@@ -364,8 +364,8 @@ def handle_update_logic_fallback(data, online_data, parent):
         url = f"https://www.cbjq.com/api.php?op=search_api&action=get_article_detail&catid={catId}&id={linkId}"
         _refresh_tips(parent, url=url)
         InfoBar.success(
-            title=_('Update Successful'),
-            content=_('New redeem code event information detected', msgid='new_redeem_code_event_information_detected_2'),
+            title=_('更新成功'),
+            content=_('检测到新的兑换码活动信息', msgid='new_redeem_code_event_information_detected_2'),
             orient=Qt.Orientation.Horizontal,
             isClosable=True,
             position=InfoBarPosition.TOP_RIGHT,
@@ -375,7 +375,7 @@ def handle_update_logic_fallback(data, online_data, parent):
     else:
         if not isinstance(config.update_data.value, dict) or 'data' not in config.update_data.value:
             parent.logger.error(
-                _('Local configuration data format is incorrect, using online data', msgid='local_configuration_data_format_is_incorrect_usi')
+                _('本地配置数据格式不正确，使用在线数据', msgid='local_configuration_data_format_is_incorrect_usi')
             )
             config.set(config.update_data, data)
             config.set(config.task_name, online_data["updateData"]["questName"])

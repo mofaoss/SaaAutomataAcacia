@@ -592,7 +592,7 @@ class Automation:
         if temp is None:
             self._log_error_throttled(
                 "find_image_without_screenshot",
-                _('No available screenshot currently, skipping image matching', msgid='no_available_screenshot_currently_skipping_image'),
+                _('当前没有可用截图，跳过图像匹配', msgid='no_available_screenshot_currently_skipping_image'),
             )
             return None, None, None
 
@@ -1073,7 +1073,7 @@ class Automation:
         if self.first_screenshot is None:
             self._log_error_throttled(
                 "read_text_no_screenshot",
-                _('No screenshot currently, unable to read text', msgid='no_screenshot_currently_unable_to_read_text'),
+                _('当前没有截图，无法读取文本', msgid='no_screenshot_currently_unable_to_read_text'),
                 level="warning",
             )
             self.ocr_result = []
@@ -1090,7 +1090,7 @@ class Automation:
             if target is None:
                 self._log_error_throttled(
                     "find_image_and_count_no_target",
-                    _('Target image is empty, skipping match counting', msgid='target_image_is_empty_skipping_match_counting'),
+                    _('目标图像为空，跳过匹配计数', msgid='target_image_is_empty_skipping_match_counting'),
                 )
                 return None
             temp = target
@@ -1140,7 +1140,7 @@ class Automation:
         try:
             ocr_result = self.read_text_from_crop(crop=(900 / 1920, 0, 1076 / 1920, 70 / 1080))
             if not ocr_result or not isinstance(ocr_result, list) or not isinstance(ocr_result[0], (list, tuple)):
-                self.logger.warning(_('Unable to recognize stamina from screenshot', msgid='unable_to_recognize_stamina_from_screenshot'))
+                self.logger.warning(_('无法从截图识别体力', msgid='unable_to_recognize_stamina_from_screenshot'))
                 return None
 
             text = str(ocr_result[0][0]) if ocr_result[0] else ""
