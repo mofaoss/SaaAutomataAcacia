@@ -201,7 +201,6 @@ class PerfectBuild:
             "--assume-yes-for-downloads",
             "--plugin-enable=pyside6",
             "--plugin-enable=numpy",
-            "--plugin-enable=opencv",
             f"--output-dir={output_dir}",
             "--windows-uac-admin",
             "--windows-console-mode=disable",
