@@ -81,7 +81,14 @@ class TranslatableString(str):
 
         merged_kwargs = dict(message.kwargs or {})
         merged_kwargs.update(kwargs)
-        updated = replace(message, kwargs=merged_kwargs, _rendered_cache=None)
+        # For non-explicit hash-like msgids (e.g. txt_xxx), preserve recoverability:
+        # after prepare_build rewrites _("...").format(...), keeping that generated
+        # hash msgid can block framework.log.* key lookup for auto-wrapped logs.
+        next_msgid = message.msgid
+        if (not message.msgid_explicit) and isinstance(next_msgid, str) and next_msgid.startswith("txt_"):
+            next_msgid = None
+
+        updated = replace(message, msgid=next_msgid, kwargs=merged_kwargs, _rendered_cache=None)
         return _public_text(updated)
 
 
@@ -1204,13 +1211,14 @@ def translate_message(message: TranslatableMessage, *, context: str, target_lang
                 return rendered
 
     translated = _CATALOGS.get(target_lang, {}).get(key)
-    if translated is None and not message.msgid_explicit and not message.kwargs:
+    if translated is None and not message.msgid_explicit:
         recovered_static = _recover_static_message_without_msgid(message, context=context, target_lang=target_lang)
         if recovered_static is not None:
-            return recovered_static
-        recovered_dynamic = _recover_dynamic_message_without_msgid(message, context=context, target_lang=target_lang)
-        if recovered_dynamic is not None:
-            return recovered_dynamic
+            return _safe_format(recovered_static, message.kwargs)
+        if not message.kwargs:
+            recovered_dynamic = _recover_dynamic_message_without_msgid(message, context=context, target_lang=target_lang)
+            if recovered_dynamic is not None:
+                return recovered_dynamic
     if translated is None and target_lang == "zh_HK":
         zh_cn_value = _CATALOGS.get("zh_CN", {}).get(key)
         if zh_cn_value is not None:
