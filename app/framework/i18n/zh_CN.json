@@ -27,6 +27,8 @@
   "framework.log.found_handle_for_window_value_hwnd": "找到窗口 {self_window_title} 的句柄：{hwnd}",
   "framework.log.game_not_running_auto_login_task_inserted_at_queue_head": "游戏未运行，自动登录任务已插入队列头部",
   "framework.log.game_path_is_not_configured_please_set_it_up_according_to_the_tutorial_first": "游戏路径未配置，请先根据教程进行设置。",
+  "framework.log.ui_click_resolved_id_type_target_trace": "UI 点击解析结果：id={resolved_id} type={resolved_find_type} target={resolved_target} trace={value_4}",
+  "framework.log.game_window_detected": "检测到游戏窗口",
   "framework.log.game_window_does_not_meet_16_9_ratio_please_adju": "游戏窗口不符合16:9比例，请手动调整",
   "framework.log.game_window_ratio_is_not_16_9": "游戏窗口比例不是16:9",
   "framework.log.hotkey_pressed": "热键已按下",

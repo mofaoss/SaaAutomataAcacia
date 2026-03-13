@@ -1,8 +1,10 @@
 from __future__ import annotations
 
 import argparse
+import ast
 import locale
 import os
+import re
 import shutil
 import subprocess
 import sys
@@ -24,29 +26,66 @@ PROJECT_ROOT = SMOKE_ROOT / "project"
 PROJECT_ENTRY = PROJECT_ROOT / "main.py"
 STAGE_DIR_NAME = ".nuitka_stage"
 EXPECTED_LINES = [
-    "Preparing role_shard, returning to home...",
-    "Hello World and K and World",
-    "Client area size: 1920x1080 (1.778:1), ratio_ok 16:9 standard ratio",
+    "\u5ba2\u6237\u533a\u5927\u5c0f\uff1a1920x1080\uff081.778:1\uff09\uff0c\u7b26\u5408 16:9 \u6807\u51c6\u6bd4\u4f8b",
 ]
 
 SAMPLE_SOURCE = """from __future__ import annotations
 
-def _(text: str, **kwargs) -> str:
-    return text
+import logging
+import sys
+
+import app.framework.i18n.runtime as i18n_runtime
+
+i18n_runtime._resolve_lang = lambda: "zh_CN"
+i18n_runtime.load_i18n_catalogs()
+
+from app.framework.i18n import _
+
+
+class LogFormatter(logging.Formatter):
+    def format(self, record: logging.LogRecord) -> str:
+        return i18n_runtime.render_message(record.msg, context="log", levelno=record.levelno)
+
+
+def build_logger() -> logging.Logger:
+    logger = logging.getLogger("nuitka.prepare.smoke")
+    logger.setLevel(logging.WARNING)
+    logger.propagate = False
+    logger.handlers.clear()
+    handler = logging.StreamHandler(sys.stdout)
+    handler.setFormatter(LogFormatter())
+    logger.addHandler(handler)
+    return logger
+
+
+class BaseTask:
+    def __init__(self) -> None:
+        self.logger = build_logger()
+
+    def determine_screen_ratio(self) -> bool:
+        client_width = 1920
+        client_height = 1080
+
+        actual_ratio = client_width / client_height
+        target_ratio = 16 / 9
+        tolerance = 0.05
+        is_16_9 = abs(actual_ratio - target_ratio) <= (target_ratio * tolerance)
+
+        status = (
+            _("Meets", msgid="meets")
+            if is_16_9
+            else _("Does not meet", msgid="does_not_meet")
+        )
+
+        self.logger.warning(
+            _(f"Client area size: {client_width}x{client_height} ({actual_ratio:.3f}:1), {status} 16:9 standard ratio", msgid="client_area_size_client_width_x_client_height_ac")
+        )
+        return is_16_9
 
 
 def main() -> None:
-    task_name = "role_shard"
-    name = "World"
-    data = {"key": "K"}
-    client_width = 1920
-    client_height = 1080
-    actual_ratio = client_width / client_height
-    status = "ratio_ok"
-
-    print(_(f"Preparing {task_name}, returning to home..."))
-    print(_(f"Hello {name} and {data['key']} and {name}"))
-    print(_(f"Client area size: {client_width}x{client_height} ({actual_ratio:.3f}:1), {status} 16:9 standard ratio"))
+    task = BaseTask()
+    task.determine_screen_ratio()
 
 
 if __name__ == "__main__":
@@ -65,6 +104,13 @@ def _run_command(cmd: list[str], *, cwd: Path | None = None) -> CommandResult:
     env = os.environ.copy()
     env.setdefault("PYTHONIOENCODING", "utf-8")
     env.setdefault("PYTHONUTF8", "1")
+
+    current_pythonpath = env.get("PYTHONPATH", "")
+    pythonpath_entries = [str(ROOT)]
+    if current_pythonpath:
+        pythonpath_entries.append(current_pythonpath)
+    env["PYTHONPATH"] = os.pathsep.join(pythonpath_entries)
+
     proc = subprocess.run(
         cmd,
         cwd=str(cwd) if cwd else None,
@@ -90,14 +136,27 @@ def _decode_stream(raw: bytes) -> str:
     return raw.decode("utf-8", errors="replace")
 
 
+def _normalize_output_lines(output: str) -> list[str]:
+    lines: list[str] = []
+    for raw_line in output.splitlines():
+        line = raw_line.rstrip("\r").strip()
+        if not line:
+            continue
+        # Strip ANSI escape sequences emitted by some third-party libraries.
+        line = re.sub(r"\x1b\[[0-9;]*m", "", line)
+        if "QFluentWidgets Pro is now released." in line:
+            continue
+        lines.append(line)
+    return lines
+
+
 def _run_program(path: Path, *, cwd: Path | None = None) -> list[str]:
     result = _run_command([sys.executable, str(path)], cwd=cwd)
     if result.returncode != 0:
         raise RuntimeError(
             f"Program failed: {path}\nstdout:\n{result.stdout}\nstderr:\n{result.stderr}"
         )
-    lines = [line.rstrip("\r") for line in result.stdout.splitlines() if line.strip()]
-    return lines
+    return _normalize_output_lines(result.stdout)
 
 
 def _assert_expected(lines: list[str], label: str) -> None:
@@ -120,6 +179,53 @@ def _ensure_transformed(stage_entry: Path) -> None:
         raise AssertionError("Stage still contains dynamic _(f\"...\") after prepare_build.")
     if ".format(" not in transformed:
         raise AssertionError("Stage source does not contain .format(...) rewrite.")
+    _assert_client_area_call_rewritten(transformed)
+
+
+def _assert_client_area_call_rewritten(source: str) -> None:
+    tree = ast.parse(source)
+    found_target = False
+    for node in ast.walk(tree):
+        if not isinstance(node, ast.Call):
+            continue
+        if not isinstance(node.func, ast.Attribute) or node.func.attr != "warning":
+            continue
+        if not node.args:
+            continue
+        first_arg = node.args[0]
+        if not isinstance(first_arg, ast.Call):
+            continue
+        if not isinstance(first_arg.func, ast.Attribute) or first_arg.func.attr != "format":
+            continue
+        i18n_call = first_arg.func.value
+        if not isinstance(i18n_call, ast.Call):
+            continue
+        if not isinstance(i18n_call.func, ast.Name) or i18n_call.func.id != "_":
+            continue
+        if not i18n_call.args or not isinstance(i18n_call.args[0], ast.Constant):
+            continue
+
+        template = i18n_call.args[0].value
+        if not isinstance(template, str) or "Client area size:" not in template:
+            continue
+
+        msgid_kw = next((kw for kw in i18n_call.keywords if kw.arg == "msgid"), None)
+        if not msgid_kw or not isinstance(msgid_kw.value, ast.Constant):
+            raise AssertionError("client-area _(...) rewrite lost msgid keyword.")
+        if msgid_kw.value.value != "client_area_size_client_width_x_client_height_ac":
+            raise AssertionError("client-area _(...) rewrite changed msgid unexpectedly.")
+
+        placeholder_keys = {kw.arg for kw in first_arg.keywords if kw.arg is not None}
+        expected_keys = {"client_width", "client_height", "actual_ratio", "status"}
+        if not expected_keys.issubset(placeholder_keys):
+            raise AssertionError(
+                f"client-area .format(...) missing keys. expected subset {expected_keys}, actual {placeholder_keys}"
+            )
+        found_target = True
+        break
+
+    if not found_target:
+        raise AssertionError("Did not find rewritten logger.warning client-area call in staged source.")
 
 
 def _maybe_run_nuitka(script_path: Path, output_dir: Path, *, standalone: bool) -> Path:
@@ -132,6 +238,7 @@ def _maybe_run_nuitka(script_path: Path, output_dir: Path, *, standalone: bool) 
         "--no-pyi-file",
         "--zig",
         f"--output-dir={output_dir}",
+        f"--include-data-dir={ROOT / 'app' / 'framework' / 'i18n'}=app/framework/i18n",
     ]
     if standalone:
         cmd.append("--standalone")
@@ -162,7 +269,7 @@ def _run_executable(exe_path: Path) -> list[str]:
         raise RuntimeError(
             f"Executable failed: {exe_path}\nstdout:\n{result.stdout}\nstderr:\n{result.stderr}"
         )
-    return [line.rstrip("\r") for line in result.stdout.splitlines() if line.strip()]
+    return _normalize_output_lines(result.stdout)
 
 
 def main() -> int:

@@ -33,7 +33,7 @@ class I18nFStringTransformer(ast.NodeTransformer):
             if not node.args:
                 return node
             first_arg = node.args[0]
-            if not isinstance(first_arg, (ast.JoinedStr, ast.BinOp)):
+            if not self._is_rewrite_candidate(first_arg):
                 return node
             transformed = self._rewrite_i18n_dynamic_call(node, first_arg)
             if transformed is not node:
@@ -68,24 +68,52 @@ class I18nFStringTransformer(ast.NodeTransformer):
         if isinstance(first_arg, ast.Call) and isinstance(first_arg.func, ast.Name) and first_arg.func.id == "_":
             return node
 
-        # Only wrap string literals or f-strings
-        if isinstance(first_arg, (ast.Constant, ast.JoinedStr, ast.BinOp)):
+        # Wrap plain string payloads and rewrite only safe dynamic template shapes.
+        if isinstance(first_arg, ast.Constant):
+            if not isinstance(first_arg.value, str):
+                return node
             self.changed = True
-            
-            # Create a virtual _(arg) call
-            virtual_i18n_call = ast.Call(
-                func=ast.Name(id="_", ctx=ast.Load()),
-                args=[first_arg],
-                keywords=[]
-            )
-            
-            # Process the virtual call using existing rewrite logic (for f-strings)
-            rewritten_arg = self._rewrite_i18n_dynamic_call(virtual_i18n_call, first_arg)
-            
-            # Update the original logger call's first argument
-            node.args[0] = rewritten_arg
-            
+            node.args[0] = self._wrap_with_i18n(first_arg)
+            return node
+
+        if self._is_rewrite_candidate(first_arg):
+            self.changed = True
+            virtual_i18n_call = self._wrap_with_i18n(first_arg)
+            node.args[0] = self._rewrite_i18n_dynamic_call(virtual_i18n_call, first_arg)
+            return node
+
+        # Keep `%` and `"{}".format(...)` payloads as-is, only add i18n wrapper.
+        if self._is_percent_format_expr(first_arg) or self._is_str_format_call(first_arg):
+            self.changed = True
+            node.args[0] = self._wrap_with_i18n(first_arg)
+
         return node
+
+    @staticmethod
+    def _wrap_with_i18n(expr: ast.AST) -> ast.Call:
+        return ast.Call(
+            func=ast.Name(id="_", ctx=ast.Load()),
+            args=[expr],
+            keywords=[],
+        )
+
+    @staticmethod
+    def _is_rewrite_candidate(expr: ast.AST) -> bool:
+        if isinstance(expr, ast.JoinedStr):
+            return True
+        return isinstance(expr, ast.BinOp) and isinstance(expr.op, ast.Add)
+
+    @staticmethod
+    def _is_percent_format_expr(expr: ast.AST) -> bool:
+        return isinstance(expr, ast.BinOp) and isinstance(expr.op, ast.Mod)
+
+    @staticmethod
+    def _is_str_format_call(expr: ast.AST) -> bool:
+        if not isinstance(expr, ast.Call):
+            return False
+        if not isinstance(expr.func, ast.Attribute) or expr.func.attr != "format":
+            return False
+        return isinstance(expr.func.value, ast.Constant) and isinstance(expr.func.value.value, str)
 
     def _rewrite_i18n_dynamic_call(self, call_node: ast.Call, expr: ast.AST) -> ast.AST:
         state = _TemplateState()

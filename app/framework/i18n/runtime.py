@@ -7,7 +7,7 @@ import json
 import logging
 import re
 import sys
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, replace
 from functools import lru_cache
 from pathlib import Path
 from typing import Any, Iterable
@@ -66,6 +66,23 @@ class TranslatableString(str):
     @property
     def i18n_msg(self) -> TranslatableMessage:
         return self._i18n_msg
+
+    def format(self, *args: Any, **kwargs: Any):  # type: ignore[override]
+        """
+        Preserve i18n metadata across `.format(...)` so prepare_build rewritten
+        calls like _("...").format(...) can still render under log context.
+        """
+        if args or not kwargs:
+            return super().format(*args, **kwargs)
+
+        message = getattr(self, "_i18n_msg", None)
+        if not isinstance(message, TranslatableMessage):
+            return super().format(*args, **kwargs)
+
+        merged_kwargs = dict(message.kwargs or {})
+        merged_kwargs.update(kwargs)
+        updated = replace(message, kwargs=merged_kwargs, _rendered_cache=None)
+        return _public_text(updated)
 
 
 @dataclass(frozen=False)
