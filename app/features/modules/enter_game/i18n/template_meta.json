@@ -3,7 +3,7 @@
     "kind": "dynamic_template",
     "template_id": "failed_to_resolve_launch_arguments_start_path_st",
     "msgid": "failed_to_resolve_launch_arguments_start_path_st",
-    "source_template": "Failed to resolve launch arguments, start_path: {start_path}, game_channel: {game_channel}",
+    "source_template": "无法解析启动参数，start_path: {start_path}, game_channel: {game_channel}",
     "fields": [
       "start_path",
       "game_channel"
@@ -21,50 +21,22 @@
     "owner_scope": "module",
     "owner_module": "enter_game",
     "file_path": "app/features/modules/enter_game/usecase/enter_game_usecase.py",
-    "line": 365,
+    "line": 367,
     "col": 20,
     "function_name": "launch_game_with_guard",
     "class_name": null,
     "context": "log",
-    "source_language": "en",
-    "template_hash": "6de55e000b236f355c846478d0054f77de3e8b7d",
-    "callsite_key": "app/features/modules/enter_game/usecase/enter_game_usecase.py:365:20",
+    "source_language": "zh_CN",
+    "template_hash": "e2c605c21e1a01551043e69f79d0aa84622b6d71",
+    "callsite_key": "app/features/modules/enter_game/usecase/enter_game_usecase.py:367:20",
     "is_runtime_visible": true,
-    "mixed_source_template": false
-  },
-  "module.enter_game.log.game_exe_not_found_please_check_the_path_start_p": {
-    "kind": "dynamic_template",
-    "template_id": "game_exe_not_found_please_check_the_path_start_p",
-    "msgid": "game_exe_not_found_please_check_the_path_start_p",
-    "source_template": "Game.exe not found, please check the path: {start_path}",
-    "fields": [
-      "start_path"
-    ],
-    "field_details": {
-      "start_path": {
-        "format_spec": "",
-        "conversion": ""
-      }
-    },
-    "owner_scope": "module",
-    "owner_module": "enter_game",
-    "file_path": "app/features/modules/enter_game/usecase/enter_game_usecase.py",
-    "line": 354,
-    "col": 20,
-    "function_name": "launch_game_with_guard",
-    "class_name": null,
-    "context": "log",
-    "source_language": "en",
-    "template_hash": "84cde8633710cd38e02f2b41ee7eb0b574ff2ab8",
-    "callsite_key": "app/features/modules/enter_game/usecase/enter_game_usecase.py:354:20",
-    "is_runtime_visible": true,
-    "mixed_source_template": false
+    "mixed_source_template": true
   },
   "module.enter_game.log.starting_exe_path_launch_args": {
     "kind": "dynamic_template",
     "template_id": "starting_exe_path_launch_args",
     "msgid": "starting_exe_path_launch_args",
-    "source_template": "Starting {exe_path} {launch_args}",
+    "source_template": "正在启动 {exe_path} {launch_args}",
     "fields": [
       "exe_path",
       "launch_args"
@@ -82,22 +54,22 @@
     "owner_scope": "module",
     "owner_module": "enter_game",
     "file_path": "app/features/modules/enter_game/usecase/enter_game_usecase.py",
-    "line": 370,
+    "line": 373,
     "col": 25,
     "function_name": "launch_game_with_guard",
     "class_name": null,
     "context": "log",
-    "source_language": "en",
-    "template_hash": "060f7435e4e74aacd9628f83e2a5290d855562d4",
-    "callsite_key": "app/features/modules/enter_game/usecase/enter_game_usecase.py:370:25",
+    "source_language": "zh_CN",
+    "template_hash": "67edca6e5dd298ac88f98e866ddf88af104d326c",
+    "callsite_key": "app/features/modules/enter_game/usecase/enter_game_usecase.py:373:25",
     "is_runtime_visible": true,
-    "mixed_source_template": false
+    "mixed_source_template": true
   },
   "module.enter_game.ui.clicking_the_start_button_will_action_automatica": {
     "kind": "dynamic_template",
     "template_id": "clicking_the_start_button_will_action_automatica",
     "msgid": "clicking_the_start_button_will_action_automatica",
-    "source_template": "Clicking the 'Start' button will {action}automatically launch the game",
+    "source_template": "点击开始将{action}自启游戏",
     "fields": [
       "action"
     ],
@@ -110,22 +82,22 @@
     "owner_scope": "module",
     "owner_module": "enter_game",
     "file_path": "app/features/modules/enter_game/usecase/enter_game_usecase.py",
-    "line": 445,
+    "line": 449,
     "col": 16,
     "function_name": "on_auto_open_toggled",
     "class_name": "EnterGameService",
     "context": "ui",
-    "source_language": "en",
-    "template_hash": "b68ff809b9e48f562d1971f3d30402e64d25b7dd",
-    "callsite_key": "app/features/modules/enter_game/usecase/enter_game_usecase.py:445:16",
+    "source_language": "zh_CN",
+    "template_hash": "20ee05bff60dd7a276dd542e6f5cb2da44a8ff9d",
+    "callsite_key": "app/features/modules/enter_game/usecase/enter_game_usecase.py:449:16",
     "is_runtime_visible": true,
-    "mixed_source_template": false
+    "mixed_source_template": true
   },
   "module.enter_game.ui.failed_to_spawn_process_exc": {
     "kind": "dynamic_template",
     "template_id": "failed_to_spawn_process_exc",
     "msgid": "failed_to_spawn_process_exc",
-    "source_template": "Failed to spawn process: {exc}",
+    "source_template": "无法启动进程: {exc}",
     "fields": [
       "exc"
     ],
@@ -138,22 +110,22 @@
     "owner_scope": "module",
     "owner_module": "enter_game",
     "file_path": "app/features/modules/enter_game/usecase/enter_game_usecase.py",
-    "line": 376,
+    "line": 379,
     "col": 42,
     "function_name": "launch_game_with_guard",
     "class_name": null,
     "context": "ui",
-    "source_language": "en",
-    "template_hash": "95e43593fd2b3ddcd5e5b1b63930219fc9df5d28",
-    "callsite_key": "app/features/modules/enter_game/usecase/enter_game_usecase.py:376:42",
+    "source_language": "zh_CN",
+    "template_hash": "6a3591fd7df7a9f1cc7a1931cd253125a132aa38",
+    "callsite_key": "app/features/modules/enter_game/usecase/enter_game_usecase.py:379:42",
     "is_runtime_visible": true,
-    "mixed_source_template": false
+    "mixed_source_template": true
   },
-  "module.enter_game.ui.game_executable_not_found_under_start_path": {
+  "module.enter_game.ui.game_exe_not_found_please_check_the_path_start_p": {
     "kind": "dynamic_template",
-    "template_id": "game_executable_not_found_under_start_path",
-    "msgid": "game_executable_not_found_under_start_path",
-    "source_template": "Game executable not found under: {start_path}",
+    "template_id": "game_exe_not_found_please_check_the_path_start_p",
+    "msgid": "game_exe_not_found_please_check_the_path_start_p",
+    "source_template": "Game.exe 游戏可执行文件未找到，请检查路径: {start_path}",
     "fields": [
       "start_path"
     ],
@@ -166,15 +138,43 @@
     "owner_scope": "module",
     "owner_module": "enter_game",
     "file_path": "app/features/modules/enter_game/usecase/enter_game_usecase.py",
-    "line": 358,
+    "line": 359,
     "col": 25,
     "function_name": "launch_game_with_guard",
     "class_name": null,
     "context": "ui",
-    "source_language": "en",
-    "template_hash": "5c2587182f9a118f685fb6a861b570dcbb35c5d0",
-    "callsite_key": "app/features/modules/enter_game/usecase/enter_game_usecase.py:358:25",
+    "source_language": "zh_CN",
+    "template_hash": "e8967d0d69caa06ba15ca94abca0dec13a37690e",
+    "callsite_key": "app/features/modules/enter_game/usecase/enter_game_usecase.py:359:25",
     "is_runtime_visible": true,
-    "mixed_source_template": false
+    "mixed_source_template": true
+  },
+  "module.enter_game.ui.launch_cooldown_in_effect_retry_after_remain_s": {
+    "kind": "dynamic_template",
+    "template_id": "launch_cooldown_in_effect_retry_after_remain_s",
+    "msgid": "launch_cooldown_in_effect_retry_after_remain_s",
+    "source_template": "启动冷却中，{remain}s后重试",
+    "fields": [
+      "remain"
+    ],
+    "field_details": {
+      "remain": {
+        "format_spec": "",
+        "conversion": ""
+      }
+    },
+    "owner_scope": "module",
+    "owner_module": "enter_game",
+    "file_path": "app/features/modules/enter_game/usecase/enter_game_usecase.py",
+    "line": 338,
+    "col": 42,
+    "function_name": "launch_game_with_guard",
+    "class_name": null,
+    "context": "ui",
+    "source_language": "zh_CN",
+    "template_hash": "c269df0d83ad06497e01482110d18736a570ec18",
+    "callsite_key": "app/features/modules/enter_game/usecase/enter_game_usecase.py:338:42",
+    "is_runtime_visible": true,
+    "mixed_source_template": true
   }
 }
