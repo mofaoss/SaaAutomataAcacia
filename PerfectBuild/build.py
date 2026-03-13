@@ -209,21 +209,10 @@ class PerfectBuild:
             "--noinclude-qt-plugins=qml,webengine,network,multimedia,sql,test,sensorkit,position,location,bluetooth,nfc,serialport,websockets,printsupport,dbus,xml,pdf",
 
             # 精简 OpenCV / onnxruntime 相关 DLL
-            "--noinclude-dlls=opencv_videoio_ffmpeg*",
-            "--noinclude-dlls=opencv_video*",
-            "--noinclude-dlls=onnxruntime_providers_cuda*",
-            "--noinclude-dlls=cudart*",
-            "--noinclude-dlls=cublas*",
-            "--noinclude-dlls=cudnn*",
-            "--noinclude-dlls=cufft*",
-
-            # 阻断无用模块的 Python 追踪
-            "--nofollow-import-to=cv2.videoio",
-            "--nofollow-import-to=cv2.video",
-            "--nofollow-import-to=cv2.samples",
-            "--nofollow-import-to=cv2.data",
-            "--nofollow-import-to=numpy.tests",
-            "--nofollow-import-to=numpy.distutils",
+            "--noinclude-dlls=cv2/opencv_videoio_ffmpeg*.dll",
+            "--noinclude-dlls=cv2/opencv_video*.dll",
+            "--noinclude-data-files=cv2/opencv_videoio_ffmpeg*.dll",
+            "--noinclude-data-files=cv2/opencv_video*.dll",
             ]
 
 
@@ -253,6 +242,20 @@ class PerfectBuild:
 
         if process.returncode != 0:
             raise ChildProcessError("Nuitka building failed.")
+
+        dist_root = output_dir / f"{self.app_exec}.dist"
+        if dist_root.exists():
+            removed_files: list[Path] = []
+            for pattern in ("cv2/opencv_videoio_ffmpeg*.dll", "cv2/opencv_video*.dll"):
+                for matched in sorted(dist_root.glob(pattern)):
+                    if matched.is_file():
+                        matched.unlink()
+                        removed_files.append(matched)
+            if removed_files:
+                print("[build] pruned excluded binaries:")
+                for removed in removed_files:
+                    rel = removed.relative_to(dist_root).as_posix()
+                    print(f"  - {rel}")
 
         print("Nuitka Building done.")
 
