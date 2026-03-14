@@ -5,6 +5,7 @@ import inspect
 import pkgutil
 import re
 from pathlib import Path
+from typing import Any
 
 from app.framework.core.module_system.config_schema import build_config_schema
 from app.framework.core.module_system.models import Field, ModuleHost, ModuleMeta
@@ -214,7 +215,7 @@ def _extract_preferred_class_name_from_module(module_path: str, host: ModuleHost
         preferred = [n for n in classes if n.endswith("Page") or n.endswith("Interface")]
     else:
         preferred = [n for n in classes if n.endswith("Interface") or n.endswith("Page")]
-    
+
     if preferred:
         return preferred[0]
 
@@ -600,5 +601,3 @@ def module_page(module_id: str):
         return cls
 
     return decorator
-
-
