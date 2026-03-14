@@ -107,15 +107,21 @@ def _validate_declaration_fields(fields: dict[str, Field] | None) -> None:
                     _validate_declaration_text(label, field=f"fields[{param}] options[{idx}] label")
 
 
-def _validate_declaration_actions(actions: dict[str, str] | None) -> None:
+def _validate_declaration_actions(actions: dict[str, Any] | None) -> None:
     if not actions:
         return
-    for label, method_name in actions.items():
+    for label, raw_spec in actions.items():
         _validate_declaration_text(label, field=f"actions[{label}] label")
-        if not isinstance(method_name, str) or not method_name.strip():
+        if isinstance(raw_spec, str):
+            method_name = raw_spec.strip()
+        elif isinstance(raw_spec, dict):
+            method_name = str(raw_spec.get("method") or raw_spec.get("name") or "").strip()
+        else:
+            raise ValueError(f"actions[{label}] spec must be a string or a dict")
+
+        if not method_name:
             raise ValueError(f"actions[{label}] method must be a non-empty string")
-        normalized = method_name.strip()
-        if not re.fullmatch(r"^[A-Za-z_][A-Za-z0-9_]*$", normalized):
+        if not re.fullmatch(r"^[A-Za-z_][A-Za-z0-9_]*$", method_name):
             raise ValueError(
                 f"actions[{label}] method must be a valid class method name, got: {method_name!r}"
             )
@@ -291,7 +297,7 @@ def _build_meta(
     host: ModuleHost,
     name: str,
     fields: dict[str, Field] | None,
-    actions: dict[str, str] | None,
+    actions: dict[str, Any] | None,
     module_id: str | None,
     binding_id: str | None = None,
     page_alias: str | None = None,
@@ -446,7 +452,7 @@ def _register_with_host(
     host: ModuleHost,
     name: str,
     fields: dict[str, Field] | None = None,
-    actions: dict[str, str] | None = None,
+    actions: dict[str, Any] | None = None,
     module_id: str | None = None,
     binding_id: str | None = None,
     page_alias: str | None = None,
@@ -504,7 +510,7 @@ def on_demand_module(
     name: str,
     *,
     fields: dict[str, Field] | None = None,
-    actions: dict[str, str] | None = None,
+    actions: dict[str, Any] | None = None,
     module_id: str | None = None,
     binding_id: str | None = None,
     page_alias: str | None = None,
@@ -540,7 +546,7 @@ def periodic_module(
     name: str,
     *,
     fields: dict[str, Field] | None = None,
-    actions: dict[str, str] | None = None,
+    actions: dict[str, Any] | None = None,
     module_id: str | None = None,
     binding_id: str | None = None,
     page_alias: str | None = None,

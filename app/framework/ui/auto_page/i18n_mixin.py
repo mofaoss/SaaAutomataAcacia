@@ -12,7 +12,8 @@ from app.framework.i18n.runtime import _resolve_lang, get_catalog
 class AutoPageI18nMixin:
     @staticmethod
     def _snake_key(text: str, *, max_len: int | None = None) -> str:
-        normalized = re.sub(r"[^A-Za-z0-9]+", "_", str(text or "").strip().lower())
+        # Support CJK characters in keys to avoid collisions for non-English labels.
+        normalized = re.sub(r"[^\w\u4e00-\u9fff]+", "_", str(text or "").strip().lower())
         normalized = re.sub(r"_+", "_", normalized).strip("_")
         if max_len is not None and max_len > 0:
             normalized = normalized[:max_len].rstrip("_")
