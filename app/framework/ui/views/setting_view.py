@@ -108,7 +108,7 @@ class AboutHeaderWidget(QWidget, BaseInterface):
 
         self.row1Layout = QHBoxLayout()
         self.row1Layout.setAlignment(Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter)
-        self.titleLabel = SubtitleLabel(_('Author: mofaoss'), self)
+        self.titleLabel = SubtitleLabel(_('Author: Dr. Sun', msgid="author"), self)
 
         star_text = _(' Visit GitHub ⭐')
 
@@ -269,7 +269,7 @@ class SettingInterface(ScrollArea, BaseInterface):
         )
 
         self.backgroundImageCard = PushSettingCard(
-            _('Choose picture'),
+            _('Choose one picture', msgid="choose_a_picture"),
             FIF.PHOTO,
             _('Background Image'),
             _('Set a custom background image for the main window'),
@@ -304,14 +304,14 @@ class SettingInterface(ScrollArea, BaseInterface):
         self.updateOnStartUpCard = SwitchSettingCard(
             FIF.UPDATE,
             self.tr('Check for updates when the application starts'),
-            _('If turned on, each time the game version is updated, the coordinates corresponding to the physical activity and the link to the Ancathiya update reminder will be automatically updated.'),
+            _("If turned on, the coordinates corresponding to the activities and SAA update reminder will be updated.", msgid='if_turned_on_each_time_the_game_version_is_updated_the_coordinates_corresponding'),
             configItem=config.checkUpdateAtStartUp,
             parent=self.aboutSoftwareGroup
         )
         self.checkPrereleaseForStableCard = SwitchSettingCard(
             FIF.TAG,
             _('Detect beta version updates (official version users)'),
-            _('Off by default. After users of the official version turn it on, they will detect both the official version and the test version at the same time; users of the test version will always detect both at the same time.'),
+            _('Off by default. After users of the official version turn it on, they will detect both the official version and the test version at the same time.', msgid='off_by_default_after_users_of_the_official_version_turn_it_on_they_will_detect_b'),
             configItem=config.checkPrereleaseForStable,
             parent=self.aboutSoftwareGroup
         )

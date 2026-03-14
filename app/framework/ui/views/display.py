@@ -347,7 +347,7 @@ class DisplayInterface(ScrollArea, BaseInterface):
         self.windowTrackingQuickSwitchCard = quick_jump.addSampleCard_Switch(
             icon=os.path.join(self.icondir, "stealth.png"),
             title=_("Stealth Mode", msgid="stealth_mode_display_title"), #if self._is_non_chinese_ui else "隐身模式",
-            content=_("Make the game completely invisible in the background"),  #if self._is_non_chinese_ui else self.tr("游戏隐身，完全后台"),
+            content=_("Make the game \n completely invisible", msgid="make_the_game_completely_invisible_in_the_background"),  #if self._is_non_chinese_ui else self.tr("游戏隐身，完全后台"),
             checked=stealth_on,
             on_toggle=self._toggle_stealth_mode,
         )
