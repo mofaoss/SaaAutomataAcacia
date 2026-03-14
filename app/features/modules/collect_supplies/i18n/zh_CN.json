@@ -25,6 +25,6 @@
   "module.collect_supplies.action.on_import_codes_click.label": "导入兑换码",
   "module.task_collect_supplies.action.on_reset_codes_click.label": "重置兑换码",
   "module.collect_supplies.action.on_reset_codes_click.label": "重置兑换码",
-  "module.collect_supplies.ui.successfully_reset_import_and_display_content": "成功重置导入和显示 {content}",
-  "module.collect_supplies.ui.reset_successful": "重置成功"
+  "module.collect_supplies.ui.reset_successful": "重置成功",
+  "module.collect_supplies.ui.successfully_reset_import_and_display_content": "成功重置导入和显示 {content}"
 }
