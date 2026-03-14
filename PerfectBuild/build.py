@@ -206,9 +206,11 @@ class PerfectBuild:
             "--include-package=app.features.modules",
 
             # 精简 Qt 插件
-            "--noinclude-qt-plugins=webengine,multimedia,sql,test,sensorkit,position,location,bluetooth,nfc,serialport,printsupport,dbus,pdf",
+            "--noinclude-qt-plugins=qml,webengine,network,multimedia,sql,test,sensorkit,position,location,bluetooth,nfc,serialport,websockets,printsupport,dbus,xml,pdf",
             # 无用且极其臃肿的 Qt 底层 DLL
+            "--noinclude-dlls=*qt6network*.dll",
             "--noinclude-dlls=*qt6pdf*.dll",
+            "--noinclude-dlls=*qt6webengine*.dll",
 
             # 精简 OpenCV / onnxruntime 相关 DLL
             "--noinclude-dlls=cv2/opencv_videoio_ffmpeg*.dll",
