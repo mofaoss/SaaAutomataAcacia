@@ -4,7 +4,7 @@ import sys
 from pathlib import Path
 
 from PySide6.QtCore import Qt, QRectF, QSize, QUrl
-from PySide6.QtGui import QPixmap, QPainter, QPainterPath, QBrush, QDesktopServices
+from PySide6.QtGui import QPixmap, QPainter, QPainterPath, QBrush, QDesktopServices, QColor
 from PySide6.QtWidgets import (
     QWidget,
     QVBoxLayout,
@@ -125,6 +125,34 @@ def _resolve_display_icon_dir() -> Path:
     return PROJECT_ROOT / "resources" / "icons"
 
 
+class StrokedLabel(QLabel):
+    """支持文字描边的标签，增强在各种背景下的可读性"""
+
+    def paintEvent(self, e):
+        painter = QPainter(self)
+        painter.setRenderHints(QPainter.RenderHint.Antialiasing | QPainter.RenderHint.TextAntialiasing)
+
+        rect = self.contentsRect()
+        text = self.text()
+        align = self.alignment()
+        painter.setFont(self.font())
+
+        # 1. 绘制黑色半透明描边 (通过 8 方向偏移模拟)
+        # 这种方式即便在纯白背景下，也能清晰勾勒出白色文字的轮廓
+        painter.setPen(QColor(0, 0, 0, 160))
+        thickness = 1
+        for dx in range(-thickness, thickness + 1):
+            for dy in range(-thickness, thickness + 1):
+                if dx == 0 and dy == 0:
+                    continue
+                painter.drawText(rect.translated(dx, dy), align, text)
+
+        # 2. 绘制主体文字
+        # 颜色从样式表的 color 属性中获取
+        painter.setPen(self.palette().color(self.foregroundRole()))
+        painter.drawText(rect, align, text)
+
+
 class BannerWidget(QWidget):
     """Banner widget"""
 
@@ -135,19 +163,19 @@ class BannerWidget(QWidget):
         self.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
 
         self.vBoxLayout = QVBoxLayout(self)
-        self.galleryLabel = QLabel(
+        self.galleryLabel = StrokedLabel(
             f'安卡小助手 {get_local_version()}\nSaaAssistantAca', self
         )
         self.galleryLabel.setStyleSheet(
-            "color: #ECF9F8;font-size: 30px; font-weight: 600;"
+            """
+            color: white;
+            font-size: 30px;
+            font-weight: 600;
+            background-color: rgba(0, 0, 0, 25);
+            border-radius: 10px;
+            padding: 12px;
+            """
         )
-
-        shadow = QGraphicsDropShadowEffect()
-        shadow.setBlurRadius(20)
-        shadow.setColor(Qt.GlobalColor.black)
-        shadow.setOffset(1.2, 1.2)
-
-        self.galleryLabel.setGraphicsEffect(shadow)
 
         self.basedir = _resolve_display_image_dir()
         self.banner = self._load_random_banner()
