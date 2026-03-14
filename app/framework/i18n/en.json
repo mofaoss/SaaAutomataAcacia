@@ -312,5 +312,6 @@
   "framework.ui.latest_version_local_version": "Latest version: {local_version}",
   "framework.ui.yes": "yes",
   "framework.ui.cancel": "cancel",
-  "framework.ui.content": "content"
+  "framework.ui.content": "content",
+  "framework.ui.feed_stars": "Feed stars, support the project and keep it updated"
 }
