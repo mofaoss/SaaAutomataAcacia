@@ -3,18 +3,20 @@ import random
 import sys
 from pathlib import Path
 
-from PySide6.QtCore import Qt, QRectF, QSize
-from PySide6.QtGui import QPixmap, QPainter, QPainterPath, QBrush
+from PySide6.QtCore import Qt, QRectF, QSize, QUrl
+from PySide6.QtGui import QPixmap, QPainter, QPainterPath, QBrush, QDesktopServices
 from PySide6.QtWidgets import (
     QWidget,
     QVBoxLayout,
+    QHBoxLayout,
     QLabel,
     QGraphicsDropShadowEffect,
     QSizePolicy,
 )
-from qfluentwidgets import ScrollArea, CardWidget
+from qfluentwidgets import ScrollArea, CardWidget, PushButton, FluentIcon as FIF
 
 from app.framework.infra.config.app_config import config, is_non_chinese_ui_language
+from app.framework.infra.config.setting import REPO_URL
 from app.framework.infra.events.signal_bus import signalBus
 from app.framework.infra.runtime.paths import PROJECT_ROOT
 from app.framework.infra.update.updater import get_local_version
@@ -286,7 +288,7 @@ class DisplayInterface(ScrollArea, BaseInterface):
 
     def _load_samples(self):
         """负责组装快速跳转卡片及绑定业务逻辑"""
-        jump_title = _("Quick Access") # if self._is_non_chinese_ui else self.tr("快捷跳转")
+        jump_title = _("Quick Access", msgid="quick_access")
         quick_jump = SampleCardView(jump_title, self.view)
 
         quick_jump.addSampleCard(
@@ -324,6 +326,25 @@ class DisplayInterface(ScrollArea, BaseInterface):
 
         # 核心：将下方控件区域的拉伸因子也设为 1，实现与 Banner 均分
         self.vBoxLayout.addWidget(quick_jump, 1)
+
+        # 底部 GitHub 按钮和文案
+        self.bottomLayout = QHBoxLayout()
+        self.bottomLayout.setContentsMargins(36, 0, 36, 0)
+        self.bottomLayout.setSpacing(12)
+
+        self.githubBtn = PushButton(FIF.GITHUB, _(" Visit GitHub ⭐", msgid="visit_github"), self.view)
+        self.githubBtn.setFixedSize(145, 28)
+        self.githubBtn.setCursor(Qt.CursorShape.PointingHandCursor)
+        self.githubBtn.clicked.connect(lambda: QDesktopServices.openUrl(QUrl(REPO_URL)))
+
+        self.starLabel = QLabel(_("投喂星星，持续更新", msgid="feed_stars"), self.view)
+        self.starLabel.setStyleSheet("color: #FFD700; font-size: 14px; font-weight: 500;")
+
+        self.bottomLayout.addWidget(self.githubBtn)
+        self.bottomLayout.addWidget(self.starLabel)
+        self.bottomLayout.addStretch(1)
+
+        self.vBoxLayout.addLayout(self.bottomLayout)
 
     def _sync_window_tracking_quick_switch(self):
         if self.windowTrackingQuickSwitchCard is not None:
