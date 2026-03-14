@@ -275,6 +275,19 @@ class SettingInterface(ScrollArea, BaseInterface):
             _('Set a custom background image for the main window'),
             parent=self.personalGroup
         )
+        self.backgroundImagesRandomButton = PushButton(_('Choose pictures'), self.backgroundImageCard)
+        self.backgroundImagesRandomButton.setToolTip(_('Choose multiple images and use one at random on startup'))
+        button_index = self.backgroundImageCard.hBoxLayout.indexOf(self.backgroundImageCard.button)
+        self.backgroundImageCard.hBoxLayout.insertWidget(
+            button_index,
+            self.backgroundImagesRandomButton,
+            0,
+            Qt.AlignmentFlag.AlignRight
+        )
+        self.backgroundImageCard.hBoxLayout.insertSpacing(
+            self.backgroundImageCard.hBoxLayout.indexOf(self.backgroundImageCard.button),
+            8
+        )
         self.backgroundOpacityCard = SliderSettingCard(
             configItem=config.backgroundOpacity,
             icon=FIF.BRUSH,
@@ -423,10 +436,9 @@ class SettingInterface(ScrollArea, BaseInterface):
 
         self.micaCard.setEnabled(isWin11())
 
-        if config.backgroundImage.value:
-            self.backgroundImageCard.setContent(config.backgroundImage.value)
-            if os.path.exists(config.backgroundImage.value):
-                 self.parent._update_background_image()
+        self._refresh_background_image_card_content()
+        if self.parent and self._has_background_image_config():
+            self.parent._update_background_image()
 
 
         # initialize layout
@@ -504,6 +516,7 @@ class SettingInterface(ScrollArea, BaseInterface):
         config.themeChanged.connect(setTheme)
         self.micaCard.checkedChanged.connect(signalBus.micaEnableChanged)
         self.backgroundImageCard.clicked.connect(self._on_choose_background_image)
+        self.backgroundImagesRandomButton.clicked.connect(self._on_choose_random_background_images)
         self.autoBootStartup.checkedChanged.connect(self.set_windows_start)
 
         if hasattr(self.aboutHeaderWidget, "githubBtn"):
@@ -515,24 +528,89 @@ class SettingInterface(ScrollArea, BaseInterface):
 
     def _on_choose_background_image(self):
         file_path, _selected_filter = QFileDialog.getOpenFileName(
-            self, _("Select Background Image"), "", "Images (*.png *.jpg *.jpeg *.bmp);;All files (*.*)"
+            self, _("Select Background Image", msgid="select_background_image"), "", "Images (*.png *.jpg *.jpeg *.bmp);;All files (*.*)"
         )
-        backup_dir = RUNTIME_DIR / "backgrounds"
-        if not os.path.exists(backup_dir):
-            os.makedirs(backup_dir)
-        if file_path:
-            # 使用新的文件路径
-            config.set(config.backgroundImage, file_path)
-            self.backgroundImageCard.setContent(file_path)
-        elif not os.path.exists(config.backgroundImage.value):
-            # 路径不存在，尝试从backup中加载
-            bg_path = backup_dir / Path(config.backgroundImage.value).name
-            if os.path.exists(bg_path):
-                file_path = str(bg_path)
+        if not file_path:
+            return
+
+        self._backup_background_images([file_path])
+        resolved_path = self._resolve_background_path(file_path) or file_path
+        config.set(config.backgroundImages, [])
+        config.set(config.backgroundImage, resolved_path)
+        self._refresh_background_image_card_content()
+
+        if self.parent:
+            self.parent._update_background_image()
+
+    def _on_choose_random_background_images(self):
+        file_paths, _selected_filter = QFileDialog.getOpenFileNames(
+            self, _("Select Background Images", msgid="select_background_images"), "", "Images (*.png *.jpg *.jpeg *.bmp);;All files (*.*)"
+        )
+        normalized_paths = self._normalize_background_paths(file_paths)
+        if not normalized_paths:
+            return
+
+        self._backup_background_images(normalized_paths)
+        resolved_paths = [self._resolve_background_path(path) or path for path in normalized_paths]
+        config.set(config.backgroundImages, resolved_paths)
+        config.set(config.backgroundImage, resolved_paths[0])
+        self._refresh_background_image_card_content()
+
+        if self.parent:
+            self.parent._update_background_image()
+
+    @staticmethod
+    def _normalize_background_paths(paths):
+        normalized = []
+        for path in paths or []:
+            path = str(path or "").strip()
+            if path:
+                normalized.append(path)
+
+        return list(dict.fromkeys(normalized))
+
+    @staticmethod
+    def _background_backup_dir() -> Path:
+        return RUNTIME_DIR / "backgrounds"
+
+    def _backup_background_images(self, file_paths):
+        backup_dir = self._background_backup_dir()
+        backup_dir.mkdir(parents=True, exist_ok=True)
+
+        for file_path in self._normalize_background_paths(file_paths):
+            path = Path(file_path)
+            if path.exists():
+                copy_user_data(path, backup_dir=backup_dir)
+
+    def _resolve_background_path(self, file_path: str) -> str:
+        file_path = str(file_path or "").strip()
+        if not file_path:
+            return ""
+
         if os.path.exists(file_path):
-            copy_user_data(Path(file_path), backup_dir=backup_dir)
-            config.set(config.backgroundImage, file_path)
-            self.backgroundImageCard.setContent(file_path)
+            return file_path
+
+        backup_path = self._background_backup_dir() / Path(file_path).name
+        if backup_path.exists():
+            return str(backup_path)
+
+        return ""
+
+    def _get_random_background_paths(self):
+        return self._normalize_background_paths(config.backgroundImages.value)
+
+    def _has_background_image_config(self) -> bool:
+        return bool(self._get_random_background_paths() or str(config.backgroundImage.value or "").strip())
+
+    def _refresh_background_image_card_content(self):
+        random_paths = self._get_random_background_paths()
+        if random_paths:
+            self.backgroundImageCard.setContent(
+                _('Random background ({count} images)').format(count=len(random_paths))
+            )
+            return
+
+        self.backgroundImageCard.setContent(str(config.backgroundImage.value or ""))
 
     def _on_manual_update_clicked(self):
         if not hasattr(self, 'aboutHeaderWidget') or not hasattr(self.aboutHeaderWidget, 'checkUpdateBtn'):

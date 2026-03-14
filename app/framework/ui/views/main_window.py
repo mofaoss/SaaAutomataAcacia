@@ -7,6 +7,7 @@ import traceback
 import logging
 import threading
 import time
+import random
 from pathlib import Path
 from typing import Protocol
 from PySide6.QtCore import QSize, QTimer, QThread, Qt, QPoint
@@ -21,7 +22,7 @@ from app.framework.infra.config.app_config import is_non_chinese_ui_language, is
 from app.framework.ui.shared.icon import Icon
 from app.framework.infra.vision.matcher import matcher
 from app.framework.infra.config.setting import REPO_URL
-from app.framework.infra.runtime.paths import LOG_DIR, TEMP_DIR, APPDATA_DIR, ensure_runtime_dirs
+from app.framework.infra.runtime.paths import LOG_DIR, TEMP_DIR, APPDATA_DIR, RUNTIME_DIR, ensure_runtime_dirs
 from app.framework.infra.events.signal_bus import signalBus
 from app.framework.core.event_bus.global_task_bus import global_task_bus
 from app.framework.core.observability import AppErrorCode, capture_exception
@@ -37,7 +38,6 @@ from app.framework.infra.update.updater import (
     get_local_version,
 )
 from app.framework.ui.widgets.custom_message_box import CustomMessageBox
-from qfluentwidgets import ConfigItem, RangeConfigItem, RangeValidator
 from resources import resource_qrc  # don't delete
 from app.framework.i18n import _
 
@@ -45,12 +45,6 @@ from app.framework.i18n import _
 logger = logging.getLogger(__name__)
 SIDEBAR_EXPAND_THRESHOLD = 60 # 侧边栏展开判定的阈值像素
 task_coordinator = global_task_bus
-
-# Inject background config items dynamically
-if not hasattr(config, 'backgroundImage'):
-    config.backgroundImage = ConfigItem("Personalization", "BackgroundImage", "")
-if not hasattr(config, 'backgroundOpacity'):
-    config.backgroundOpacity = RangeConfigItem("Personalization", "BackgroundOpacity", 6, RangeValidator(0, 100))
 
 class MainWindowFeatureBridge(Protocol):
     def configure_module_registry(self) -> None:
@@ -146,6 +140,7 @@ class MainWindow(FluentWindow, BaseInterface):
         self.bg_pixmap = None
         self._update_background_image()
         config.backgroundImage.valueChanged.connect(self._update_background_image)
+        config.backgroundImages.valueChanged.connect(self._update_background_image)
         config.backgroundOpacity.valueChanged.connect(self.repaint)
         self.stackedWidget.setAttribute(Qt.WidgetAttribute.WA_TranslucentBackground)
 
@@ -163,12 +158,56 @@ class MainWindow(FluentWindow, BaseInterface):
         QTimer.singleShot(0, self._run_next_init_task)
 
     def _update_background_image(self):
-        path = config.backgroundImage.value
-        if path and os.path.exists(path):
-            self.bg_pixmap = QPixmap(path)
-        else:
-            self.bg_pixmap = None
+        candidates = self._get_background_candidates()
+        self.bg_pixmap = None
+
+        if candidates:
+            selected_path = random.choice(candidates)
+            pixmap = QPixmap(selected_path)
+            if not pixmap.isNull():
+                self.bg_pixmap = pixmap
+
         self.repaint()
+
+    @staticmethod
+    def _normalize_background_paths(paths):
+        if isinstance(paths, str):
+            paths = [paths]
+
+        normalized = []
+        for path in paths or []:
+            path = str(path or "").strip()
+            if path:
+                normalized.append(path)
+
+        return list(dict.fromkeys(normalized))
+
+    def _resolve_background_path(self, path: str) -> str:
+        path = str(path or "").strip()
+        if not path:
+            return ""
+
+        if os.path.exists(path):
+            return path
+
+        backup_path = RUNTIME_DIR / "backgrounds" / Path(path).name
+        if backup_path.exists():
+            return str(backup_path)
+
+        return ""
+
+    def _get_background_candidates(self):
+        candidates = [
+            self._resolve_background_path(path)
+            for path in self._normalize_background_paths(config.backgroundImages.value)
+        ]
+        candidates = [path for path in candidates if path]
+
+        if candidates:
+            return list(dict.fromkeys(candidates))
+
+        fallback_path = self._resolve_background_path(config.backgroundImage.value)
+        return [fallback_path] if fallback_path else []
 
     def paintEvent(self, event):
         super().paintEvent(event)

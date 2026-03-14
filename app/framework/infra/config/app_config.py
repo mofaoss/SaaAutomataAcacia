@@ -6,7 +6,7 @@ from enum import Enum
 
 from PySide6.QtCore import QLocale
 from qfluentwidgets import (qconfig, QConfig, ConfigItem, OptionsConfigItem, BoolValidator,
-                            OptionsValidator, Theme, ConfigSerializer)
+                            OptionsValidator, Theme, ConfigSerializer, RangeConfigItem, RangeValidator)
 
 from app.framework.infra.config.sequence_serializer import TaskSequenceSerializer
 from .setting import CONFIG_FILE
@@ -143,6 +143,9 @@ class Config(QConfig):
     auto_boot_startup     = ConfigItem("setting_personal", "auto_boot_startup", False, BoolValidator())
     inform_message        = ConfigItem("setting_personal", "inform_message", True, BoolValidator())
     showI18nWarnings      = ConfigItem("setting_personal", "showI18nWarnings", False, BoolValidator())
+    backgroundImage       = ConfigItem("Personalization", "BackgroundImage", "")
+    backgroundImages      = ConfigItem("Personalization", "BackgroundImages", [])
+    backgroundOpacity     = RangeConfigItem("Personalization", "BackgroundOpacity", 6, RangeValidator(0, 100))
 
     checkUpdateAtStartUp     = ConfigItem("Update", "CheckUpdateAtStartUp", True, BoolValidator())
     checkPrereleaseForStable = ConfigItem("Update", "CheckPrereleaseForStable", False, BoolValidator())
