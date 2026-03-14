@@ -7,7 +7,7 @@ from app.framework.i18n import _
 
 from PySide6.QtCore import Qt, QUrl, QThread, Signal
 from PySide6.QtGui import QDesktopServices, QFont, QPixmap
-from PySide6.QtWidgets import QWidget, QLabel, QHBoxLayout, QVBoxLayout, QApplication, QSizePolicy
+from PySide6.QtWidgets import QWidget, QLabel, QHBoxLayout, QVBoxLayout, QApplication, QSizePolicy, QFileDialog
 from qfluentwidgets import (
     BodyLabel,
     ComboBoxSettingCard,
@@ -21,6 +21,7 @@ from qfluentwidgets import (
     ProgressBar,
     PushButton,
     ScrollArea,
+    PushSettingCard,
     SettingCardGroup as CardGroup,
     SubtitleLabel,
     SwitchSettingCard,
@@ -264,6 +265,23 @@ class SettingInterface(ScrollArea, BaseInterface):
             parent=self.personalGroup
         )
 
+        self.backgroundImageCard = PushSettingCard(
+            _('Choose picture'),
+            FIF.PHOTO,
+            _('Background Image'),
+            _('Set a custom background image for the main window'),
+            parent=self.personalGroup
+        )
+        self.backgroundOpacityCard = SliderSettingCard(
+            configItem=config.backgroundOpacity,
+            icon=FIF.BRUSH,
+            title=_('Background Opacity'),
+            content=_('Adjust the opacity of the background image (0-100)'),
+            parent=self.personalGroup,
+            min_value=0,
+            max_value=100
+        )
+
         # about software
         self.aboutSoftwareGroup = SettingCardGroup(
             _('Function related'), self.scrollWidget)
@@ -402,6 +420,9 @@ class SettingInterface(ScrollArea, BaseInterface):
 
         self.micaCard.setEnabled(isWin11())
 
+        if config.backgroundImage.value:
+            self.backgroundImageCard.setContent(config.backgroundImage.value)
+
         # initialize layout
         self.__initLayout()
         self._connectSignalToSlot()
@@ -416,6 +437,8 @@ class SettingInterface(ScrollArea, BaseInterface):
         self.personalGroup.addSettingCard(self.enterCard)
         self.personalGroup.addSettingCard(self.zoomCard)
         self.personalGroup.addSettingCard(self.languageCard)
+        self.personalGroup.addSettingCard(self.backgroundImageCard)
+        self.personalGroup.addSettingCard(self.backgroundOpacityCard)
 
         # Add Core Settings cards
         self.coreSettingsGroup.addSettingCard(self.stealthModeCard)
@@ -474,6 +497,7 @@ class SettingInterface(ScrollArea, BaseInterface):
         # personalization
         config.themeChanged.connect(setTheme)
         self.micaCard.checkedChanged.connect(signalBus.micaEnableChanged)
+        self.backgroundImageCard.clicked.connect(self._on_choose_background_image)
         self.autoBootStartup.checkedChanged.connect(self.set_windows_start)
 
         if hasattr(self.aboutHeaderWidget, "githubBtn"):
@@ -482,6 +506,14 @@ class SettingInterface(ScrollArea, BaseInterface):
             self.aboutHeaderWidget.qqLink.clicked.connect(self._copy_qq_group_number)
         if hasattr(self.aboutHeaderWidget, "checkUpdateBtn"):
             self.aboutHeaderWidget.checkUpdateBtn.clicked.connect(self._on_manual_update_clicked)
+
+    def _on_choose_background_image(self):
+        file_path, _selected_filter = QFileDialog.getOpenFileName(
+            self, _("Select Background Image"), "", "Images (*.png *.jpg *.jpeg *.bmp)"
+        )
+        if file_path:
+            config.set(config.backgroundImage, file_path)
+            self.backgroundImageCard.setContent(file_path)
 
     def _on_manual_update_clicked(self):
         if not hasattr(self, 'aboutHeaderWidget') or not hasattr(self.aboutHeaderWidget, 'checkUpdateBtn'):

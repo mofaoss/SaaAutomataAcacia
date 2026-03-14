@@ -10,7 +10,7 @@ import time
 from pathlib import Path
 from typing import Protocol
 from PySide6.QtCore import QSize, QTimer, QThread, Qt, QPoint
-from PySide6.QtGui import QIcon, QImage, QPixmap, QAction
+from PySide6.QtGui import QIcon, QImage, QPixmap, QAction, QPainter
 from PySide6.QtWidgets import QApplication, QFrame, QSystemTrayIcon, QMenu
 from qfluentwidgets import FluentIcon as FIF, SystemThemeListener, MessageBox, InfoBar, InfoBarPosition
 from qfluentwidgets import NavigationItemPosition, FluentWindow, setThemeColor
@@ -37,6 +37,7 @@ from app.framework.infra.update.updater import (
     get_local_version,
 )
 from app.framework.ui.widgets.custom_message_box import CustomMessageBox
+from qfluentwidgets import ConfigItem, RangeConfigItem, RangeValidator
 from resources import resource_qrc  # don't delete
 from app.framework.i18n import _
 
@@ -45,6 +46,11 @@ logger = logging.getLogger(__name__)
 SIDEBAR_EXPAND_THRESHOLD = 60 # 侧边栏展开判定的阈值像素
 task_coordinator = global_task_bus
 
+# Inject background config items dynamically
+if not hasattr(config, 'backgroundImage'):
+    config.backgroundImage = ConfigItem("Personalization", "BackgroundImage", "")
+if not hasattr(config, 'backgroundOpacity'):
+    config.backgroundOpacity = RangeConfigItem("Personalization", "BackgroundOpacity", 6, RangeValidator(0, 100))
 
 class MainWindowFeatureBridge(Protocol):
     def configure_module_registry(self) -> None:
@@ -136,6 +142,13 @@ class MainWindow(FluentWindow, BaseInterface):
         self.hotkey_timer.timeout.connect(self._check_global_hotkey)
         self.hotkey_timer.start(100)
 
+        # Background setup
+        self.bg_pixmap = None
+        self._update_background_image()
+        config.backgroundImage.valueChanged.connect(self._update_background_image)
+        config.backgroundOpacity.valueChanged.connect(self.repaint)
+        self.stackedWidget.setAttribute(Qt.WidgetAttribute.WA_TranslucentBackground)
+
         self._configure_module_registry()
         self.initWindow()
         self._disable_main_stacked_animation()
@@ -148,6 +161,22 @@ class MainWindow(FluentWindow, BaseInterface):
             self._finalize_startup,
         ]
         QTimer.singleShot(0, self._run_next_init_task)
+
+    def _update_background_image(self):
+        path = config.backgroundImage.value
+        if path and os.path.exists(path):
+            self.bg_pixmap = QPixmap(path)
+        else:
+            self.bg_pixmap = None
+        self.repaint()
+
+    def paintEvent(self, event):
+        super().paintEvent(event)
+        if self.bg_pixmap and not self.bg_pixmap.isNull():
+            painter = QPainter(self)
+            painter.setRenderHint(QPainter.RenderHint.SmoothPixmapTransform)
+            painter.setOpacity(config.backgroundOpacity.value / 100.0)
+            painter.drawPixmap(self.rect(), self.bg_pixmap)
 
     @staticmethod
     def _resolve_app_icon() -> QIcon:
