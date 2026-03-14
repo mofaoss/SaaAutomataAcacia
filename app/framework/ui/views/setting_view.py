@@ -2,6 +2,7 @@
 import logging
 import os.path
 import subprocess
+from pathlib import Path
 import sys
 from app.framework.i18n import _
 
@@ -31,6 +32,7 @@ from qfluentwidgets import (
 
 from app.framework.infra.config.app_config import config, isWin11, is_non_chinese_ui_language
 from app.framework.infra.config.setting import REPO_URL
+from app.framework.infra.runtime.paths import RUNTIME_DIR
 from app.framework.infra.events.signal_bus import signalBus
 from app.framework.infra.update.updater import (
     UpdateDownloadThread,
@@ -39,6 +41,7 @@ from app.framework.infra.update.updater import (
     get_local_version,
     resolve_batch_dir,
 )
+from app.framework.infra.runtime.paths import copy_user_data
 from app.framework.ui.shared.style_sheet import StyleSheet
 from .periodic_base import BaseInterface
 from app.framework.ui.widgets.slider_setting_card import SliderSettingCard
@@ -422,6 +425,9 @@ class SettingInterface(ScrollArea, BaseInterface):
 
         if config.backgroundImage.value:
             self.backgroundImageCard.setContent(config.backgroundImage.value)
+            if os.path.exists(config.backgroundImage.value):
+                 self.parent._update_background_image()
+
 
         # initialize layout
         self.__initLayout()
@@ -509,9 +515,22 @@ class SettingInterface(ScrollArea, BaseInterface):
 
     def _on_choose_background_image(self):
         file_path, _selected_filter = QFileDialog.getOpenFileName(
-            self, _("Select Background Image"), "", "Images (*.png *.jpg *.jpeg *.bmp)"
+            self, _("Select Background Image"), "", "Images (*.png *.jpg *.jpeg *.bmp);;All files (*.*)"
         )
+        backup_dir = RUNTIME_DIR / "backgrounds"
+        if not os.path.exists(backup_dir):
+            os.makedirs(backup_dir)
         if file_path:
+            # 使用新的文件路径
+            config.set(config.backgroundImage, file_path)
+            self.backgroundImageCard.setContent(file_path)
+        elif not os.path.exists(config.backgroundImage.value):
+            # 路径不存在，尝试从backup中加载
+            bg_path = backup_dir / Path(config.backgroundImage.value).name
+            if os.path.exists(bg_path):
+                file_path = str(bg_path)
+        if os.path.exists(file_path):
+            copy_user_data(Path(file_path), backup_dir=backup_dir)
             config.set(config.backgroundImage, file_path)
             self.backgroundImageCard.setContent(file_path)
 

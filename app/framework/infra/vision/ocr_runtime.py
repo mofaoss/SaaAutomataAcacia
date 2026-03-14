@@ -1,7 +1,7 @@
 import gc
 import json
 import logging
-import shutil
+from pathlib import Path
 import time
 
 import cv2
@@ -13,7 +13,7 @@ from app.features.utils.text_normalizer import normalize_chinese_text
 from app.framework.infra.system.cpu import cpu_support_avx2
 from app.framework.infra.vision.onnxocr.onnx_paddleocr import ONNXPaddleOcr
 from app.framework.infra.vision.image import ImageUtils
-from app.framework.infra.runtime.paths import APPDATA_DIR, PROJECT_ROOT, ensure_runtime_dirs
+from app.framework.infra.runtime.paths import APPDATA_DIR, PROJECT_ROOT, copy_user_data, ensure_runtime_dirs
 from app.framework.i18n import _
 
 
@@ -382,7 +382,6 @@ class OCR:
 def load_ocr_replacements():
     """
     加载 OCR 替换表。
-    如果用户的个人表不存在，则从资源模板复制。
     返回替换数据字典。
     """
     ensure_runtime_dirs()
@@ -390,8 +389,9 @@ def load_ocr_replacements():
 
     if not user_json_path.exists():
         template_path = PROJECT_ROOT / "resources" / "ocr_table" / "ocr_replacements.json"
+
         if template_path.exists():
-            shutil.copy(template_path, user_json_path)
+            copy_user_data(template_path)
         else:
             # Fallback if template is missing
             with open(user_json_path, 'w', encoding='utf-8') as f:

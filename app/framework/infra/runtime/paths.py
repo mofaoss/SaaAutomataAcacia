@@ -2,6 +2,7 @@
 """统一路径管理模块，兼容开发环境与打包环境"""
 import sys
 from pathlib import Path
+import shutil
 
 
 def _get_project_root():
@@ -25,5 +26,15 @@ TEMP_DIR = RUNTIME_DIR / "temp"
 
 
 def ensure_runtime_dirs():
+    """创建运行时目录，如果不存在"""
     for p in (RUNTIME_DIR, APPDATA_DIR, LOG_DIR, TEMP_DIR):
         p.mkdir(parents=True, exist_ok=True)
+
+
+def copy_user_data(user_file_path: Path, backup_dir: Path = APPDATA_DIR):
+    """备份用户数据到 runtime 目录"""
+    ensure_runtime_dirs()
+    target_path = backup_dir / user_file_path.name
+
+    if user_file_path.exists() and not target_path.exists():
+        shutil.copy(user_file_path, target_path)
