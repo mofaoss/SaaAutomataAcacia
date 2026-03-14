@@ -145,6 +145,7 @@
   "framework.ui.current_color": "Current Color",
   "framework.ui.quick_access": "Quick Access",
   "framework.ui.language_notice_non_chinese_ui": "Note: Game language for automation supports only Simplified/Traditional Chinese.",
+  "framework.ui.visit_github": " Visit GitHub ⭐",
   "framework.ui.core_settings_display_title": "Core Settings",
   "framework.ui.please_confirm_the_settings_when_you_first_download": "Please confirm the settings when you first download",
   "framework.ui.start_daily": "Start Daily",
@@ -232,7 +233,6 @@
   "framework.ui.clear": "Clear",
   "framework.ui.drag_to_adjust_order": "Drag to adjust order",
   "framework.ui.schedule_reminder": "Schedule reminder",
-  "framework.ui.visit_github": " Visit GitHub ⭐",
   "framework.ui.update_ready": "Update ready",
   "framework.ui.author_mofaoss": "Author: mofaoss",
   "framework.ui.update_qq_group": "Update QQ group: ",
@@ -312,6 +312,5 @@
   "framework.ui.latest_version_local_version": "Latest version: {local_version}",
   "framework.ui.yes": "yes",
   "framework.ui.cancel": "cancel",
-  "framework.ui.content": "content",
-  "framework.ui.display.feed_stars": "Star us for updates!"
+  "framework.ui.content": "content"
 }

@@ -180,6 +180,7 @@
   "framework.ui.failed_to_create_startup_file": "en",
   "framework.ui.failed_to_delete_scheduled_task": "en",
   "framework.ui.failed_to_restore_window_position_e": "en",
+  "framework.ui.feed_stars": "zh_CN",
   "framework.ui.file_cannot_be_written": "en",
   "framework.ui.final_queued_tasks_var_0": "en",
   "framework.ui.force_running_task_task_name": "en",

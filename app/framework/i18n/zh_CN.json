@@ -1,4 +1,5 @@
 {
+  "framework.ui.feed_stars": "投喂星星，持续更新",
   "framework.log.adding_auto_start_failed": "添加自启失败",
   "framework.log.all_tasks_have_completed_and_the_assistant_is_now_in_idle_monitoring_mode": "所有任务执行完毕，助手已进入挂机监控模式...",
   "framework.log.auto_login_is_not_checked": "“自动登录”未勾选",
@@ -303,7 +304,6 @@
   "framework.ui.user_interrupt_game_window_has_been_closed": "用户中断：游戏窗口已关闭",
   "framework.ui.visit_github": " 访问 GitHub ⭐",
   "framework.ui.wait_timeout": "等待超时",
-  "framework.ui.display.feed_stars": "投喂星星，持续更新",
   "framework.ui.whether_to_turn_on_physical_recovery_notifications": "是否打开体力恢复通知",
   "framework.ui.withdraw_successful": "撤回成功",
   "framework.ui.yes": "是"
