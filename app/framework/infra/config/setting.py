@@ -29,7 +29,17 @@ ACTIVITY = [
     ["勇者游戏", "2024-12-2", "2024-12-16"],
 ]
 
+import shutil
+
 ensure_runtime_dirs()
 CONFIG_FOLDER = APPDATA_DIR
 CONFIG_FILE = CONFIG_FOLDER / "config.json"
 CONFIG_FILE_OLD = APPDATA_OLD_DIR / "config.json"  # 旧版本的配置文件路径，兼容迁移
+
+if CONFIG_FILE_OLD.exists() and not CONFIG_FILE.exists():
+    # 兼容旧版本配置迁移
+    CONFIG_FILE.parent.mkdir(parents=True, exist_ok=True)
+    try:
+        shutil.copy2(CONFIG_FILE_OLD, CONFIG_FILE)
+    except Exception:
+        pass
