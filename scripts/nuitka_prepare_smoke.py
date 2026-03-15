@@ -238,7 +238,7 @@ def _maybe_run_nuitka(script_path: Path, output_dir: Path, *, standalone: bool) 
         "--no-pyi-file",
         "--zig",
         f"--output-dir={output_dir}",
-        f"--include-data-dir={ROOT / 'app' / 'framework' / 'i18n'}=app/framework/i18n",
+        f"--include-data-dir={ROOT / 'resources' / 'i18n'}=resources/i18n",
     ]
     if standalone:
         cmd.append("--standalone")

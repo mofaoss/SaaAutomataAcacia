@@ -144,7 +144,7 @@ def main() -> int:
     files = 0
     filled = 0
 
-    framework_dir = ROOT / "app" / "framework" / "i18n"
+    framework_dir = ROOT / "resources" / "i18n"
     f, c = _sync_owner(framework_dir)
     files += f
     filled += c

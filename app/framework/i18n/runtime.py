@@ -546,11 +546,11 @@ def _merge_file(lang: str, path: Path) -> None:
 @lru_cache(maxsize=1)
 def _resolve_i18n_project_root() -> Path:
     """Resolve runtime project root robustly across source and Nuitka layouts."""
-    marker = ("app", "framework", "i18n", "en.json")
+    marker = ("resources", "i18n", "en.json")
 
     def has_i18n_root(candidate: Path) -> bool:
         try:
-            return (candidate / marker[0] / marker[1] / marker[2] / marker[3]).is_file()
+            return (candidate / marker[0] / marker[1] / marker[2]).is_dir() and (candidate / marker[0] / marker[1] / marker[2] / marker[3]).is_file()
         except Exception:
             return False
 
@@ -591,7 +591,7 @@ def load_i18n_catalogs() -> None:
     global _PAYLOAD_TEXT_TRANSLATION_CACHE
     root = _resolve_i18n_project_root()
 
-    framework_i18n = root / "app" / "framework" / "i18n"
+    framework_i18n = root / "resources" / "i18n"
     for lang in SUPPORTED_LANGS:
         _merge_file(lang, framework_i18n / f"{lang}.json")
 
@@ -842,7 +842,7 @@ def _load_template_meta() -> None:
     _DYNAMIC_RECOVERY_MATCH_CACHE.clear()
     _PAYLOAD_TEXT_TRANSLATION_CACHE.clear()
     root = _resolve_i18n_project_root()
-    _merge_template_meta_file(root / "app" / "framework" / "i18n" / "template_meta.json")
+    _merge_template_meta_file(root / "resources" / "i18n" / "template_meta.json")
     _merge_template_meta_file(root / "app" / "features" / "utils" / "i18n" / "template_meta.json")
 
     modules_root = root / "app" / "features" / "modules"

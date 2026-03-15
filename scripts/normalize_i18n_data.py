@@ -10,7 +10,7 @@ import string
 ROOT = Path(__file__).resolve().parents[1]
 MODULES_ROOT = ROOT / "app" / "features" / "modules"
 FEATURES_UTILS_I18N = ROOT / "app" / "features" / "utils" / "i18n"
-FRAMEWORK_I18N = ROOT / "app" / "framework" / "i18n"
+FRAMEWORK_I18N = ROOT / "resources" / "i18n"
 LANGS = ("en", "zh_CN", "zh_HK")
 REQUIRED_LANGS = ("en", "zh_CN")
 OPTIONAL_LANGS = ("zh_HK",)

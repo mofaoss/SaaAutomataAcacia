@@ -128,7 +128,7 @@ def _ensure_stage_rewrite(stage_dir: Path) -> None:
 
 
 def _build_nuitka(stage_runner: Path, stage_dir: Path, output_dir: Path, *, standalone: bool) -> Path:
-    i18n_src = stage_dir / "app" / "framework" / "i18n"
+    i18n_src = stage_dir / "resources" / "i18n"
     cmd = [
         sys.executable,
         "-m",
@@ -138,7 +138,7 @@ def _build_nuitka(stage_runner: Path, stage_dir: Path, output_dir: Path, *, stan
         "--no-pyi-file",
         "--zig",
         f"--output-dir={output_dir}",
-        f"--include-data-dir={i18n_src}=app/framework/i18n",
+        f"--include-data-dir={i18n_src}=resources/i18n",
     ]
     if standalone:
         cmd.append("--standalone")

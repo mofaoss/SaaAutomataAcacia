@@ -138,7 +138,7 @@ class PerfectBuild:
             ("docs/help_en.md", "docs/help_en.md", "file"),
             ("update_data.txt", "update_data.txt", "file"),
             ("asset", "asset", "dir"),
-            ("app/framework/i18n", "app/framework/i18n", "dir"),
+            ("resources/i18n", "resources/i18n", "dir"),
         ]
 
         def _include_arg(src: str, dst: str, kind: str) -> str | None:

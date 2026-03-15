@@ -335,7 +335,7 @@ def _audit_owner(base: Path, owner_name: str, *, module_id_map: dict[str, str] |
 
 
 def collect_report() -> dict:
-    framework_base = ROOT / "app" / "framework" / "i18n"
+    framework_base = ROOT / "resources" / "i18n"
     module_id_map = _module_id_to_owner()
     framework_report = _audit_owner(framework_base, "framework", module_id_map=module_id_map)
 

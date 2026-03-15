@@ -468,11 +468,11 @@ def _owner_i18n_dir(owner_scope: str, owner_module: str | None) -> Path:
         if owner_module == "utils":
             return FEATURES_UTILS_ROOT / "i18n"
         return MODULES_ROOT / owner_module / "i18n"
-    return FRAMEWORK_ROOT / "i18n"
+    return ROOT / "resources" / "i18n"
 
 
 def _existing_owner_i18n_dirs() -> dict[tuple[str, str | None], Path]:
-    owners: dict[tuple[str, str | None], Path] = {("framework", None): FRAMEWORK_ROOT / "i18n"}
+    owners: dict[tuple[str, str | None], Path] = {("framework", None): ROOT / "resources" / "i18n"}
     if FEATURES_UTILS_ROOT.exists():
         owners[("module", "utils")] = FEATURES_UTILS_ROOT / "i18n"
     if MODULES_ROOT.exists():
