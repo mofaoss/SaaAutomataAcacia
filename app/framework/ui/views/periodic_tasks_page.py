@@ -517,10 +517,17 @@ class PeriodicTasksPage(QFrame, BaseInterface):
         self.settings_usecase.apply_config_to_widgets(self.ui.findChildren(QWidget))
 
     def _connect_to_save_changed(self):
+        # Connect main UI components
         self.ui_binding_usecase.connect_config_bindings(
             root_widget=self.ui,
             on_widget_change=self.save_changed,
         )
+        # Connect all task-specific settings pages
+        for task_id, page in self.ui.periodic_pages_by_task_id.items():
+            self.ui_binding_usecase.connect_config_bindings(
+                root_widget=page,
+                on_widget_change=self.save_changed,
+            )
 
     def open_game_directly(self):
         try:

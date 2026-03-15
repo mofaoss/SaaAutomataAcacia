@@ -18,6 +18,7 @@ from app.framework.ui.shared.log_startup_logo import insert_startup_logo
 from app.framework.core.event_bus.global_task_bus import global_task_bus
 from app.framework.application.modules import HostContext, get_on_demand_module_specs
 from app.framework.application.periodic.on_demand_runner import OnDemandRunner
+from app.framework.application.periodic.periodic_settings_usecase import PeriodicSettingsUseCase
 from app.framework.core.task_engine.threads import ModuleTaskThread
 from app.framework.i18n import _
 
@@ -557,21 +558,8 @@ class OnDemandTasksPage(QFrame, BaseInterface):
         self._refresh_task_ui()
 
     def _load_config(self):
-        for widget in self.findChildren(QWidget):
-            config_item = getattr(config, widget.objectName(), None)
-            if config_item:
-                if isinstance(widget, CheckBox):
-                    widget.setChecked(config_item.value)
-                elif isinstance(widget, SwitchButton):
-                    widget.setChecked(bool(config_item.value))
-                elif isinstance(widget, ComboBox):
-                    widget.setCurrentIndex(config_item.value)
-                elif isinstance(widget, LineEdit):
-                    widget.setText(self._coerce_line_edit_text(config_item.value))
-                elif isinstance(widget, SpinBox):
-                    widget.setValue(config_item.value)
-                elif isinstance(widget, Slider):
-                    widget.setValue(config_item.value)
+        self.settings_usecase = PeriodicSettingsUseCase()  # Ensure it exists
+        self.settings_usecase.apply_config_to_widgets(self.findChildren(QWidget))
         
         for page in self.module_pages.values():
             if hasattr(page, 'update_label_color'):
@@ -580,51 +568,40 @@ class OnDemandTasksPage(QFrame, BaseInterface):
                 page.load_config()
 
     def _connect_to_save_changed(self):
-        children_list = get_all_children(self)
-        for children in children_list:
-            if isinstance(children, CheckBox):
-                children.stateChanged.connect(partial(self.save_changed, children))
-            elif isinstance(children, SwitchButton):
-                children.checkedChanged.connect(partial(self.save_changed, children))
-            elif isinstance(children, ComboBox):
-                children.currentIndexChanged.connect(partial(self.save_changed, children))
-            elif isinstance(children, SpinBox):
-                children.valueChanged.connect(partial(self.save_changed, children))
-            elif isinstance(children, LineEdit):
-                children.editingFinished.connect(partial(self.save_changed, children))
-            elif isinstance(children, Slider):
-                children.valueChanged.connect(partial(self.save_changed, children))
+        from app.framework.application.periodic.periodic_ui_binding_usecase import PeriodicUiBindingUseCase
+        self.settings_usecase = PeriodicSettingsUseCase()
+        self.ui_binding_usecase = PeriodicUiBindingUseCase()
+
+        # Connect main UI
+        self.ui_binding_usecase.connect_config_bindings(
+            root_widget=self.ui,
+            on_widget_change=self.save_changed,
+        )
+        # Connect all module pages
+        for task_id, page in self.module_pages.items():
+            self.ui_binding_usecase.connect_config_bindings(
+                root_widget=page,
+                on_widget_change=self.save_changed,
+            )
 
     def save_changed(self, widget, *args, **kwargs):
-        config_item = getattr(config, widget.objectName(), None)
-        if not config_item: return
+        # Use the robust unified persistence logic
+        self.settings_usecase.persist_widget_change(widget)
 
-        if isinstance(widget, SpinBox):
-            config.set(config_item, widget.value())
-        elif isinstance(widget, CheckBox):
-            config.set(config_item, widget.isChecked())
-        elif isinstance(widget, SwitchButton):
-            config.set(config_item, widget.isChecked())
-        elif isinstance(widget, LineEdit):
-            if widget.objectName().split('_')[1] == 'fish' and widget.objectName().split('_')[2] != 'key':
-                if self.is_valid_format(widget.text()):
-                    config.set(config_item, widget.text())
-            else:
-                config.set(config_item, widget.text())
-        elif isinstance(widget, ComboBox):
-            config.set(config_item, widget.currentIndex())
-        elif isinstance(widget, Slider):
-            config.set(config_item, widget.value())
-            if hasattr(self, "page_water_bomb") and hasattr(self.page_water_bomb, 'load_config'):
+        # Handle page-specific side effects
+        if hasattr(widget, "objectName"):
+            name = widget.objectName()
+            if "water_bomb" in name and hasattr(self, "page_water_bomb") and hasattr(self.page_water_bomb, 'load_config'):
                 self.page_water_bomb.load_config()
 
+        # Sync background tasks if needed
         task_id = self._task_id_for_widget(widget)
         if task_id:
             meta = self._get_task_metadata().get(task_id, {})
             if self._execution_policy(meta) == "background":
                 self._sync_background_task(task_id)
         
-        # Notify that a task config item has changed so PeriodicTasksPage can snapshot it to the current preset
+        # CRITICAL: Notify PeriodicTasksPage to snapshot these changes into the current preset
         signalBus.taskConfigChanged.emit()
 
     def onCurrentIndexChanged(self, index):

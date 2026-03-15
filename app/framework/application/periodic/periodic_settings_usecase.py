@@ -236,6 +236,17 @@ class PeriodicSettingsUseCase:
         if isinstance(widget, LineEdit):
             name = widget.objectName()
             text = widget.text()
+            
+            # Special handling for fishing color values (e.g. LineEdit_fish_base)
+            if "LineEdit_fish_" in name and "key" not in name:
+                pattern = r'^(\d+),(\d+),(\d+)$'
+                match = re.match(pattern, text)
+                if match:
+                    int_values = [int(match.group(1)), int(match.group(2)), int(match.group(3))]
+                    if all(0 <= value <= 255 for value in int_values):
+                        config.set(config_item, text)
+                return None
+
             if any(token in name for token in ("x1", "x2", "y1", "y2")):
                 try:
                     config.set(config_item, int(text))
