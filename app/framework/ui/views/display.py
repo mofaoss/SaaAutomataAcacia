@@ -13,9 +13,9 @@ from PySide6.QtWidgets import (
     QGraphicsDropShadowEffect,
     QSizePolicy,
 )
-from qfluentwidgets import ScrollArea, CardWidget, PushButton, FluentIcon as FIF
+from qfluentwidgets import ScrollArea, PushButton, FluentIcon as FIF
 
-from app.framework.infra.config.app_config import config, is_non_chinese_ui_language
+from app.framework.infra.config.app_config import config
 from app.framework.infra.config.setting import REPO_URL
 from app.framework.infra.events.signal_bus import signalBus
 from app.framework.infra.runtime.paths import PROJECT_ROOT
@@ -257,7 +257,6 @@ class DisplayInterface(ScrollArea, BaseInterface):
     def __init__(self, parent=None):
         super().__init__(parent=parent)
         BaseInterface.__init__(self)
-        self._is_non_chinese_ui = is_non_chinese_ui_language()
         self.basedir = str(_resolve_display_image_dir())
         self.icondir = str(_resolve_display_icon_dir())
         self.windowTrackingQuickSwitchCard = None
@@ -286,33 +285,9 @@ class DisplayInterface(ScrollArea, BaseInterface):
         self.banner = BannerWidget(self.view)
         self.vBoxLayout.addWidget(self.banner, 1)
 
-        # 语言提示卡片 (不占用拉伸空间)
-        self.gameLanguageNoticeCard = CardWidget(self.view)
-        self.gameLanguageNoticeCard.setFixedHeight(45)
-        self.gameLanguageNoticeLayout = QVBoxLayout(self.gameLanguageNoticeCard)
-        self.gameLanguageNoticeLayout.setContentsMargins(12, 8, 12, 8)
-        self.gameLanguageNoticeLayout.setSpacing(2)
-
-        self.gameLanguageNoticeTitle = QLabel(self.gameLanguageNoticeCard)
-        self.gameLanguageNoticeTitle.setStyleSheet("font-size: 16px; font-weight: 500;")
-
-        self.gameLanguageNoticeLabel = QLabel(self.gameLanguageNoticeCard)
-        self.gameLanguageNoticeLabel.setStyleSheet("color: red;")
-        self.gameLanguageNoticeLabel.setWordWrap(True)
-
-        self.gameLanguageNoticeLayout.addWidget(self.gameLanguageNoticeTitle)
-        self.gameLanguageNoticeLayout.addWidget(self.gameLanguageNoticeLabel)
-
-        self.gameLanguageNoticeCard.setVisible(self._is_non_chinese_ui)
-        self.vBoxLayout.addWidget(self.gameLanguageNoticeCard, 0)
-
     def apply_i18n(self):
         """多语言翻译"""
-        self.gameLanguageNoticeLabel.setText(
-            _("Note: Game language for automation supports only Simplified/Traditional Chinese.", msgid="language_notice_non_chinese_ui")
-            # if self._is_non_chinese_ui
-            # else self.tr("注意：自动化识别的游戏语言目前仅支持简体中文与繁体中文。")
-        )
+        pass
 
     def _load_samples(self):
         """负责组装快速跳转卡片及绑定业务逻辑"""

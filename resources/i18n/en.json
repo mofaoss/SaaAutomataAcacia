@@ -148,7 +148,6 @@
   "framework.ui.action_failed_error": "Action failed: {error}",
   "framework.ui.current_color": "Current Color",
   "framework.ui.quick_access": "Quick Access",
-  "framework.ui.language_notice_non_chinese_ui": "Note: Game language for automation supports only Simplified/Traditional Chinese.",
   "framework.ui.visit_github": " Visit GitHub ⭐",
   "framework.ui.core_settings_display_title": "Core Settings",
   "framework.ui.please_confirm_the_settings_when_you_first_download": "Please confirm the settings when you first download",

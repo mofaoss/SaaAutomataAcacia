@@ -461,7 +461,8 @@ class SharedSchedulingPanel(QWidget):
         main_layout.addLayout(checkbox_row)
 
         # 2. 中间：生效起点设置行
-        activation_row = QHBoxLayout()
+        self.activation_row_widget = QWidget(self)
+        activation_row = QHBoxLayout(self.activation_row_widget)
         activation_row.setContentsMargins(0, 0, 0, 0)
         activation_row.setSpacing(6)
 
@@ -472,7 +473,7 @@ class SharedSchedulingPanel(QWidget):
 
         self.activation_widget = QWidget(self)
         self.activation_widget.setStyleSheet("background: transparent;")
-        self.activation_widget.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Fixed)
+        self.activation_widget.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Fixed)
         self.activation_widget.setMaximumHeight(42)
 
         self.activation_layout = QVBoxLayout(self.activation_widget)
@@ -481,7 +482,8 @@ class SharedSchedulingPanel(QWidget):
         self.activation_layout.addStretch(1)
 
         activation_row.addWidget(self.activation_widget, 1)
-        main_layout.addLayout(activation_row)
+
+        main_layout.addWidget(self.activation_row_widget)
 
         # 3. 执行节点标题行
         exec_title_layout = QHBoxLayout()
@@ -564,6 +566,11 @@ class SharedSchedulingPanel(QWidget):
             if isinstance(widget, ExecutionRuleWidget):
                 yield widget
 
+    def _update_activation_visibility(self):
+        """根据执行节点数量自动切换生效起点的显示状态"""
+        has_rules = any(True for _ in self._iter_rule_widgets())
+        self.activation_row_widget.setVisible(has_rules)
+
     def _add_rule(self, data):
         w = ExecutionRuleWidget(self.is_non_chinese_ui, self)
         w.deleted.connect(self._remove_rule)
@@ -577,6 +584,7 @@ class SharedSchedulingPanel(QWidget):
 
         self.rules_layout.insertWidget(self.rules_layout.count() - 1, w)
         self._update_delete_btns()
+        self._update_activation_visibility()
         self._emit_change()
 
     def _remove_rule(self, w):
@@ -584,6 +592,7 @@ class SharedSchedulingPanel(QWidget):
         self.rules_layout.removeWidget(w)
         w.deleteLater()
         self._update_delete_btns()
+        self._update_activation_visibility()
         self._emit_change()
 
     def _update_delete_btns(self):
@@ -634,6 +643,7 @@ class SharedSchedulingPanel(QWidget):
                 self._add_rule(rule)
 
             self._update_delete_btns()
+            self._update_activation_visibility()
         finally:
             self._is_loading = False
 
