@@ -54,7 +54,7 @@ def copy_user_data(source_path: Path | str = None, target_path: Path | str = APP
     tgt = Path(tgt)
 
     if not src.exists():
-        logger.debug(f"源路径不存在: {src}")
+        logger.debug(_(f"source path does not exist: {src}", msgid="source_path_does_not_exist"))
         return
 
     try:
@@ -80,19 +80,20 @@ def copy_user_data(source_path: Path | str = None, target_path: Path | str = APP
             if src.resolve() != dest_file.resolve():
                 shutil.copy2(src, dest_file)
         except Exception as e:
-            logger.error(f"复制文件失败 {src} 到 {dest_file}: {e}")
+            logger.error(_(f"copy file failed {src} to {dest_file}: {e}", msgid="copy_file_failed_src_to_dest_file_e"))
+            return
+
 
     elif src.is_dir():
         if not recursive:
-            logger.debug(f"跳过目录复制 (未开启递归): {src}")
+            logger.debug(_(f"skip directory copy (recursive not enabled): {src}", msgid="skip_directory_copy_recursive_not_enabled", src=src))
             return
 
         if tgt.is_file():
-            logger.error(f"无法将目录 {src} 复制到文件 {tgt}")
+            logger.error(_(f"cannot copy directory {src} to file {tgt}", msgid="cannot_copy_directory_to_file"))
             return
 
         tgt.mkdir(parents=True, exist_ok=True)
 
         for item in src.iterdir():
-            # 递归复制子项，确保目录结构不会被展平
             copy_user_data(source_path=item, target_path=tgt / item.name, recursive=recursive)

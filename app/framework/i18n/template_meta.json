@@ -20,6 +20,39 @@
     "is_runtime_visible": true,
     "mixed_source_template": false
   },
+  "framework.log.cannot_copy_directory_to_file": {
+    "kind": "dynamic_template",
+    "template_id": "cannot_copy_directory_to_file",
+    "msgid": "cannot_copy_directory_to_file",
+    "source_template": "cannot copy directory {src} to file {tgt}",
+    "fields": [
+      "src",
+      "tgt"
+    ],
+    "field_details": {
+      "src": {
+        "format_spec": "",
+        "conversion": ""
+      },
+      "tgt": {
+        "format_spec": "",
+        "conversion": ""
+      }
+    },
+    "owner_scope": "framework",
+    "owner_module": null,
+    "file_path": "app/framework/infra/runtime/paths.py",
+    "line": 95,
+    "col": 25,
+    "function_name": "copy_user_data",
+    "class_name": null,
+    "context": "log",
+    "source_language": "en",
+    "template_hash": "242b98e88ba38e9d9c3a43c37ce4c419f5022c55",
+    "callsite_key": "app/framework/infra/runtime/paths.py:95:25",
+    "is_runtime_visible": true,
+    "mixed_source_template": false
+  },
   "framework.log.client_area_size_client_width_x_client_height_ac": {
     "kind": "dynamic_template",
     "template_id": "client_area_size_client_width_x_client_height_ac",
@@ -60,6 +93,44 @@
     "source_language": "en",
     "template_hash": "ce77cfdb6d2cf893585e515c134081ed996a1cc9",
     "callsite_key": "app/framework/core/task_engine/base_task.py:47:12",
+    "is_runtime_visible": true,
+    "mixed_source_template": false
+  },
+  "framework.log.copy_file_failed_src_to_dest_file_e": {
+    "kind": "dynamic_template",
+    "template_id": "copy_file_failed_src_to_dest_file_e",
+    "msgid": "copy_file_failed_src_to_dest_file_e",
+    "source_template": "copy file failed {src} to {dest_file}: {e}",
+    "fields": [
+      "src",
+      "dest_file",
+      "e"
+    ],
+    "field_details": {
+      "src": {
+        "format_spec": "",
+        "conversion": ""
+      },
+      "dest_file": {
+        "format_spec": "",
+        "conversion": ""
+      },
+      "e": {
+        "format_spec": "",
+        "conversion": ""
+      }
+    },
+    "owner_scope": "framework",
+    "owner_module": null,
+    "file_path": "app/framework/infra/runtime/paths.py",
+    "line": 84,
+    "col": 25,
+    "function_name": "copy_user_data",
+    "class_name": null,
+    "context": "log",
+    "source_language": "en",
+    "template_hash": "2f71bd8012a00191b6936e760d6339d09e700778",
+    "callsite_key": "app/framework/infra/runtime/paths.py:84:25",
     "is_runtime_visible": true,
     "mixed_source_template": false
   },
@@ -1067,6 +1138,34 @@
     "is_runtime_visible": true,
     "mixed_source_template": false
   },
+  "framework.log.skip_directory_copy_recursive_not_enabled": {
+    "kind": "dynamic_template",
+    "template_id": "skip_directory_copy_recursive_not_enabled",
+    "msgid": "skip_directory_copy_recursive_not_enabled",
+    "source_template": "skip directory copy (recursive not enabled): {src}",
+    "fields": [
+      "src"
+    ],
+    "field_details": {
+      "src": {
+        "format_spec": "",
+        "conversion": ""
+      }
+    },
+    "owner_scope": "framework",
+    "owner_module": null,
+    "file_path": "app/framework/infra/runtime/paths.py",
+    "line": 90,
+    "col": 25,
+    "function_name": "copy_user_data",
+    "class_name": null,
+    "context": "log",
+    "source_language": "en",
+    "template_hash": "9e8887ce47727e6811c912f7a30638642cbe316d",
+    "callsite_key": "app/framework/infra/runtime/paths.py:90:25",
+    "is_runtime_visible": true,
+    "mixed_source_template": false
+  },
   "framework.log.skipping_task_metadata_not_found": {
     "kind": "dynamic_template",
     "template_id": "skipping_task_metadata_not_found",
@@ -1092,6 +1191,34 @@
     "source_language": "en",
     "template_hash": "aee46c5c83054a0fd89816f2e22b14bc6fcd5cad",
     "callsite_key": "app/framework/core/task_engine/threads.py:272:24",
+    "is_runtime_visible": true,
+    "mixed_source_template": false
+  },
+  "framework.log.source_path_does_not_exist": {
+    "kind": "dynamic_template",
+    "template_id": "source_path_does_not_exist",
+    "msgid": "source_path_does_not_exist",
+    "source_template": "source path does not exist: {src}",
+    "fields": [
+      "src"
+    ],
+    "field_details": {
+      "src": {
+        "format_spec": "",
+        "conversion": ""
+      }
+    },
+    "owner_scope": "framework",
+    "owner_module": null,
+    "file_path": "app/framework/infra/runtime/paths.py",
+    "line": 57,
+    "col": 21,
+    "function_name": "copy_user_data",
+    "class_name": null,
+    "context": "log",
+    "source_language": "en",
+    "template_hash": "65f45eed1a341aad419c06f18f02e0bb70375577",
+    "callsite_key": "app/framework/infra/runtime/paths.py:57:21",
     "is_runtime_visible": true,
     "mixed_source_template": false
   },
