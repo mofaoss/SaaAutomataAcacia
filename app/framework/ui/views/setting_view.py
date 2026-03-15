@@ -57,9 +57,8 @@ class VersionCheckThread(QThread):
 
     def run(self):
         local_version = get_local_version() or "-"
-        should_check_prerelease = bool(config.checkPrereleaseForStable.value)
 
-        best = get_best_update_candidate(REPO_URL, local_version, should_check_prerelease)
+        best = get_best_update_candidate(REPO_URL, local_version)
 
         if best:
             payload = {
@@ -212,13 +211,6 @@ class SettingInterface(ScrollArea, BaseInterface):
         # personalization
         self.personalGroup = SettingCardGroup(
             self.tr('Personalization'), self.scrollWidget)
-        self.minimizeToTrayCard = SwitchSettingCard(
-            FIF.MINIMIZE,
-            _('Shrink to tray on close'),
-            _('Once enabled, clicking the Close button will hide the program in the system tray instead of exiting the program.'),
-            configItem=config.minimizeToTray,
-            parent=self.personalGroup
-        )
         self.micaCard = SwitchSettingCard(
             FIF.TRANSPARENT,
             self.tr('Mica effect'),
@@ -308,11 +300,18 @@ class SettingInterface(ScrollArea, BaseInterface):
             configItem=config.checkUpdateAtStartUp,
             parent=self.aboutSoftwareGroup
         )
-        self.checkPrereleaseForStableCard = SwitchSettingCard(
-            FIF.TAG,
-            _('Detect beta version updates (official version users)'),
-            _('Off by default. After users of the official version turn it on, they will detect both the official version and the test version at the same time.', msgid='off_by_default_after_users_of_the_official_version_turn_it_on_they_will_detect_b'),
-            configItem=config.checkPrereleaseForStable,
+        self.minimizeToTrayCard = SwitchSettingCard(
+            FIF.MINIMIZE,
+            _('Shrink to tray on close', msgid='shrink_to_tray_on_close'),
+            _('Once enabled, clicking the Close button will hide the program in the system tray instead of exiting the program.'),
+            configItem=config.minimizeToTray,
+            parent=self.aboutSoftwareGroup
+        )
+        self.minimizeToTrayAtStartupCard = SwitchSettingCard(
+            FIF.UP,
+            _('Shrink to tray on startup', msgid='shrink_to_tray_on_startup'),
+            _('Once enabled, the main window will not be displayed when starting the program, and it will directly shrink to the system tray.', msgid='stay_hidden_in_tray_after_startup'),
+            configItem=config.minimizeToTrayAtStartup,
             parent=self.aboutSoftwareGroup
         )
 
@@ -350,13 +349,6 @@ class SettingInterface(ScrollArea, BaseInterface):
             parent=self.scrollWidget,
             min_value=1,
             max_value=255,
-        )
-        self.saveScaleCacheCard = SwitchSettingCard(
-            FIF.SAVE,
-            _('Save scaling data'),
-            _('If your game window is used permanently, you can choose to save it, so that the running will match faster. If the window size changes frequently, uncheck it.'),
-            configItem=config.saveScaleCache,
-            parent=self.aboutSoftwareGroup
         )
         self.autoStartTask = SwitchSettingCard(
             FIF.PLAY,
@@ -449,7 +441,6 @@ class SettingInterface(ScrollArea, BaseInterface):
     def __initLayout(self):
         self.settingLabel.move(36, 50)
 
-        self.personalGroup.addSettingCard(self.minimizeToTrayCard)
         self.personalGroup.addSettingCard(self.micaCard)
         self.personalGroup.addSettingCard(self.themeCard)
         self.personalGroup.addSettingCard(self.enterCard)
@@ -464,8 +455,8 @@ class SettingInterface(ScrollArea, BaseInterface):
         self.coreSettingsGroup.addSettingCard(self.gameLanguageCard)
 
         self.aboutSoftwareGroup.addSettingCard(self.updateOnStartUpCard)
-        self.aboutSoftwareGroup.addSettingCard(self.checkPrereleaseForStableCard)
-        self.aboutSoftwareGroup.addSettingCard(self.saveScaleCacheCard)
+        self.aboutSoftwareGroup.addSettingCard(self.minimizeToTrayCard)
+        self.aboutSoftwareGroup.addSettingCard(self.minimizeToTrayAtStartupCard)
         self.aboutSoftwareGroup.addSettingCard(self.autoStartTask)
         self.aboutSoftwareGroup.addSettingCard(self.autoBootStartup)
         self.aboutSoftwareGroup.addSettingCard(self.informMessage)

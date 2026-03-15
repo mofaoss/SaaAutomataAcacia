@@ -122,6 +122,9 @@ class MainWindow(FluentWindow, BaseInterface):
         self._shared_task_sidebar_cards = None
         self._task_sidebar_owner = None
         self._feature_bridge = feature_bridge
+        
+        # 记录是否已完成过正常的显示流程
+        self._first_visible_show_done = False
 
         # 【新增】全局任务运行状态
         self.global_is_running = False
@@ -272,12 +275,44 @@ class MainWindow(FluentWindow, BaseInterface):
         if reason == QSystemTrayIcon.ActivationReason.DoubleClick:
             self.show_from_tray()
 
+    def _apply_geometry_fix(self):
+        """复用原本的几何尺寸绘制流程，强制校准窗口比例和位置"""
+        position = config.position.value
+        target_screen = None
+        if position:
+            target_screen = QApplication.screenAt(QPoint(position[0], position[1]))
+        if target_screen is None:
+            target_screen = QApplication.primaryScreen()
+        target_geo = target_screen.availableGeometry()
+
+        # 计算并强制应用尺寸
+        w = int(target_geo.width() * 0.58)
+        h = int(target_geo.height() * 0.8)
+        self.resize(w, h)
+        self.setMinimumSize(int(target_geo.width() * 0.5), int(target_geo.height() * 0.6))
+
+        # 计算并强制应用位置
+        if position and target_screen == QApplication.screenAt(QPoint(position[0], position[1])):
+            self.move(*position)
+        else:
+            rect = self.frameGeometry()
+            rect.moveCenter(target_geo.center())
+            self.move(rect.topLeft())
+
     def show_from_tray(self):
         """从托盘恢复窗口显示"""
         self.show()
+        
+        # 针对静默启动后第一次打开的专项修复：
+        # 此时窗口已 visible，重新执行原本的几何绘制逻辑，确保比例正常
+        if not self._first_visible_show_done:
+            self._apply_geometry_fix()
+            self._first_visible_show_done = True
+
         self.activateWindow()
         if self.isMinimized():
             self.showNormal()
+        self.raise_()
 
     def quit_app(self):
         """彻底退出程序，跳过托盘拦截"""
@@ -661,21 +696,15 @@ class MainWindow(FluentWindow, BaseInterface):
         self.ocr_module = self._feature_bridge.initialize_ocr_module()
 
     def initWindow(self):
-        position = config.position.value
-        if hasattr(config, "ocr_use_gpu") and config.ocr_use_gpu.value:
-            config.set(config.ocr_use_gpu, False)
-        target_screen = None
-
-        if position:
-            target_screen = QApplication.screenAt(QPoint(position[0], position[1]))
-
-        if target_screen is None:
-            target_screen = QApplication.primaryScreen()
-
-        target_geo = target_screen.availableGeometry()
-
-        self.resize(int(target_geo.width() * 0.58), int(target_geo.height() * 0.8))
-        self.setMinimumSize(int(target_geo.width() * 0.5), int(target_geo.height() * 0.6))
+        # 启动时的初始可见性由外部 SAA.py 的 _show_main_window 统一控制
+        # 这里仅执行必要的隐藏初始化，并不在此处 resize/move 以免被 FluentWindow 覆盖
+        if config.minimizeToTrayAtStartup.value:
+            self.setVisible(False)
+            logger.info(_("Application initialized in system tray mode"))
+        else:
+            self._apply_geometry_fix()
+            self.show()
+            self._first_visible_show_done = True
 
         self.setWindowIcon(self._resolve_app_icon())
         self.setWindowTitle(_("Assistant Aca", msgid="app_name"))
@@ -683,14 +712,6 @@ class MainWindow(FluentWindow, BaseInterface):
         self.setMicaEffectEnabled(False)
         self.navigationInterface.setReturnButtonVisible(False)
 
-        if position and target_screen == QApplication.screenAt(QPoint(position[0], position[1])):
-            self.move(*position)
-        else:
-            rect = self.frameGeometry()
-            rect.moveCenter(target_geo.center())
-            self.move(rect.topLeft())
-
-        self.show()
         QApplication.processEvents()
 
     def resizeEvent(self, e):
@@ -840,8 +861,6 @@ class MainWindow(FluentWindow, BaseInterface):
         try:
             self.save_log()
             self.save_position()
-            if config.saveScaleCache.value:
-                matcher.save_scale_cache()
         except Exception as e:
             logger.error(e)
 

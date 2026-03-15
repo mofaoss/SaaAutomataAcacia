@@ -14,8 +14,11 @@ from app.framework.i18n import _
     "执行退出",
     notify_on_completion=False,
     periodic_requires_home_sync=False,
-    description="### 提示\n* 关闭助手后，计划任务将不会继续执行",
+    periodic_force_last=True,
+    periodic_mandatory=True,
+    description="### 提示\n* 开启“自动加入计划队列”后，到点自动执行计划任务时，将自动在队列末尾执行本项目以清理环境（如关闭游戏等）。\n* 关闭助手后，计划任务将不会继续执行",
     fields={
+        "CheckBox_auto_run": Field("自动加入计划队列"),
         "CheckBox_close_game": Field("退出游戏"),
         "CheckBox_shutdown": Field("关机"),
         "CheckBox_close_proxy": Field("退出助手"),
@@ -27,6 +30,7 @@ class CloseGameModule:
         auto,
         logger,
         app_config,
+        CheckBox_auto_run: bool = False,
         CheckBox_close_game: bool = False,
         CheckBox_shutdown: bool = False,
         CheckBox_close_proxy: bool = False,
@@ -34,11 +38,15 @@ class CloseGameModule:
         self.auto = auto
         self.logger = logger
         self.app_config = app_config
-        self.close_game_enabled = bool(CheckBox_close_game)
-        self.shutdown_enabled = bool(CheckBox_shutdown)
-        self.close_proxy_enabled = bool(CheckBox_close_proxy)
+        self.auto_run_enabled = CheckBox_auto_run
+        self.close_game_enabled = CheckBox_close_game
+        self.shutdown_enabled = CheckBox_shutdown
+        self.close_proxy_enabled = CheckBox_close_proxy
 
     def run(self):
+        # 即使被加入队列，也通过内部逻辑进行最终防护 (目前 dispatcher 会控制加入，这里双重保险)
+        self.logger.info(_('Executing exit tasks...', msgid='executing_exit_tasks'))
+        
         # 1. 退出游戏
         if self.close_game_enabled:
             self.logger.info(_('Exiting game...', msgid='exiting_game'))

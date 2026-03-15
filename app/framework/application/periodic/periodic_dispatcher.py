@@ -1,5 +1,6 @@
 from datetime import datetime
 from typing import Callable, Iterable
+from app.framework.i18n import _
 
 
 class PeriodicDispatcher:
@@ -16,6 +17,7 @@ class PeriodicDispatcher:
         is_launch_pending: bool,
         is_self_running: bool,
         is_external_running: bool,
+        close_game_auto_run: bool,
         queue_tasks: Callable[[list[str]], None],
         mark_task_queued: Callable[[str], None],
         mark_waiting_for_external_finish: Callable[[bool], None],
@@ -24,6 +26,10 @@ class PeriodicDispatcher:
         task_ids = list(new_tasks_found or [])
         if not task_ids or is_launch_pending:
             return
+
+        # 如果开启了自动加入计划队列，且当前队列中没有执行退出任务，则追加到末尾
+        if close_game_auto_run and "close_game" not in task_ids:
+            task_ids.append("close_game")
 
         current_time_str = datetime.now().strftime("%H:%M")
         if is_self_running or is_external_running:

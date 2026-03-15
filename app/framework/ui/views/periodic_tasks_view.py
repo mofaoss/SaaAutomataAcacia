@@ -59,6 +59,10 @@ class TaskListView(ListWidget):
         if getattr(task_item_widget, "is_force_first", False):
             item.setFlags(item.flags() & ~Qt.ItemFlag.ItemIsDragEnabled)
 
+        # 彻底剥夺强制末尾任务的拖拽能力
+        if getattr(task_item_widget, "is_force_last", False):
+            item.setFlags(item.flags() & ~Qt.ItemFlag.ItemIsDragEnabled)
+
         self.addItem(item)
         self.setItemWidget(item, task_item_widget)
 
@@ -232,6 +236,7 @@ class TaskItemWidget(QWidget):
         *,
         is_mandatory: bool = False,
         is_force_first: bool = False,
+        is_force_last: bool = False,
     ):
         super().__init__(parent)
         self.task_id = task_id
@@ -243,6 +248,7 @@ class TaskItemWidget(QWidget):
         # 标记当前任务是否为强制底座（由注册中心定义）
         self.is_mandatory = bool(is_mandatory)
         self.is_force_first = bool(is_force_first)
+        self.is_force_last = bool(is_force_last)
 
         layout = QHBoxLayout(self)
         layout.setContentsMargins(4, 4, 4, 4)

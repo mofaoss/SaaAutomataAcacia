@@ -9,7 +9,6 @@ import numpy as np
 
 from app.framework.infra.config.app_config import config
 from app.framework.infra.vision.image import ImageUtils
-from app.framework.infra.runtime.paths import APPDATA_DIR
 
 logger = logging.getLogger(__name__)
 
@@ -27,43 +26,7 @@ class Matcher:
         self.early_stop_threshold = early_stop_threshold
         self.nms_threshold = nms_threshold
         self.max_scale = 1
-        self.scales = {}
-        self._init_scales()
         self._get_max_scale()
-
-    def _init_scales(self):
-        # 定义文件路径
-        file_path = str(APPDATA_DIR / "scale_cache.json")
-        if config.saveScaleCache.value:
-            # 检查文件是否存在
-            if os.path.exists(file_path):
-                try:
-                    # 打开并读取 JSON 文件
-                    with open(file_path, 'r', encoding='utf-8') as file:
-                        self.scales = json.load(file)  # 将 JSON 数据加载到 self.scales
-                except Exception as e:
-                    print(f"读取 scale_cache.json 文件时出错: {e}")
-        else:
-            if os.path.exists(file_path):
-                try:
-                    # 删除文件
-                    os.remove(file_path)
-                except Exception as e:
-                    print(f"删除 scale_cache.json 文件时出错: {e}")
-
-    def save_scale_cache(self):
-        # 定义文件路径
-        file_path = str(APPDATA_DIR / "scale_cache.json")
-
-        # 检查 runtime/appdata 目录是否存在，如果不存在则创建
-        os.makedirs(os.path.dirname(file_path), exist_ok=True)
-
-        try:
-            # 将 self.scales 写入 JSON 文件
-            with open(file_path, 'w', encoding='utf-8') as file:
-                json.dump(self.scales, file, indent=4)  # 使用 indent 参数格式化 JSON
-        except Exception as e:
-            print(f"保存 scale_cache.json 文件时出错: {e}")
 
     def _get_max_scale(self):
         import ctypes
@@ -167,31 +130,20 @@ class Matcher:
             tpl_h, tpl_w = template.shape[:2]
             orig_h, orig_w = target.shape[:2]
 
-            if config.saveScaleCache.value:
-                scale = self.scales.get(template_path, None)
-            else:
-                scale = None
-
-            if scale is None:
-                boxes = []
-                confidences = [0]
-                for i in range(self.scale_steps):
-                    scale = self.max_scale - i * self.scale_factor
-                    step_confidences, step_boxes = self.step(
-                        scale, orig_w, orig_h, tpl_w, tpl_h, template, target, mask
-                    )
-                    if len(step_confidences) == 0:
-                        continue
-                    if max(step_confidences) > max(confidences):
-                        confidences = step_confidences
-                        boxes = step_boxes
-                        self.scales[template_path] = scale
-                        if min(confidences) > self.early_stop_threshold:
-                            break
-            else:
-                confidences, boxes = self.step(
+            boxes = []
+            confidences = [0]
+            for i in range(self.scale_steps):
+                scale = self.max_scale - i * self.scale_factor
+                step_confidences, step_boxes = self.step(
                     scale, orig_w, orig_h, tpl_w, tpl_h, template, target, mask
                 )
+                if len(step_confidences) == 0:
+                    continue
+                if max(step_confidences) > max(confidences):
+                    confidences = step_confidences
+                    boxes = step_boxes
+                    if min(confidences) > self.early_stop_threshold:
+                        break
 
             if len(boxes) == 0:
                 return []

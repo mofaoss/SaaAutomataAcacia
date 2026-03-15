@@ -5,8 +5,8 @@ from dataclasses import dataclass
 
 from app.framework.application.modules import get_periodic_module_specs
 from app.framework.application.tasks.periodic_task_specs import (
-    PERIODIC_TASK_SPECS,
-    PRIMARY_TASK_ID,
+    get_periodic_task_specs,
+    get_primary_task_id,
 )
 
 
@@ -16,6 +16,7 @@ class PeriodicTaskProfile:
     primary_task_id: str
     mandatory_task_ids: frozenset[str]
     force_first_task_ids: frozenset[str]
+    force_last_task_ids: frozenset[str]
     primary_option_key: str
 
 
@@ -42,7 +43,7 @@ def _build_task_registry() -> dict[str, dict]:
     module_class_by_task_id = _build_module_class_by_task_id()
     module_text_by_task_id = _build_module_text_by_task_id()
     registry: dict[str, dict] = {}
-    for spec in PERIODIC_TASK_SPECS:
+    for spec in get_periodic_task_specs():
         task_id = spec.get("id")
         if not task_id:
             continue
@@ -60,6 +61,7 @@ def _build_task_registry() -> dict[str, dict]:
             "notify_on_completion": spec.get("notify_on_completion", True),
             "is_mandatory": spec.get("is_mandatory", False),
             "force_first": spec.get("force_first", False),
+            "force_last": spec.get("force_last", False),
         }
     return registry
 
@@ -70,7 +72,7 @@ def get_periodic_task_profile() -> PeriodicTaskProfile:
         return _CACHED_PROFILE
 
     registry = _build_task_registry()
-    primary_task_id = str(PRIMARY_TASK_ID or "").strip()
+    primary_task_id = str(get_primary_task_id() or "").strip()
     if not primary_task_id and registry:
         primary_task_id = next(iter(registry.keys()))
     mandatory_task_ids = frozenset(
@@ -78,6 +80,9 @@ def get_periodic_task_profile() -> PeriodicTaskProfile:
     )
     force_first_task_ids = frozenset(
         task_id for task_id, meta in registry.items() if bool(meta.get("force_first", False))
+    )
+    force_last_task_ids = frozenset(
+        task_id for task_id, meta in registry.items() if bool(meta.get("force_last", False))
     )
     primary_option_key = str(registry.get(primary_task_id, {}).get("option_key", "") or "")
     if not primary_option_key:
@@ -89,6 +94,7 @@ def get_periodic_task_profile() -> PeriodicTaskProfile:
         primary_task_id=primary_task_id,
         mandatory_task_ids=mandatory_task_ids,
         force_first_task_ids=force_first_task_ids,
+        force_last_task_ids=force_last_task_ids,
         primary_option_key=primary_option_key,
     )
     return _CACHED_PROFILE

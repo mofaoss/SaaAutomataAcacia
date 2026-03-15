@@ -75,6 +75,7 @@ class ModuleMeta:
     periodic_enabled_by_default: bool = False
     periodic_mandatory: bool = False
     periodic_force_first: bool = False
+    periodic_force_last: bool = False
     periodic_default_hour: int = 4
     periodic_default_minute: int = 0
     periodic_max_runs: int = 1

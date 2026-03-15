@@ -42,9 +42,19 @@ def get_all_modules() -> list[ModuleMeta]:
 
 def get_modules_by_host(host: ModuleHost) -> list[ModuleMeta]:
     _ensure_discovered()
+
+    def sort_key(m: ModuleMeta):
+        # 优先级：force_first (-1) < normal (0) < force_last (1)
+        priority = 0
+        if m.periodic_force_first:
+            priority = -1
+        elif m.periodic_force_last:
+            priority = 1
+        return (priority, m.order, str(m.id or ""))
+
     return sorted(
         [m for m in _MODULE_REGISTRY.values() if m.host == host and m.enabled],
-        key=lambda x: (x.order, str(x.id or "")),
+        key=sort_key,
     )
 
 
@@ -72,6 +82,7 @@ def build_periodic_profiles():
                 "enabled_by_default": m.periodic_enabled_by_default,
                 "mandatory": m.periodic_mandatory,
                 "force_first": m.periodic_force_first,
+                "force_last": m.periodic_force_last,
                 "default_hour": m.periodic_default_hour,
                 "default_minute": m.periodic_default_minute,
                 "max_runs": m.periodic_max_runs,

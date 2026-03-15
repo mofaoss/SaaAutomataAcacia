@@ -129,6 +129,7 @@ class Config(QConfig):
     # 2. 系统与个性化设置 (Settings - Personal & Update)
     # =========================================================
     minimizeToTray        = ConfigItem("setting_personal", "minimizeToTray", False, BoolValidator())
+    minimizeToTrayAtStartup = ConfigItem("setting_personal", "minimizeToTrayAtStartup", False, BoolValidator())
     enter_interface       = OptionsConfigItem("setting_personal", "enter_interface", 0, OptionsValidator([0, 1, 2]))
     server_interface      = OptionsConfigItem("setting_personal", "server_interface", 0, OptionsValidator([0, 1, 2, 3]))
     isLog                 = ConfigItem("setting_personal", "isLog", False, BoolValidator())
@@ -136,7 +137,6 @@ class Config(QConfig):
     showScreenshot        = ConfigItem("setting_personal", "showScreenshot", False, BoolValidator())
     windowTrackingInput   = ConfigItem("setting_personal", "windowTrackingInput", True, BoolValidator())
     windowTrackingAlpha   = ConfigItem("setting_personal", "windowTrackingAlpha", 1)
-    saveScaleCache        = ConfigItem("setting_personal", "saveScaleCache", False, BoolValidator(), restart=True)
     ocr_use_gpu           = ConfigItem("setting_personal", "ocr_use_gpu", False, BoolValidator())  # Abandoned, kept for config compatibility
     is_resize             = ConfigItem("setting_personal", "is_resize", None)
     auto_start_task       = ConfigItem("setting_personal", "auto_start_task", False, BoolValidator())
@@ -148,7 +148,6 @@ class Config(QConfig):
     backgroundOpacity     = RangeConfigItem("Personalization", "BackgroundOpacity", 6, RangeValidator(0, 100))
 
     checkUpdateAtStartUp     = ConfigItem("Update", "CheckUpdateAtStartUp", True, BoolValidator())
-    checkPrereleaseForStable = ConfigItem("Update", "CheckPrereleaseForStable", False, BoolValidator())
     github_api_cache         = ConfigItem("Update", "GithubApiCache", {})
     update_proxies           = ConfigItem("Update", "update_proxies", '')
     cpu_support_avx2         = ConfigItem("about", "cpu_support_avx2", None)
@@ -172,6 +171,7 @@ class Config(QConfig):
     CheckBox_close_game_10 = ConfigItem("home_interface_option", "CheckBox_close_game_10", False, BoolValidator())
 
     # --- 退出设置 (Close Game) ---
+    CheckBox_auto_run    = ConfigItem("home_interface_close", "CheckBox_auto_run", False, BoolValidator())
     CheckBox_close_game  = ConfigItem("home_interface_close", "CheckBox_close_game", False, BoolValidator())
     CheckBox_close_proxy = ConfigItem("home_interface_close", "CheckBox_close_proxy", False, BoolValidator())
     CheckBox_shutdown    = ConfigItem("home_interface_close", "CheckBox_shutdown", False, BoolValidator())

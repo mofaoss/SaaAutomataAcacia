@@ -11,11 +11,10 @@ def get_local_version(file_path="update_data.txt"):
     return _updater_module().get_local_version(file_path=file_path)
 
 
-def get_best_update_candidate(repo_url: str, local_version: str, check_prerelease: bool = False):
+def get_best_update_candidate(repo_url: str, local_version: str):
     return _updater_module().get_best_update_candidate(
         repo_url,
         local_version,
-        check_prerelease=check_prerelease,
     )
 
 

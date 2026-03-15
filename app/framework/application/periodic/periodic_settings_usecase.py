@@ -23,6 +23,10 @@ class PeriodicSettingsUseCase:
         return bool(config.CheckBox_open_game_directly.value)
 
     @staticmethod
+    def is_close_game_auto_run_enabled() -> bool:
+        return bool(config.CheckBox_auto_run.value)
+
+    @staticmethod
     def is_same_game_directory(folder: str) -> bool:
         return str(config.LineEdit_game_directory.value) == str(folder)
 

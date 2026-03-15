@@ -183,7 +183,10 @@ class StartupController(QObject):
         self.localize_widget_tree_for_traditional(self.window)
 
     def _show_main_window(self):
-        self.window.show()
+        # 仅在未开启“启动时缩小到托盘”时才显式调用 show
+        from app.framework.infra.config.app_config import config
+        if not config.minimizeToTrayAtStartup.value:
+            self.window.show()
 
     def _finish(self):
         self.splash.close_with_cleanup()

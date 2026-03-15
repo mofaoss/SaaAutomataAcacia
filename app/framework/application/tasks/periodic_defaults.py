@@ -5,28 +5,33 @@ from __future__ import annotations
 
 import copy
 
-from app.framework.core.module_system import build_periodic_profiles
+from app.framework.application.tasks.periodic_task_specs import get_periodic_task_specs
 
 
 def build_default_periodic_task_sequence():
     sequence = []
-    for profile in build_periodic_profiles():
-        default_rules = profile.get("default_activation_config") or [
+    for spec in get_periodic_task_specs():
+        task_id = spec.get("id")
+        if not task_id:
+            continue
+            
+        default_rules = spec.get("default_activation_config") or [
             {
                 "type": "daily",
                 "day": 0,
-                "time": f"{int(profile.get('default_hour', 4)):02d}:{int(profile.get('default_minute', 0)):02d}",
-                "max_runs": int(profile.get("max_runs", 1)),
+                "time": "00:00",
+                "max_runs": 1,
             }
         ]
         sequence.append(
             {
-                "id": profile.get("task_id"),
+                "id": task_id,
                 "enabled": False,
-                "use_periodic": bool(profile.get("enabled_by_default", False)),
+                "use_periodic": bool(spec.get("enabled_by_default", False)),
                 "last_run": 0,
                 "activation_config": copy.deepcopy(default_rules),
                 "execution_config": [],
+                "force_last": bool(spec.get("force_last", False)),
             }
         )
     return sequence

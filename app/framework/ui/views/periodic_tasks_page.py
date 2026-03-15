@@ -333,6 +333,7 @@ class PeriodicTasksPage(QFrame, BaseInterface):
             is_launch_pending=getattr(self, "is_launch_pending", False),
             is_self_running=getattr(self, "is_running", False),
             is_external_running=getattr(self, "is_global_running", False),
+            close_game_auto_run=self.settings_usecase.is_close_game_auto_run_enabled(),
             queue_tasks=self.periodic_controller.queue_tasks,
             mark_task_queued=self._mark_task_queued,
             mark_waiting_for_external_finish=self.periodic_controller.mark_waiting_for_external_finish,
@@ -437,6 +438,7 @@ class PeriodicTasksPage(QFrame, BaseInterface):
                 parent=self.ui.taskListWidget,
                 is_mandatory=bool(meta.get("is_mandatory", False)),
                 is_force_first=bool(meta.get("force_first", False)),
+                is_force_last=bool(meta.get("force_last", False)),
             )
 
             # 初始化时传入任务的调度状态
@@ -492,6 +494,15 @@ class PeriodicTasksPage(QFrame, BaseInterface):
         # If a task other than primary task is dragged to the top, refresh the UI to correct its position.
         if task_id_order and task_id_order[0] != self.primary_task_id:
             self._init_task_list_widgets()
+            return
+
+        # 如果强制置底的任务被拖离了末尾，也刷新 UI 进行纠正
+        force_last_ids = [tid for tid, m in self.task_registry.items() if m.get("force_last")]
+        if force_last_ids and task_id_order:
+            expected_last_ids = set(force_last_ids)
+            actual_last_ids = set(task_id_order[-len(force_last_ids):])
+            if expected_last_ids != actual_last_ids:
+                self._init_task_list_widgets()
 
     def _on_task_settings_clicked(self, task_id: str):
         meta = self.task_registry.get(task_id)

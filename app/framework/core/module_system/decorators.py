@@ -314,6 +314,7 @@ def _build_meta(
     periodic_role: str | None = None,
     periodic_mandatory: bool | None = None,
     periodic_force_first: bool | None = None,
+    periodic_force_last: bool | None = None,
     periodic_requires_home_sync: bool | None = None,
     periodic_option_key: str | None = None,
     periodic_default_activation_config: list[dict] | tuple[dict, ...] | None = None,
@@ -378,6 +379,8 @@ def _build_meta(
     resolved_periodic_enabled_by_default = bool(periodic_enabled_by_default) if periodic_enabled_by_default is not None else False
     resolved_periodic_mandatory = bool(periodic_mandatory) if periodic_mandatory is not None else is_bootstrap_role
     resolved_periodic_force_first = bool(periodic_force_first) if periodic_force_first is not None else is_bootstrap_role
+    resolved_periodic_force_last = bool(periodic_force_last) if periodic_force_last is not None else False
+    
     if periodic_requires_home_sync is None:
         resolved_periodic_requires_home_sync = not is_bootstrap_role
     else:
@@ -421,6 +424,7 @@ def _build_meta(
         periodic_enabled_by_default=resolved_periodic_enabled_by_default,
         periodic_mandatory=resolved_periodic_mandatory,
         periodic_force_first=resolved_periodic_force_first,
+        periodic_force_last=resolved_periodic_force_last,
         periodic_default_hour=0,
         periodic_default_minute=0,
         periodic_max_runs=1,
@@ -469,6 +473,7 @@ def _register_with_host(
     periodic_role: str | None = None,
     periodic_mandatory: bool | None = None,
     periodic_force_first: bool | None = None,
+    periodic_force_last: bool | None = None,
     periodic_requires_home_sync: bool | None = None,
     periodic_option_key: str | None = None,
     periodic_default_activation_config: list[dict] | tuple[dict, ...] | None = None,
@@ -496,6 +501,7 @@ def _register_with_host(
             periodic_role=periodic_role,
             periodic_mandatory=periodic_mandatory,
             periodic_force_first=periodic_force_first,
+            periodic_force_last=periodic_force_last,
             periodic_requires_home_sync=periodic_requires_home_sync,
             periodic_option_key=periodic_option_key,
             periodic_default_activation_config=periodic_default_activation_config,
@@ -557,6 +563,7 @@ def periodic_module(
     periodic_role: str | None = None,
     periodic_mandatory: bool | None = None,
     periodic_force_first: bool | None = None,
+    periodic_force_last: bool | None = None,
     periodic_requires_home_sync: bool | None = None,
     periodic_option_key: str | None = None,
     periodic_default_activation_config: list[dict] | tuple[dict, ...] | None = None,
@@ -578,6 +585,7 @@ def periodic_module(
         periodic_role=periodic_role,
         periodic_mandatory=periodic_mandatory,
         periodic_force_first=periodic_force_first,
+        periodic_force_last=periodic_force_last,
         periodic_requires_home_sync=periodic_requires_home_sync,
         periodic_option_key=periodic_option_key,
         periodic_default_activation_config=periodic_default_activation_config,

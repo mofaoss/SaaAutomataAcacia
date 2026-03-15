@@ -26,18 +26,13 @@ logger = logging.getLogger(__name__)
 
 def get_app_root():
     """获取程序运行时的根目录，兼容开发环境和 Nuitka 打包环境"""
-    # Nuitka 和 PyInstaller 在打包后通常会设置 sys.frozen 或类似标识
-    # 但最稳妥的方法是判断 sys.argv[0] 或 sys.executable
     if getattr(sys, 'frozen', False) or hasattr(sys, '_MEIPASS'):
-        # 打包后的 exe 所在目录
         return os.path.dirname(sys.executable)
-    # 开发环境下，updater.py 位于 app/utils/
     return str(Path(__file__).resolve().parents[2])
 
 def get_binary_path(bin_name):
     """专门用于获取 binary 目录下工具的路径"""
     root = get_app_root()
-    # 无论打包还是开发，确保路径指向 resources/binary/xxx.exe
     path = os.path.join(root, "resources", "binary", bin_name)
     return path
 
@@ -149,7 +144,6 @@ def get_github_release_channels(
 
     result: Dict[str, Optional[Dict[str, Optional[str]]]] = {
         "latest": None,
-        "prerelease": None,
     }
 
     owner, repo = _parse_github_repo(repo_url)
@@ -160,11 +154,14 @@ def get_github_release_channels(
     cached_obj = config.github_api_cache.value or {}
     if "timestamp" in cached_obj and "data" in cached_obj:
         if time.time() - cached_obj["timestamp"] < CACHE_TTL_SECONDS:
-            return cached_obj["data"]  # Return ultra-fast, minimal parsed cache
+            # Migration check: if old cache has 'prerelease', we prune it
+            data = cached_obj["data"]
+            if "prerelease" in data:
+                data = {"latest": data.get("latest")}
+            return data
 
-    # 2. Cache Miss or Expired: Fetch from API (with lock to prevent concurrent startup calls)
+    # 2. Cache Miss or Expired: Fetch from API
     with _fetch_lock:
-        # Double-check cache in case another thread populated it while waiting for lock
         cached_obj = config.github_api_cache.value or {}
         if "timestamp" in cached_obj and "data" in cached_obj:
             if time.time() - cached_obj["timestamp"] < CACHE_TTL_SECONDS:
@@ -182,19 +179,14 @@ def get_github_release_channels(
             if response.status_code == 200:
                 releases = response.json()
                 if isinstance(releases, list):
-                    # Process the bloated raw data into our minimal `result`
                     for release in releases:
-                        if not isinstance(release, dict) or bool(release.get("draft")):
+                        if not isinstance(release, dict) or bool(release.get("draft")) or bool(release.get("prerelease")):
                             continue
                         item = _build_release_item(release)
                         if not item:
                             continue
-                        if bool(release.get("prerelease")):
-                            result["prerelease"] = _choose_newer(result["prerelease"], item)
-                        else:
-                            result["latest"] = _choose_newer(result["latest"], item)
+                        result["latest"] = _choose_newer(result["latest"], item)
 
-                    # Save ONLY the minimal result and timestamp to config.json
                     config.set(config.github_api_cache, {
                         "timestamp": time.time(),
                         "data": result
@@ -209,7 +201,6 @@ def get_github_release_channels(
         except Exception as e:
             logger.error(_(f"GitHub API Connection Error: {e}"))
 
-    # 3. Fallback: If API failed, try to use expired config cache
     if "data" in cached_obj and cached_obj["data"].get("latest"):
         logger.warning(_("Falling back to expired config cache due to API failure."))
         return cached_obj["data"]
@@ -225,13 +216,6 @@ def is_remote_version_newer(local_version: str, remote_version: str) -> bool:
     if not local_norm:
         return True
     return parse_version(remote_norm) > parse_version(local_norm)
-
-
-def is_prerelease_version(version: str) -> bool:
-    normalized = _normalize_tag(version)
-    if not normalized:
-        return False
-    return bool(parse_version(normalized).is_prerelease)
 
 
 def get_github_latest_release_version(repo_url: str) -> Optional[str]:
@@ -254,7 +238,7 @@ def get_local_version(file_path="update_data.txt"):
         return None
 
 
-def get_best_update_candidate(repo_url: str, local_version: str, check_prerelease: bool = False) -> Optional[Dict[str, Any]]:
+def get_best_update_candidate(repo_url: str, local_version: str) -> Optional[Dict[str, Any]]:
     """
     获取远程版本。
     如果远程最佳版本确实比 local_version 新，则返回该字典。
@@ -262,59 +246,30 @@ def get_best_update_candidate(repo_url: str, local_version: str, check_prereleas
     """
     channels = get_github_release_channels(repo_url)
     stable = channels.get("latest")
-    prerelease = channels.get("prerelease")
 
-    if not stable and not prerelease:
+    if not stable or not isinstance(stable, dict):
         return None
 
-    should_check_prerelease = is_prerelease_version(local_version) or check_prerelease
-    candidates = []
+    best = {
+        "version": stable.get("version"),
+        "download_url": stable.get("download_url"),
+        "is_prerelease": False
+    }
 
-    if stable and isinstance(stable, dict):
-        candidates.append({
-            "version": stable.get("version"),
-            "download_url": stable.get("download_url"),
-            "is_prerelease": False
-        })
-
-    if prerelease and isinstance(prerelease, dict) and should_check_prerelease:
-        candidates.append({
-            "version": prerelease.get("version"),
-            "download_url": prerelease.get("download_url"),
-            "is_prerelease": True
-        })
-
-    if not candidates:
-        return None
-
-    best = candidates[0]
-    for candidate in candidates[1:]:
-        if is_remote_version_newer(best["version"], candidate["version"]):
-            best = candidate
-
-    # 2. 判断远端最好版本是否真的比本地版本新
     if is_remote_version_newer(local_version, best["version"]):
         return best
-    else:
-
-        return None
+    return None
 
 def resolve_batch_dir(downloaded_path: str) -> str:
-    """
-    判断 downloaded_path 是否位于受保护目录（如 Program Files、系统盘根目录等），
-    若是则将批处理脚本写入用户可写目录（LOCALAPPDATA），否则沿用文件所在目录。
-    """
-    # 受保护的前缀目录（统一转小写比较）
     protected_prefixes = (
         os.environ.get("ProgramFiles", r"C:\Program Files").lower(),
         os.environ.get("ProgramFiles(x86)", r"C:\Program Files (x86)").lower(),
         os.environ.get("ProgramW6432", r"C:\Program Files").lower(),
         os.environ.get("SystemRoot", r"C:\Windows").lower(),
-        os.environ.get("SystemDrive", "c:").lower() + os.sep,  # 仅 C:\ 根目录本身
+        os.environ.get("SystemDrive", "c:").lower() + os.sep,
     )
 
     download_dir = os.path.dirname(os.path.abspath(downloaded_path)).lower()
-
     is_protected = any(download_dir.startswith(p) for p in protected_prefixes)
 
     if is_protected:
@@ -324,7 +279,6 @@ def resolve_batch_dir(downloaded_path: str) -> str:
             app_name
         )
 
-    # 非受保护目录：直接使用下载文件所在目录
     return os.path.dirname(downloaded_path)
 
 
@@ -353,7 +307,6 @@ class UpdateDownloadThread(QThread):
                 except OSError as exc:
                     logger.warning(_("failed to remove existing update package: %s"), exc)
 
-            # === 1. 原生高速下载 (支持 125MB 大文件流式写入和代理) ===
             proxies = _resolve_proxies(None)
             response = requests.get(self.download_url, stream=True, proxies=proxies, timeout=15)
             response.raise_for_status()
@@ -362,38 +315,31 @@ class UpdateDownloadThread(QThread):
             downloaded_size = 0
 
             with open(self.filepath, 'wb') as f:
-                # 每次读取 8KB
                 for chunk in response.iter_content(chunk_size=8192):
                     if chunk:
                         f.write(chunk)
                         downloaded_size += len(chunk)
                         if total_size > 0:
                             progress = int((downloaded_size / total_size) * 100)
-                            # 进度条走到 95%，留出最后 5% 的时间给解压
                             self.progress_signal.emit(int(progress * 0.95))
 
-            # === 2. 原生解压 (无需 7za.exe) ===
             is_exe = self.download_url.lower().endswith('.exe')
             if not is_exe:
                 if os.path.exists(self.extract_dir):
                     shutil.rmtree(self.extract_dir, ignore_errors=True)
                 os.makedirs(self.extract_dir, exist_ok=True)
 
-                # 使用 Python 内置 zipfile 解压到临时文件夹
                 with zipfile.ZipFile(self.filepath, 'r') as zip_ref:
                     zip_ref.extractall(self.extract_dir)
 
-                # 智能识别 Nuitka 打包出的单层嵌套结构 (防止复制后多嵌套一层)
                 extracted_items = os.listdir(self.extract_dir)
                 if len(extracted_items) == 1 and os.path.isdir(os.path.join(self.extract_dir, extracted_items[0])):
                     self.extract_dir = os.path.join(self.extract_dir, extracted_items[0])
 
                 self.progress_signal.emit(100)
-                # 传递解压后的【文件夹】路径
                 self.finished_signal.emit(self.extract_dir)
             else:
                 self.progress_signal.emit(100)
-                # EXE 直接传递文件路径
                 self.finished_signal.emit(self.filepath)
 
         except requests.exceptions.RequestException as e:

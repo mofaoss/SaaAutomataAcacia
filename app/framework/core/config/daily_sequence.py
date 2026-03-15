@@ -59,5 +59,12 @@ def normalize_daily_task_sequence(
         normalized.remove(first_task)
         normalized.insert(0, first_task)
 
+    # 3. 处理强制置底逻辑 (通用框架支持)
+    # 找出所有声明了 force_last 的任务并移至末尾
+    last_tasks = [t for t in normalized if bool(t.get("force_last", False))]
+    for t in last_tasks:
+        normalized.remove(t)
+        normalized.append(t)
+
     return normalized
 
