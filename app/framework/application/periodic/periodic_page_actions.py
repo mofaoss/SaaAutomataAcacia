@@ -21,31 +21,122 @@ class PeriodicPresetActions:
     @staticmethod
     def load_presets(host):
         presets = host.settings_usecase.load_presets()
+        last_name = host.settings_usecase.load_last_preset()
+        
         host.ui.ComboBox_presets.blockSignals(True)
         host.ui.ComboBox_presets.clear()
         host.ui.ComboBox_presets.addItems(list(presets.keys()))
-        host.ui.ComboBox_presets.setCurrentIndex(0)
+        idx = host.ui.ComboBox_presets.findText(last_name)
+        if idx >= 0:
+            host.ui.ComboBox_presets.setCurrentIndex(idx)
+        else:
+            host.ui.ComboBox_presets.setCurrentIndex(0)
         host.ui.ComboBox_presets.blockSignals(False)
-        host._on_preset_changed(0)
+        
+        # Manually trigger apply
+        current_name = host.ui.ComboBox_presets.currentText()
+        PeriodicPresetActions._apply_preset_to_ui(host, current_name)
 
     @staticmethod
     def on_preset_changed(host, index):
-        preset_index = index
         preset_name = host.ui.ComboBox_presets.currentText()
-        enabled_tasks = host.settings_usecase.get_enabled_tasks_for_preset(preset_name)
-        for task_id, item in host.task_widget_map.items():
-            item.checkbox.setChecked(task_id in enabled_tasks)
+        if not preset_name:
+            return
+        
+        # Save current state to PREVIOUS preset before switching? 
+        # Actually, if we auto-save on every change, the previous one is already up-to-date.
+        
+        PeriodicPresetActions._apply_preset_to_ui(host, preset_name)
+        host.settings_usecase.save_last_preset(preset_name)
+
+    @staticmethod
+    def _apply_preset_to_ui(host, preset_name):
+        data = host.settings_usecase.get_preset_data(preset_name)
+        # task_ids is kept for potential compatibility, but task_configs['daily_task_sequence'] is the master source now
+        task_configs = data.get("task_configs", {})
+        
+        # 1. Apply config snapshot (this updates config.daily_task_sequence)
+        host.settings_usecase.apply_config_snapshot(task_configs)
+        
+        # 2. Force scheduler to refresh its internal cache from the updated config
+        host.scheduler.refresh_from_config()
+        
+        # 3. Fully rebuild task list widgets to reflect new sequence (order, enabled state, schedule status)
+        host._init_task_list_widgets()
+            
+        # 4. Refresh individual setting widgets to reflect applied configs
+        host._load_config()
+        
+        # 5. Reload the scheduling panel for the currently visible task settings
+        current_task_id = host.ui.shared_scheduling_panel.task_id
+        if current_task_id:
+            sequence = host.scheduler.get_task_sequence()
+            task_cfg = next((item for item in sequence if item.get("id") == current_task_id), None)
+            if task_cfg:
+                host.ui.shared_scheduling_panel.load_task(current_task_id, task_cfg)
+        
+        # 6. Trigger logic refresh (e.g. scheduling icons in task list)
+        host._auto_adjust_after_use_action()
 
     @staticmethod
     def on_add_preset_clicked(host):
+        new_name = host.settings_usecase.generate_next_default_name()
+        
+        # Capture current state for the new preset
+        enabled_tasks = [
+            task_id
+            for task_id, item in host.task_widget_map.items()
+            if item.checkbox.isChecked()
+        ]
+        task_configs = host.settings_usecase.get_all_task_configs()
+        
+        host.settings_usecase.save_preset(new_name, enabled_tasks, task_configs)
+        
         host.ui.ComboBox_presets.blockSignals(True)
-        host.ui.ComboBox_presets.setCurrentIndex(-1)
-        host.ui.ComboBox_presets.setCurrentText("")
+        host.ui.ComboBox_presets.addItem(new_name)
+        idx = host.ui.ComboBox_presets.findText(new_name)
+        host.ui.ComboBox_presets.setCurrentIndex(idx)
         host.ui.ComboBox_presets.blockSignals(False)
-        host.ui.ComboBox_presets.setFocus()
+        
+        host.settings_usecase.save_last_preset(new_name)
+        
+        InfoBar.success(
+            title=_('Added', msgid='added'),
+            content=_(f"New preset '{new_name}' created", msgid='preset_new_created'),
+            parent=host,
+            duration=2000
+        )
 
     @staticmethod
-    def save_current_preset(host):
+    def rename_current_preset(host):
+        # Called when ComboBox editing finishes
+        new_name = host.ui.ComboBox_presets.currentText().strip()
+        # Find the old name - it might be tricky since ComboBox text already changed
+        # We store the 'last_preset' in config, so we can use that as the old name
+        old_name = host.settings_usecase.load_last_preset()
+        
+        if not new_name or new_name == old_name:
+            return
+
+        if host.settings_usecase.rename_preset(old_name, new_name):
+            # Refresh list to reflect new name (or just update the item)
+            # Simplest is full reload
+            PeriodicPresetActions.load_presets(host)
+            InfoBar.success(
+                title=_('Renamed', msgid='renamed'),
+                content=_(f"Preset renamed to '{new_name}'", msgid='preset_renamed'),
+                parent=host,
+                duration=2000
+            )
+        else:
+            # Revert UI if rename failed (e.g. duplicate)
+            idx = host.ui.ComboBox_presets.findText(old_name)
+            host.ui.ComboBox_presets.blockSignals(True)
+            host.ui.ComboBox_presets.setCurrentIndex(idx)
+            host.ui.ComboBox_presets.blockSignals(False)
+
+    @staticmethod
+    def auto_save_current_preset(host):
         preset_name = host.ui.ComboBox_presets.currentText().strip()
         if not preset_name:
             return
@@ -55,17 +146,8 @@ class PeriodicPresetActions:
             for task_id, item in host.task_widget_map.items()
             if item.checkbox.isChecked()
         ]
-        host.settings_usecase.save_preset(preset_name, enabled_tasks)
-
-        if host.ui.ComboBox_presets.findText(preset_name) == -1:
-            host.ui.ComboBox_presets.addItem(preset_name)
-        host.ui.ComboBox_presets.setCurrentIndex(host.ui.ComboBox_presets.findText(preset_name))
-
-        InfoBar.success(
-            title=_('Saved', msgid='saved'),
-            content=_(f"Preset '{preset_name}' saved", msgid='preset_preset_name_saved'),
-            parent=host,
-        )
+        task_configs = host.settings_usecase.get_all_task_configs()
+        host.settings_usecase.save_preset(preset_name, enabled_tasks, task_configs)
 
     @staticmethod
     def delete_current_preset(host):

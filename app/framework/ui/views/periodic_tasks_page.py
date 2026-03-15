@@ -442,6 +442,13 @@ class PeriodicTasksPage(QFrame, BaseInterface):
             task_item.is_scheduled = bool(task_cfg.get("use_periodic", False))
 
             task_item.checkbox.setObjectName(meta["option_key"])
+            
+            # 【修复点】：在列表项创建时立即连接信号，确保重建后依然有效
+            task_item.settings_clicked.connect(self._on_task_settings_clicked)
+            task_item.checkbox_state_changed.connect(self._on_task_checkbox_changed)
+            task_item.play_clicked.connect(self._on_task_play_clicked)
+            task_item.play_from_here_clicked.connect(self._on_task_play_from_here_clicked)
+
             self.ui.taskListWidget.add_task_item(task_item)
             self.task_widget_map[task_id] = task_item
             setattr(self, meta["option_key"], task_item.checkbox)
@@ -663,9 +670,11 @@ class PeriodicTasksPage(QFrame, BaseInterface):
             self._on_withdraw_single_rule_from_checked)
 
         self.ui.PushButton_add_preset.clicked.connect(self._on_add_preset_clicked)
-        self.ui.PushButton_save_preset.clicked.connect(self._save_current_preset)
+        # Removed manual save button connection
         self.ui.PushButton_delete_preset.clicked.connect(self._delete_current_preset)
         self.ui.ComboBox_presets.currentIndexChanged.connect(self._on_preset_changed)
+        # Add rename connection for EditableComboBox
+        self.ui.ComboBox_presets.editingFinished.connect(self._on_preset_renamed)
 
         self.scheduler.tasks_due.connect(self._on_scheduled_tasks_due)
         self.scheduler.sequence_updated.connect(self._auto_adjust_after_use_action)
@@ -689,12 +698,18 @@ class PeriodicTasksPage(QFrame, BaseInterface):
 
     def _on_task_checkbox_changed(self, task_id: str, is_checked: bool):
         PeriodicRuntimeActions.on_task_checkbox_changed(self, task_id, is_checked)
+        # Auto save on checkbox change
+        self._auto_save_current_preset()
 
     def _on_shared_config_changed(self, task_id: str, new_config: dict):
         PeriodicRuntimeActions.on_shared_config_changed(self, task_id, new_config)
+        # Auto save on schedule config change
+        self._auto_save_current_preset()
 
     def _on_toggle_all_cycles_clicked(self, enable: bool):
         PeriodicRuntimeActions.on_toggle_all_cycles_clicked(self, enable)
+        # Auto save on toggle all
+        self._auto_save_current_preset()
 
     def _set_launch_pending_state(self, pending: bool):
         PeriodicRuntimeActions.set_launch_pending_state(self, pending)
@@ -713,9 +728,11 @@ class PeriodicTasksPage(QFrame, BaseInterface):
 
     def _on_copy_single_rule_to_checked(self, rule_data: dict):
         PeriodicRuleActions.copy_single_rule_to_checked(self, rule_data)
+        self._auto_save_current_preset()
 
     def _on_withdraw_single_rule_from_checked(self, rule_data: dict):
         PeriodicRuleActions.withdraw_single_rule_from_checked(self, rule_data)
+        self._auto_save_current_preset()
 
     def check_game_open(self):
         PeriodicRuntimeActions.check_game_open(self)
@@ -766,6 +783,8 @@ class PeriodicTasksPage(QFrame, BaseInterface):
             combo_power_day = self.ui.get_module_widget("ComboBox_power_day")
             if combo_power_day is not None:
                 combo_power_day.setEnabled(bool(maybe_power_enabled))
+        # Auto save on any widget change
+        self._auto_save_current_preset()
 
     def _load_presets(self):
         PeriodicPresetActions.load_presets(self)
@@ -773,11 +792,14 @@ class PeriodicTasksPage(QFrame, BaseInterface):
     def _on_preset_changed(self, index):
         PeriodicPresetActions.on_preset_changed(self, index)
 
+    def _on_preset_renamed(self):
+        PeriodicPresetActions.rename_current_preset(self)
+
     def _on_add_preset_clicked(self):
         PeriodicPresetActions.on_add_preset_clicked(self)
 
-    def _save_current_preset(self):
-        PeriodicPresetActions.save_current_preset(self)
+    def _auto_save_current_preset(self):
+        PeriodicPresetActions.auto_save_current_preset(self)
 
     def _delete_current_preset(self):
         PeriodicPresetActions.delete_current_preset(self)

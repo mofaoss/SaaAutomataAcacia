@@ -297,25 +297,30 @@ class PeriodicSettingsUseCase:
         return bool(config.isLog.value)
 
     @staticmethod
-    def load_presets() -> Dict[str, List[str]]:
+    def load_presets() -> Dict[str, Any]:
         presets = config.task_presets.value
         if not presets:
-            presets = {"Default": []}
+            presets = {"Default": {"task_ids": [], "task_configs": {}}}
             config.set(config.task_presets, presets)
         return dict(presets)
 
     @staticmethod
-    def get_enabled_tasks_for_preset(preset_name: str) -> List[str]:
+    def get_preset_data(preset_name: str) -> Dict[str, Any]:
         presets = PeriodicSettingsUseCase.load_presets()
-        return list(presets.get(preset_name, []))
+        data = presets.get(preset_name, {})
+        if isinstance(data, list):
+            # Compatibility with legacy list-only presets
+            return {"task_ids": data, "task_configs": {}}
+        return data
 
     @staticmethod
-    def save_preset(preset_name: str, enabled_tasks: List[str]) -> bool:
+    def save_preset(preset_name: str, enabled_tasks: List[str], task_configs: Dict[str, Any]) -> None:
         presets = PeriodicSettingsUseCase.load_presets()
-        is_new = preset_name not in presets
-        presets[preset_name] = list(enabled_tasks)
+        presets[preset_name] = {
+            "task_ids": list(enabled_tasks),
+            "task_configs": copy.deepcopy(task_configs)
+        }
         config.set(config.task_presets, presets)
-        return is_new
 
     @staticmethod
     def delete_preset(preset_name: str) -> Tuple[bool, str]:
@@ -326,4 +331,95 @@ class PeriodicSettingsUseCase:
             return False, "min_one_required"
         del presets[preset_name]
         config.set(config.task_presets, presets)
+        
+        # If deleted preset was the last used, reset to first available
+        if config.last_preset.value == preset_name:
+            config.set(config.last_preset, list(presets.keys())[0])
+            
         return True, "deleted"
+
+    @staticmethod
+    def rename_preset(old_name: str, new_name: str) -> bool:
+        if not new_name or old_name == new_name:
+            return False
+        presets = PeriodicSettingsUseCase.load_presets()
+        if old_name not in presets:
+            return False
+        
+        # If new name already exists, we don't allow overwrite via rename
+        if new_name in presets:
+            return False
+            
+        presets[new_name] = presets.pop(old_name)
+        config.set(config.task_presets, presets)
+        
+        if config.last_preset.value == old_name:
+            config.set(config.last_preset, new_name)
+        return True
+
+    @staticmethod
+    def save_last_preset(preset_name: str) -> None:
+        config.set(config.last_preset, preset_name)
+
+    @staticmethod
+    def load_last_preset() -> str:
+        name = config.last_preset.value
+        presets = PeriodicSettingsUseCase.load_presets()
+        if name not in presets:
+            return list(presets.keys())[0]
+        return name
+
+    @staticmethod
+    def generate_next_default_name() -> str:
+        counter = config.preset_counter.value + 1
+        config.set(config.preset_counter, counter)
+        return f"default_{counter}"
+
+    @staticmethod
+    def get_all_task_configs() -> Dict[str, Any]:
+        """Snapshot all task-related ConfigItems from the current global config."""
+        res = {}
+        # Only include groups that are task-specific and safe to snapshot/serialize
+        include_groups = {
+            "home_interface_enter", "home_interface_option", "home_interface_close",
+            "home_interface_person", "home_interface_power", "home_interface_reward",
+            "home_interface_shopping", "home_interface_shopping_person", "home_interface_shopping_weapon",
+            "ShardExchange", "automation", "add_action", "add_fish", "add_trigger",
+            "add_alien", "add_maze", "add_massaging", "add_drink", "add_water",
+            "jigsaw", "pieces_num", "add_capture_pals", "DailyTasks"
+        }
+        
+        from qfluentwidgets import ConfigItem
+        for attr in dir(config):
+            item = getattr(config, attr, None)
+            if isinstance(item, ConfigItem):
+                # Skip metadata and internal state
+                if attr in {"task_presets", "last_preset", "preset_counter"}:
+                    continue
+                
+                # Only include task-related groups
+                if not hasattr(item, "group") or item.group not in include_groups:
+                    continue
+
+                val = item.value
+                try:
+                    # We try to deepcopy to detach from current state
+                    res[attr] = copy.deepcopy(val)
+                except Exception:
+                    res[attr] = val
+        return res
+
+    @staticmethod
+    def apply_config_snapshot(snapshot: Dict[str, Any]) -> None:
+        """Apply a previously saved snapshot back to the global config."""
+        if not snapshot:
+            return
+        from qfluentwidgets import ConfigItem
+        for attr, value in snapshot.items():
+            item = getattr(config, attr, None)
+            if isinstance(item, ConfigItem):
+                try:
+                    config.set(item, value)
+                except Exception:
+                    # If setting fails (e.g. validator mismatch in old preset), skip it
+                    pass

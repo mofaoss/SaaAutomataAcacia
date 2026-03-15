@@ -2274,6 +2274,34 @@
     "is_runtime_visible": true,
     "mixed_source_template": false
   },
+  "framework.ui.preset_new_created": {
+    "kind": "dynamic_template",
+    "template_id": "preset_new_created",
+    "msgid": "preset_new_created",
+    "source_template": "New preset '{new_name}' created",
+    "fields": [
+      "new_name"
+    ],
+    "field_details": {
+      "new_name": {
+        "format_spec": "",
+        "conversion": ""
+      }
+    },
+    "owner_scope": "framework",
+    "owner_module": null,
+    "file_path": "app/framework/application/periodic/periodic_page_actions.py",
+    "line": 105,
+    "col": 20,
+    "function_name": "on_add_preset_clicked",
+    "class_name": "PeriodicPresetActions",
+    "context": "ui",
+    "source_language": "en",
+    "template_hash": "e7598a83ae5113289d2ba0667e6bc54a1013e3d8",
+    "callsite_key": "app/framework/application/periodic/periodic_page_actions.py:105:20",
+    "is_runtime_visible": true,
+    "mixed_source_template": false
+  },
   "framework.ui.preset_preset_name_deleted": {
     "kind": "dynamic_template",
     "template_id": "preset_preset_name_deleted",
@@ -2291,27 +2319,27 @@
     "owner_scope": "framework",
     "owner_module": null,
     "file_path": "app/framework/application/periodic/periodic_page_actions.py",
-    "line": 91,
+    "line": 173,
     "col": 20,
     "function_name": "delete_current_preset",
     "class_name": "PeriodicPresetActions",
     "context": "ui",
     "source_language": "en",
     "template_hash": "f2ced9d5976029965379ff10e04b42425c9a4f55",
-    "callsite_key": "app/framework/application/periodic/periodic_page_actions.py:91:20",
+    "callsite_key": "app/framework/application/periodic/periodic_page_actions.py:173:20",
     "is_runtime_visible": true,
     "mixed_source_template": false
   },
-  "framework.ui.preset_preset_name_saved": {
+  "framework.ui.preset_renamed": {
     "kind": "dynamic_template",
-    "template_id": "preset_preset_name_saved",
-    "msgid": "preset_preset_name_saved",
-    "source_template": "Preset '{preset_name}' saved",
+    "template_id": "preset_renamed",
+    "msgid": "preset_renamed",
+    "source_template": "Preset renamed to '{new_name}'",
     "fields": [
-      "preset_name"
+      "new_name"
     ],
     "field_details": {
-      "preset_name": {
+      "new_name": {
         "format_spec": "",
         "conversion": ""
       }
@@ -2319,14 +2347,14 @@
     "owner_scope": "framework",
     "owner_module": null,
     "file_path": "app/framework/application/periodic/periodic_page_actions.py",
-    "line": 66,
-    "col": 20,
-    "function_name": "save_current_preset",
+    "line": 127,
+    "col": 24,
+    "function_name": "rename_current_preset",
     "class_name": "PeriodicPresetActions",
     "context": "ui",
     "source_language": "en",
-    "template_hash": "92dbd15f4b9673478e1bced469f22999b7dd6b79",
-    "callsite_key": "app/framework/application/periodic/periodic_page_actions.py:66:20",
+    "template_hash": "85ff896584a95cc0ce59ea991c14845186b4b93d",
+    "callsite_key": "app/framework/application/periodic/periodic_page_actions.py:127:24",
     "is_runtime_visible": true,
     "mixed_source_template": false
   },
@@ -2347,14 +2375,14 @@
     "owner_scope": "framework",
     "owner_module": null,
     "file_path": "app/framework/application/periodic/periodic_page_actions.py",
-    "line": 195,
+    "line": 277,
     "col": 20,
     "function_name": "withdraw_single_rule_from_checked",
     "class_name": "PeriodicRuleActions",
     "context": "ui",
     "source_language": "en",
     "template_hash": "6db024d1d1dc1381f9efbdaca7c77d55130bb0fc",
-    "callsite_key": "app/framework/application/periodic/periodic_page_actions.py:195:20",
+    "callsite_key": "app/framework/application/periodic/periodic_page_actions.py:277:20",
     "is_runtime_visible": true,
     "mixed_source_template": false
   },
@@ -2375,14 +2403,14 @@
     "owner_scope": "framework",
     "owner_module": null,
     "file_path": "app/framework/application/periodic/periodic_page_actions.py",
-    "line": 142,
+    "line": 224,
     "col": 20,
     "function_name": "copy_single_rule_to_checked",
     "class_name": "PeriodicRuleActions",
     "context": "ui",
     "source_language": "en",
     "template_hash": "edeeea82340d14a808f3e7d0aba821c6c8d52b46",
-    "callsite_key": "app/framework/application/periodic/periodic_page_actions.py:142:20",
+    "callsite_key": "app/framework/application/periodic/periodic_page_actions.py:224:20",
     "is_runtime_visible": true,
     "mixed_source_template": false
   },

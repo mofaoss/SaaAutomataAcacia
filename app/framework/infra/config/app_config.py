@@ -240,7 +240,9 @@ class Config(QConfig):
     enable_gift_shards    = ConfigItem("ShardExchange", "enable_gift_shards", True, BoolValidator())
     enable_recycle_shards = ConfigItem("ShardExchange", "enable_recycle_shards", True, BoolValidator())
 
-    task_presets = ConfigItem("home_interface_option", "task_presets", {"Default": []})
+    task_presets = ConfigItem("home_interface_option", "task_presets", {"Default": {"task_ids": [], "task_configs": {}}})
+    last_preset = ConfigItem("home_interface_option", "last_preset", "Default")
+    preset_counter = ConfigItem("home_interface_option", "preset_counter", 0)
 
     # =========================================================
     # 4. 自动化任务调度清单 (DailyTasks Sequence)

@@ -736,12 +736,10 @@ class PeriodicTasksView(ScrollArea):
         self.ComboBox_presets = EditableComboBox(self.SimpleCardWidget_3)
         self.ComboBox_presets.setObjectName("ComboBox_presets")
         self.PushButton_add_preset = ToolButton(FIF.ADD, self.SimpleCardWidget_3)
-        self.PushButton_save_preset = ToolButton(FIF.SAVE, self.SimpleCardWidget_3)
         self.PushButton_delete_preset = ToolButton(FIF.DELETE, self.SimpleCardWidget_3)
 
         preset_row.addWidget(self.ComboBox_presets, 1)
         preset_row.addWidget(self.PushButton_add_preset)
-        preset_row.addWidget(self.PushButton_save_preset)
         preset_row.addWidget(self.PushButton_delete_preset)
 
         self.PushButton_start = PushButton(self.SimpleCardWidget_3)
@@ -885,9 +883,8 @@ class PeriodicTasksView(ScrollArea):
 
     def _apply_ui_settings(self):
         self.BodyLabel_preset.setText(
-            _('Task check record:'))
+            _('Task preset', msgid="task_check_record"))
         self.PushButton_add_preset.setToolTip(_('New preset'))
-        self.PushButton_save_preset.setToolTip(_('Save current check to preset'))
         self.PushButton_delete_preset.setToolTip(_('Delete current preset'))
         self.PushButton_start.setText(_('Execute Now (F8)'))
         self.PushButton_start.setToolTip(
@@ -898,5 +895,3 @@ class PeriodicTasksView(ScrollArea):
         self.PushButton_no_select.setText(_('Clear'))
         self.hint_label.setText(_('Drag to adjust order'))
         self.TitleLabel_3.setText(_('Schedule reminder'))
-
-

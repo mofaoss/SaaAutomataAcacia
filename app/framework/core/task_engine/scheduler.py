@@ -39,6 +39,11 @@ class Scheduler(QObject):
     def stop(self):
         self.loop_timer.stop()
 
+    def refresh_from_config(self):
+        """Force reload task sequence from global configuration."""
+        self._init_and_normalize_sequence()
+        self.sequence_updated.emit(self._task_sequence_cache)
+
     def _init_and_normalize_sequence(self):
         sequence = migrate_daily_sequence_schema(config.daily_task_sequence.value)
         defaults = copy.deepcopy(config.daily_task_sequence.defaultValue)
