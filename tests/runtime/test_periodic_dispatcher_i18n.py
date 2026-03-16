@@ -48,7 +48,7 @@ def test_periodic_dispatcher_log_translates_scheduled_trigger_without_msgid(monk
     monkeypatch.setattr(periodic_dispatcher_module, "datetime", _FixedDateTime)
 
     logger = _CaptureLogger()
-    dispatcher = PeriodicDispatcher(logger, ui_text_fn=lambda k, d: d)
+    dispatcher = PeriodicDispatcher(logger)
 
     queued: list[list[str]] = []
     queued_marks: list[str] = []

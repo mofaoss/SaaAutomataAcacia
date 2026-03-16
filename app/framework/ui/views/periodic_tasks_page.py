@@ -141,7 +141,7 @@ class PeriodicTasksPage(QFrame, BaseInterface):
         self.logger = setup_ui_logger("logger_daily", self.ui.textBrowser_log)
         self.event_tips_actions.bind(ui=self.ui, logger=self.logger, host=self)
         self.refresh_tips = self.event_tips_actions.refresh_tips
-        self.periodic_dispatcher = PeriodicDispatcher(self.logger, self._ui_text)
+        self.periodic_dispatcher = PeriodicDispatcher(self.logger)
         self.single_task_toggle = SingleTaskToggle()
 
         self.check_game_window_timer = QTimer()
@@ -328,12 +328,21 @@ class PeriodicTasksPage(QFrame, BaseInterface):
         self.periodic_controller.start_thread = value
 
     def _on_scheduled_tasks_due(self, new_tasks_found: List[str]):
+        # 1. 立即注入 cleanup 任务 (如果开关开启)
+        # 这样做是为了让 Dispatcher 在记录日志和入队时，就能包含这个任务，从而让 UI 正确显示 ⌛️ 标志
+        task_ids = list(new_tasks_found or [])
+        if self.settings_usecase.is_close_game_auto_run_enabled():
+            for tid, meta in self.task_registry.items():
+                if meta.get("force_last") and tid not in task_ids:
+                    task_ids.append(tid)
+
+        # 2. 交给调度器分发
         self.periodic_dispatcher.handle_due_tasks(
-            new_tasks_found,
+            task_ids,
             is_launch_pending=getattr(self, "is_launch_pending", False),
             is_self_running=getattr(self, "is_running", False),
             is_external_running=getattr(self, "is_global_running", False),
-            close_game_auto_run=self.settings_usecase.is_close_game_auto_run_enabled(),
+            cleanup_enabled=self.settings_usecase.is_close_game_auto_run_enabled(),
             queue_tasks=self.periodic_controller.queue_tasks,
             mark_task_queued=self._mark_task_queued,
             mark_waiting_for_external_finish=self.periodic_controller.mark_waiting_for_external_finish,
@@ -445,7 +454,7 @@ class PeriodicTasksPage(QFrame, BaseInterface):
             task_item.is_scheduled = bool(task_cfg.get("use_periodic", False))
 
             task_item.checkbox.setObjectName(meta["option_key"])
-            
+
             # 【修复点】：在列表项创建时立即连接信号，确保重建后依然有效
             task_item.settings_clicked.connect(self._on_task_settings_clicked)
             task_item.checkbox_state_changed.connect(self._on_task_checkbox_changed)

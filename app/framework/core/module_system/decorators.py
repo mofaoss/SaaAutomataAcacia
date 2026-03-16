@@ -219,8 +219,6 @@ def _extract_preferred_class_name_from_module(module_path: str, host: ModuleHost
     if preferred:
         return preferred[0]
 
-    # If no preferred suffix is found, we do NOT return any random class.
-    # This prevents misidentifying internal logic classes (like AdjustColor) as UI pages.
     return None
 
 
@@ -238,7 +236,6 @@ def _infer_page_class_path(target, host: ModuleHost) -> str | None:
 
 
 def _infer_periodic_index(resolved_order: int) -> int:
-    # Most periodic tasks use step-10 ordering. Keep deterministic mapping.
     return max(0, (resolved_order // 10) - 1)
 
 
@@ -266,7 +263,6 @@ def _infer_ui_bindings(
         alias = alias or "module"
         return ModuleUiBindings(page_attr=f"page_{alias}")
 
-    # on-demand defaults
     binding_token = _normalize_binding_token(binding_id or resolved_id) or "module"
     suffix = normalized_page_alias or binding_token
     page_attr = f"page_{suffix}"
@@ -369,20 +365,21 @@ def _build_meta(
         resolved_background_keys = _normalize_background_keys(on_demand_background_keys)
 
     normalized_periodic_role = str(periodic_role or "").strip().lower()
-    if normalized_periodic_role and normalized_periodic_role not in {"bootstrap"}:
+    if normalized_periodic_role and normalized_periodic_role not in {"bootstrap", "cleanup"}:
         raise ValueError(
-            "periodic_role must be one of: 'bootstrap'. "
+            "periodic_role must be one of: 'bootstrap', 'cleanup'. "
             f"got: {periodic_role!r}"
         )
     is_bootstrap_role = normalized_periodic_role == "bootstrap"
+    is_cleanup_role = normalized_periodic_role == "cleanup"
 
     resolved_periodic_enabled_by_default = bool(periodic_enabled_by_default) if periodic_enabled_by_default is not None else False
-    resolved_periodic_mandatory = bool(periodic_mandatory) if periodic_mandatory is not None else is_bootstrap_role
+    resolved_periodic_mandatory = bool(periodic_mandatory) if periodic_mandatory is not None else (is_bootstrap_role or is_cleanup_role)
     resolved_periodic_force_first = bool(periodic_force_first) if periodic_force_first is not None else is_bootstrap_role
-    resolved_periodic_force_last = bool(periodic_force_last) if periodic_force_last is not None else False
+    resolved_periodic_force_last = bool(periodic_force_last) if periodic_force_last is not None else is_cleanup_role
     
     if periodic_requires_home_sync is None:
-        resolved_periodic_requires_home_sync = not is_bootstrap_role
+        resolved_periodic_requires_home_sync = not (is_bootstrap_role or is_cleanup_role)
     else:
         resolved_periodic_requires_home_sync = bool(periodic_requires_home_sync)
     resolved_periodic_ui_page_index = _infer_periodic_index(resolved_order) if host == ModuleHost.PERIODIC else None
@@ -425,9 +422,6 @@ def _build_meta(
         periodic_mandatory=resolved_periodic_mandatory,
         periodic_force_first=resolved_periodic_force_first,
         periodic_force_last=resolved_periodic_force_last,
-        periodic_default_hour=0,
-        periodic_default_minute=0,
-        periodic_max_runs=1,
         periodic_requires_home_sync=resolved_periodic_requires_home_sync,
         periodic_ui_page_index=resolved_periodic_ui_page_index,
         periodic_option_key=resolved_periodic_option_key,

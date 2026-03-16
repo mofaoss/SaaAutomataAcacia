@@ -46,6 +46,7 @@ class TaskQueueThread(QThread):
         self.tasks_to_run = tasks_to_run
         self.logger = logger_instance
         self.task_registry = task_registry
+        self.current_task_id = None # 框架级属性：当前正在执行的任务 ID
         self.home_sync = home_sync or (lambda _auto, _logger: True)
         self.runtime_config = runtime_config or config
         self.session = RuntimeAutomationSession(self.logger)
@@ -272,6 +273,8 @@ class TaskQueueThread(QThread):
                         _("Skipping task '{task_id}': metadata not found", msgid='skipping_task_metadata_not_found', task_id=task_id)
                     )
                     continue
+                
+                self.current_task_id = task_id # 更新当前任务 ID
 
                 task_name = resolve_task_display_name(meta, task_id)
                 self.logger.info(_("Current task: {task_name}", msgid='current_task_task_name', task_name=task_name))

@@ -55,8 +55,29 @@ class PeriodicController:
     def set_global_running(self, is_running: bool):
         self.state.is_global_running = bool(is_running)
 
+    def _ensure_cleanup_at_end(self, task_ids: List[str]) -> List[str]:
+        """通用逻辑：确保带有置底属性的任务始终处于序列末尾"""
+        if not task_ids:
+            return []
+        
+        # 提取出所有普通任务和所有置底任务
+        normal_tasks = []
+        cleanup_tasks = []
+        
+        for tid in task_ids:
+            meta = self.task_registry.get(tid, {})
+            if meta.get("force_last") or meta.get("periodic_role") == "cleanup":
+                cleanup_tasks.append(tid)
+            else:
+                normal_tasks.append(tid)
+        
+        # 重新组合：普通在前，置底在后（保持内部相对顺序）
+        return normal_tasks + cleanup_tasks
+
     def queue_tasks(self, task_ids: List[str]):
-        self.state.tasks_to_run.extend(task_ids)
+        """入队逻辑：合并并重新应用排序规则"""
+        combined = self.state.tasks_to_run + task_ids
+        self.state.tasks_to_run = self._ensure_cleanup_at_end(combined)
 
     def mark_waiting_for_external_finish(self, waiting: bool):
         self.state.waiting_for_external_to_finish = bool(waiting)
@@ -78,13 +99,27 @@ class PeriodicController:
         *,
         game_opened: bool,
         auto_open_game_enabled: bool,
+        cleanup_enabled: bool = False,
     ) -> RunPlan:
         should_launch_game = (not game_opened) and bool(auto_open_game_enabled)
-        final_tasks = normalize_tasks_for_launch(
+        
+        # 1. 基础序列标准化 (处理 bootstrap 等)
+        final_tasks = list(normalize_tasks_for_launch(
             task_ids=task_ids,
             primary_task_id=self.primary_task_id,
             should_force_primary=should_launch_game or self.primary_task_id in task_ids,
-        )
+        ))
+
+        # 2. 通用 Cleanup 注入与排序 (根据角色声明)
+        if cleanup_enabled:
+            # 找出所有声明了 cleanup 角色但不在列表中的任务并追加
+            for tid, meta in self.task_registry.items():
+                if (meta.get("force_last") or meta.get("periodic_role") == "cleanup") and tid not in final_tasks:
+                    final_tasks.append(tid)
+        
+        # 3. 强制二次校验：确保无论何种注入方式，置底任务都在最后
+        final_tasks = self._ensure_cleanup_at_end(final_tasks)
+
         self.state.tasks_to_run = list(final_tasks)
         return RunPlan(
             final_tasks=list(final_tasks),
@@ -182,5 +217,15 @@ class PeriodicController:
             transition.should_after_finish = flag == "end"
         return transition
 
-    def should_stop_for_window_closed(self, game_window_open: bool) -> bool:
-        return self.state.is_running and (not game_window_open)
+    def should_stop_for_window_closed(self, game_window_open: bool, current_task_id: str = None) -> bool:
+        """核心守卫判定：判断当前任务是否允许窗口关闭"""
+        if not self.state.is_running or game_window_open:
+            return False
+        
+        if current_task_id:
+            meta = self.task_registry.get(current_task_id, {})
+            # 如果当前是置底清理类任务，窗口关闭是预期行为，守卫不应干预
+            if meta.get("periodic_role") == "cleanup" or meta.get("force_last"):
+                return False
+                
+        return True

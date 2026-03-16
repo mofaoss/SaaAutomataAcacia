@@ -22,7 +22,7 @@ class PeriodicPresetActions:
     def load_presets(host):
         presets = host.settings_usecase.load_presets()
         last_name = host.settings_usecase.load_last_preset()
-        
+
         host.ui.ComboBox_presets.blockSignals(True)
         host.ui.ComboBox_presets.clear()
         host.ui.ComboBox_presets.addItems(list(presets.keys()))
@@ -32,7 +32,7 @@ class PeriodicPresetActions:
         else:
             host.ui.ComboBox_presets.setCurrentIndex(0)
         host.ui.ComboBox_presets.blockSignals(False)
-        
+
         # Manually trigger apply
         current_name = host.ui.ComboBox_presets.currentText()
         PeriodicPresetActions._apply_preset_to_ui(host, current_name)
@@ -42,10 +42,10 @@ class PeriodicPresetActions:
         preset_name = host.ui.ComboBox_presets.currentText()
         if not preset_name:
             return
-        
-        # Save current state to PREVIOUS preset before switching? 
+
+        # Save current state to PREVIOUS preset before switching?
         # Actually, if we auto-save on every change, the previous one is already up-to-date.
-        
+
         PeriodicPresetActions._apply_preset_to_ui(host, preset_name)
         host.settings_usecase.save_last_preset(preset_name)
 
@@ -54,19 +54,19 @@ class PeriodicPresetActions:
         data = host.settings_usecase.get_preset_data(preset_name)
         # task_ids is kept for potential compatibility, but task_configs['daily_task_sequence'] is the master source now
         task_configs = data.get("task_configs", {})
-        
+
         # 1. Apply config snapshot (this updates config.daily_task_sequence)
         host.settings_usecase.apply_config_snapshot(task_configs)
-        
+
         # 2. Force scheduler to refresh its internal cache from the updated config
         host.scheduler.refresh_from_config()
-        
+
         # 3. Fully rebuild task list widgets to reflect new sequence (order, enabled state, schedule status)
         host._init_task_list_widgets()
-            
+
         # 4. Refresh individual setting widgets to reflect applied configs
         host._load_config()
-        
+
         # 5. Reload the scheduling panel for the currently visible task settings
         current_task_id = host.ui.shared_scheduling_panel.task_id
         if current_task_id:
@@ -74,14 +74,14 @@ class PeriodicPresetActions:
             task_cfg = next((item for item in sequence if item.get("id") == current_task_id), None)
             if task_cfg:
                 host.ui.shared_scheduling_panel.load_task(current_task_id, task_cfg)
-        
+
         # 6. Trigger logic refresh (e.g. scheduling icons in task list)
         host._auto_adjust_after_use_action()
 
     @staticmethod
     def on_add_preset_clicked(host):
         new_name = host.settings_usecase.generate_next_default_name()
-        
+
         # Capture current state for the new preset
         enabled_tasks = [
             task_id
@@ -89,17 +89,17 @@ class PeriodicPresetActions:
             if item.checkbox.isChecked()
         ]
         task_configs = host.settings_usecase.get_all_task_configs()
-        
+
         host.settings_usecase.save_preset(new_name, enabled_tasks, task_configs)
-        
+
         host.ui.ComboBox_presets.blockSignals(True)
         host.ui.ComboBox_presets.addItem(new_name)
         idx = host.ui.ComboBox_presets.findText(new_name)
         host.ui.ComboBox_presets.setCurrentIndex(idx)
         host.ui.ComboBox_presets.blockSignals(False)
-        
+
         host.settings_usecase.save_last_preset(new_name)
-        
+
         InfoBar.success(
             title=_('Added', msgid='added'),
             content=_(f"New preset '{new_name}' created", msgid='preset_new_created'),
@@ -114,7 +114,7 @@ class PeriodicPresetActions:
         # Find the old name - it might be tricky since ComboBox text already changed
         # We store the 'last_preset' in config, so we can use that as the old name
         old_name = host.settings_usecase.load_last_preset()
-        
+
         if not new_name or new_name == old_name:
             return
 
@@ -331,6 +331,7 @@ class PeriodicRuntimeActions:
             task_ids=tasks_to_run,
             game_opened=bool(game_opened),
             auto_open_game_enabled=host.settings_usecase.is_auto_open_game_enabled(),
+            cleanup_enabled=host.settings_usecase.is_close_game_auto_run_enabled(),
         )
         host.tasks_to_run = plan.final_tasks
         primary_task_id = getattr(host, "primary_task_id", None)
@@ -408,7 +409,7 @@ class PeriodicRuntimeActions:
                     host.after_finish()
         except Exception as e:
             host.logger.error(
-                _('Error occurred while handling task state change: {e}').format(e=e)
+                _(f'Error occurred while handling task state change: {e}')
             )
             host.is_running = False
             PeriodicRuntimeActions.set_checkbox_enable(host, True)
@@ -431,7 +432,7 @@ class PeriodicRuntimeActions:
             meta = host.task_registry.get(selected_task_id, {})
             task_name = host._task_display_name(meta, selected_task_id)
             host.logger.info(
-                _('Force running task: {task_name}').format(task_name=task_name)
+                _(f'Force running task: {task_name}')
             )
             host._is_running_solo_flag = True
             host._initiate_task_run([selected_task_id])
@@ -516,7 +517,7 @@ class PeriodicRuntimeActions:
                 )
         except Exception as e:
             host.logger.error(
-                _('Error occurred while checking game launch status: {e}').format(e=e)
+                _(f'Error occurred while checking game launch status: {e}')
             )
             host._clear_launch_watch_state()
             host._set_launch_pending_state(False)
@@ -574,7 +575,14 @@ class PeriodicRuntimeActions:
                 host._stop_running_guard()
                 return
 
-            if not host.periodic_controller.should_stop_for_window_closed(bool(host._is_game_window_open())):
+            # 获取当前正在执行的任务 ID
+            current_task_id = getattr(host.start_thread, "current_task_id", None)
+
+            # 核心守卫判定：透传当前任务 ID 供 Controller 进行元数据驱动的智能识别
+            if not host.periodic_controller.should_stop_for_window_closed(
+                game_window_open=bool(host._is_game_window_open()),
+                current_task_id=current_task_id
+            ):
                 return
 
             host._stop_running_guard()
@@ -586,7 +594,7 @@ class PeriodicRuntimeActions:
             )
         except Exception as e:
             host.logger.error(
-                _('Error occurred while monitoring running game window: {e}').format(e=e)
+                _(f'Error occurred while monitoring running game window: {e}')
             )
             host._stop_running_guard()
 
@@ -727,7 +735,7 @@ class PeriodicRuntimeActions:
         meta = host.task_registry.get(task_id, {})
         task_name = host._task_display_name(meta, task_id)
         fail_msg = (
-            _("⚠️ Task [{task_name}] skipped!", msgid="task_skipped").format(task_name=task_name)
+            _(f"⚠️ Task [{task_name}] skipped!", msgid="task_skipped")
         )
         host.logger.warning(fail_msg)
 
@@ -751,7 +759,7 @@ class PeriodicRuntimeActions:
         host.scheduler.save_task_sequence(sequence)
 
         success_msg = (
-            _("✨ Task [{task_name}] completed!", msgid="task_completed").format(task_name=task_name)
+            _(f"✨ Task [{task_name}] completed!", msgid="task_completed")
         )
         host.logger.info(success_msg)
 
